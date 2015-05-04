@@ -8,7 +8,10 @@ The basic function of the API is to take in data files ouput from
 Gaussian for a particular system and analyse their outcome in terms of:
 
 -  Geometry alignment and,
--  Electronic distribution
+-  Electronic distribution  
+
+Example
+-------
 
 .. code:: python
 

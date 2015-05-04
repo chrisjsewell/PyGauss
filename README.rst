@@ -24,32 +24,10 @@ Gaussian for a particular system and analyse their outcome in terms of:
 
 
 
-.. raw:: html
+.. parsed-literal::
 
-    <div style="max-height:1000px;max-width:1500px;overflow:auto;">
-    <table border="1" class="dataframe">
-      <thead>
-        <tr style="text-align: right;">
-          <th></th>
-          <th>Cation</th>
-          <th>Basis</th>
-          <th>Nbasis</th>
-          <th>Optimised</th>
-          <th>Conformer</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr>
-          <th>0</th>
-          <td> emim</td>
-          <td> 6-311+G(d,p) (5D, 7F)</td>
-          <td> 242</td>
-          <td> True</td>
-          <td> True</td>
-        </tr>
-      </tbody>
-    </table>
-    </div>
+      Cation                  Basis  Nbasis Optimised Conformer
+    0   emim  6-311+G(d,p) (5D, 7F)     242      True      True
 
 
 

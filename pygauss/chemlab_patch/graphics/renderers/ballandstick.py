@@ -28,7 +28,8 @@ class BallAndStickRenderer(AbstractRenderer):
 
 
     '''
-    def __init__(self, widget, r_array, type_array, bonds, shading='phong', rgba_array=[]):
+    def __init__(self, widget, r_array, type_array, bonds, shading='phong', 
+                 rgba_array=[], linestyle='impostors'):
         super(BallAndStickRenderer, self).__init__(widget)
         vdw_dict = cdb.get("data", 'vdwdict')        
         
@@ -42,7 +43,7 @@ class BallAndStickRenderer(AbstractRenderer):
                                radii_map = vdw_dict, shading=shading, rgba_array=rgba_array)
         
         if self.has_bonds:
-            self.br = BondRenderer(widget, bonds, r_array, type_array, style='impostors',
+            self.br = BondRenderer(widget, bonds, r_array, type_array, style=linestyle,
                                    shading=shading, rgba_array=rgba_array)
 
         

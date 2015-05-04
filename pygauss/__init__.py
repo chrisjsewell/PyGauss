@@ -7,29 +7,31 @@ Gaussian output and outputting it to a word document.
 
 """
 
-
-import chemlab # version 0.4
-import cclib # version 1.3
-
 # mokeypatch classes improved for this implementation 
+# TOD don't think this is working
+
+import sys
+
+from .chemlab_patch.io.handlers import _cclib
+sys.modules['chemlab.io.handlers._cclib'] = _cclib
 
 from .cclib_patch.parser import data, gaussianparser
 
-cclib.parser.data = data 
-cclib.parser.gaussianparser = gaussianparser
-
-from .chemlab_patch.io.handlers import _cclib
-
-chemlab.io.handlers._cclib = _cclib
+sys.modules['cclib.parser.data'] = data 
+sys.modules['cclib.parser.gaussianparser'] = gaussianparser
 
 from .chemlab_patch.graphics import camera
 
-chemlab.graphics.camera = camera
+sys.modules['chemlab.graphics.camera']= camera
 
-from .chemlab_patch.graphics.renderers import atom, ballandstick, bond
+from .chemlab_patch.graphics.renderers import atom, ballandstick, bond, line
 
-chemlab.graphics.renderers.atom = atom
-chemlab.graphics.renderers.ballandstick = ballandstick
-chemlab.graphics.renderers.bond = bond
+sys.modules['chemlab.graphics.renderers.atom'] = atom
+sys.modules['chemlab.graphics.renderers.ballandstick'] = ballandstick
+sys.modules['chemlab.graphics.renderers.bond'] = bond
+sys.modules['chemlab.graphics.renderers.line'] = line
+
+#import chemlab # version 0.4
+#import cclib # version 1.3
 
 from . import analysis

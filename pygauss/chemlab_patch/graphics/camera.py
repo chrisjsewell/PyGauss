@@ -84,6 +84,7 @@ class Camera:
     """
 
     def __init__(self):
+        
         self.position = np.array([0.0, 0.0, 5.0]) # Position in real coordinates
         
         self.pivot = np.array([0.0, 0.0, 0.0])

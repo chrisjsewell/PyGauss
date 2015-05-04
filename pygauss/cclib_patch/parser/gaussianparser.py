@@ -63,7 +63,7 @@ class Gaussian(logfileparser.Logfile):
         return ans
 
     def before_parsing(self):
-
+        
         # Used to index self.scftargets[].
         SCFRMS, SCFMAX, SCFENERGY = list(range(3))
 
@@ -76,6 +76,11 @@ class Gaussian(logfileparser.Logfile):
 
         # Flag for identifying ONIOM calculations.
         self.oniom = False
+        
+        # CJS to catch unfinished optimisations
+        if not hasattr(self, 'optdone'):
+            self.optdone = []
+
 
     def after_parsing(self):
 
@@ -1376,6 +1381,57 @@ class Gaussian(logfileparser.Logfile):
                     nline = next(inputfile)
                     charges.append(float(nline.split()[2]))
                 self.atomcharges["natural"] = charges
+                
+        # CJS added extraction of Second Order Perturbation NBO data
+        # The next segment summarizes the second-order perturbative estimates 
+        # of donor-acceptor (bond-antibond) interactions in the NBO basis
+        # 
+        # extract:
+        # Second Order Perturbation Theory Analysis of Fock Matrix in NBO Basis
+        #
+        #     Threshold for printing:   0.50 kcal/mol
+        #    (Intermolecular threshold: 0.05 kcal/mol)
+        #                                                                              E(2)  E(j)-E(i) F(i,j)
+        #         Donor NBO (i)                     Acceptor NBO (j)                 kcal/mol   a.u.    a.u.
+        # ===================================================================================================
+        #
+        # within unit  1
+        #   1. BD (   1) C   1 - C   2        / 92. RY*(   2) N   4                    1.15    2.05    0.044
+        #   1. BD (   1) C   1 - C   2        /124. RY*(   2) N   8                    1.11    2.09    0.043
+        #   1. BD (   1) C   1 - C   2        /254. BD*(   1) C   1 - N   4            0.70    1.16    0.026
+        
+        # BD = Bonding (2 centers); CR = Core (1 center); LP = Lone pair; RY = Rydberg; BD* = Antibond        
+        # after that a 'serial number' which corresponds to the connectivity
+        # (or idealized bond index between the atoms, i.e., single double triple bond), 
+        # and finally the atom(s) to which the NBO belongs.        
+        if line.strip() == 'Second Order Perturbation Theory Analysis of Fock Matrix in NBO Basis':
+
+            p = re.compile('([\d]+).\s([A-Z\*]+)[\s\(]+([\w]+)[\)]([\s\w-]+\-[\s\w-]+|[\s\w]+)\s([\s\w\.]+)')
+            p2 = re.compile('[\d]+')
+            
+            line = next(inputfile)
+            sopt_analysis=[]
+            while line.find("Natural Bond Orbitals") < 0:
+                if len(line.split('/')) == 2:
+                    donor, acceptor_energy =  line.split('/')
+                    if p.search(donor) and p.search(acceptor_energy):
+                        dgroups = p.search(donor).groups()
+                        agroups = p.search(acceptor_energy).groups()
+                        
+                        datoms=[]
+                        for atom in dgroups[3].split('-'):
+                            datoms.append(int(p2.findall(atom)[0]))
+                        aatoms=[]
+                        for atom in agroups[3].split('-'):
+                            aatoms.append(int(p2.findall(atom)[0]))
+                        
+                        energy = float(agroups[-1].split()[0])
+                                            
+                        sopt_analysis.append([dgroups[1], datoms[:], agroups[1], aatoms[:], energy])
+                    
+                line = next(inputfile)
+            
+            self.set_attribute('sopt', sopt_analysis[:])
 
         #Extract Thermochemistry
         #Temperature   298.150 Kelvin.  Pressure   1.00000 Atm.

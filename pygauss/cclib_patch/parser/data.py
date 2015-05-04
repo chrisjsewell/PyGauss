@@ -80,7 +80,7 @@ class ccData(object):
             the 11th molecular orbital is the HOMO
     """
 
-    # CJS added some attributes; basis_descript, nscans
+    # CJS added some attributes; basis_descript, nscans, sopt
     # The expected types for all supported attributes.
     _attrtypes = {
         "aonames":        list,
@@ -132,6 +132,7 @@ class ccData(object):
         "scfenergies":    numpy.ndarray,
         "scftargets":     numpy.ndarray,
         "scfvalues":      list,
+        "sopt":           list,
         "temperature":    float,
         "vibanharms":     numpy.ndarray,
         "vibdisps":       numpy.ndarray,
@@ -154,6 +155,7 @@ class ccData(object):
     _dictsofarrays = ["atomcharges", "atomspins"]
 
     def __init__(self, attributes={}):
+        
         """Initialize the cclibData object.
         
         Normally called in the parse() method of a Logfile subclass.
@@ -161,7 +163,6 @@ class ccData(object):
         Inputs:
             attributes - optional dictionary of attributes to load as data
         """
-
         if attributes:
             self.setattributes(attributes)
         

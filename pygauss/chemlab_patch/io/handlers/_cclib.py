@@ -19,9 +19,13 @@ from cclib.parser import (ADF,
                           # Psi, 
                           #QChem
                           )
+from ....cclib_patch.parser import gausscomparser
+from ....cclib_patch.parser import gaussianparser
+
 _types = { 'gamess' : GAMESS,
            'gamessuk': GAMESSUK, 
-           'gaussian': Gaussian, 
+           'gaussian':gaussianparser.Gaussian, 
+           'gausscom': gausscomparser.Gausscom,
            'jaguar': Jaguar, 
            'molpro': Molpro, 
            #'nwchem': NWChem, 

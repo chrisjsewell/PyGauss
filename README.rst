@@ -7,8 +7,8 @@ A layer on top of chemlab for analysis of gaussian DFT output
 The basic function of the API is to take in data files ouput from
 Gaussian for a particular system and analyse their outcome in terms of:
 
-- Geometry alignment, and 
-- Electronic distribution
+-  Geometry alignment and,
+-  Electronic distribution
 
 .. code:: python
 
@@ -16,20 +16,37 @@ Gaussian for a particular system and analyse their outcome in terms of:
     folder = pg.get_test_folder()
     
     analysis = pg.Analysis(folder)
-    analysis.add_run({'Cation':'emim'},
-                    init_fname='CJS1_emim_-_init.com', 
-                    opt_fname='CJS1_emim_-_6-311+g-d-p-_gd3bj_opt_.log',
-                    freq_fname='CJS1_emim_-_6-311+g-d-p-_gd3bj_freq_.log',
-                    nbo_fname='CJS1_emim_-_6-311+g-d-p-_gd3bj_pop-nbo-full-_.log')
-    analysis.add_basic_properties()
-    analysis.get_table()
+    analysis.add_runs(headers=['Cation', 'Anion', 'Initial'], 
+                      values=[['emim'], ['cl'], ['B', 'F', 'T']],
+        init_pattern='CJS1_{0}-{1}_{2}_init.com',
+        opt_pattern='CJS1_{0}-{1}_{2}_6-311+g-d-p-_gd3bj_opt-modredundant_unfrz.log',
+        freq_pattern='CJS1_{0}-{1}_{2}_6-311+g-d-p-_gd3bj_freq_unfrz.log',
+        nbo_pattern='CJS1_{0}-{1}_{2}_6-311+g-d-p-_gd3bj_pop-nbo-full-_unfrz.log')
+    analysis
 
 
 
 .. parsed-literal::
 
-      Cation                  Basis  Nbasis Optimised Conformer
-    0   emim  6-311+G(d,p) (5D, 7F)     242      True      True
+      Anion Cation Initial
+    0    cl   emim       B
+    1    cl   emim       F
+
+
+
+.. code:: python
+
+    analysis.add_basic_properties()
+    analysis.add_mol_property('Energy (au)', 'get_optimisation_E', units='hartree')
+    analysis
+
+
+
+.. parsed-literal::
+
+      Anion Cation Initial                  Basis  Nbasis Optimised Conformer  Energy (au)
+    0    cl   emim       B  6-311+G(d,p) (5D, 7F)     272      True      True     -805.105
+    1    cl   emim       F  6-311+G(d,p) (5D, 7F)     272      True      True     -805.118
 
 
 
@@ -37,12 +54,30 @@ Gaussian for a particular system and analyse their outcome in terms of:
 
     from IPython.display import display
     mols = analysis.yield_mol_images(mtype='optimised',
-                                    align_to=[3,2,1], 
-                                    rotations=[[0, 0, 90], [-90, 90, 0]],
-                                    axis_length=0.5)
+                        align_to=[3,2,1], axis_length=0.3, 
+                        rotations=[[0, 0, 90], [-90, 90, 0]])
     for mol in mols: display(mol)
 
 
-.. image:: readme/emim_molecule.png
+.. image:: readme/output_5_0.png
+
+
+
+.. image:: readme/output_5_1.png
+
+
+.. code:: python
+
+    mols = analysis.yield_mol_images(mtype='nbo',
+                        align_to=[3,2,1], axis_length=0.3, 
+                        rotations=[[0, 0, 90], [-90, 90, 0]])
+    for mol in mols: display(mol)
+
+
+.. image:: readme/output_6_0.png
+
+
+
+.. image:: readme/output_6_1.png
 
 

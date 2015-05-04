@@ -20,7 +20,7 @@ Example
     
     analysis = pg.Analysis(folder)
     analysis.add_runs(headers=['Cation', 'Anion', 'Initial'], 
-                      values=[['emim'], ['cl'], ['B', 'F', 'T']],
+                      values=[['emim'], ['cl'], ['B', 'F']],
         init_pattern='CJS1_{0}-{1}_{2}_init.com',
         opt_pattern='CJS1_{0}-{1}_{2}_6-311+g-d-p-_gd3bj_opt-modredundant_unfrz.log',
         freq_pattern='CJS1_{0}-{1}_{2}_6-311+g-d-p-_gd3bj_freq_unfrz.log',

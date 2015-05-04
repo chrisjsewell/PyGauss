@@ -2,7 +2,7 @@
 PyGauss
 =======
 
-A layer on top of chemlab for analysis of gaussian DFT output
+A layer on top of cclib (v1.3), chemlab (v0.4) and pandas (v0.15.2) for analysis of gaussian DFT output
 
 The basic function of the API is to take in data files ouput from
 Gaussian for a particular system and analyse their outcome in terms of:

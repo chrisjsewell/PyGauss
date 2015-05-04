@@ -59,9 +59,9 @@ Gaussian for a particular system and analyse their outcome in terms of:
     for mol in mols: display(mol)
 
 
-.. image:: readme/output_5_0.png
+.. image:: readme/output_5_0.png  
 
-
+|
 
 .. image:: readme/output_5_1.png
 
@@ -74,9 +74,9 @@ Gaussian for a particular system and analyse their outcome in terms of:
     for mol in mols: display(mol)
 
 
-.. image:: readme/output_6_0.png
+.. image:: readme/output_6_0.png  
 
-
+|
 
 .. image:: readme/output_6_1.png
 

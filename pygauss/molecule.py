@@ -9,12 +9,13 @@ from io import BytesIO
 import PIL
 from PIL import Image, ImageChops
 
-from math import degrees, atan2, sqrt
+from math import degrees, atan2, sqrt, acos
 
 import numpy as np
 import matplotlib as mpl
 import matplotlib.pyplot as plt
 import matplotlib.cm as cm
+from mpl_toolkits.mplot3d import Axes3D
 
 from IPython.display import Image as ipy_Image
 
@@ -42,10 +43,12 @@ class Molecule:
         
         self._folder = folder
         self._init_data = None
+        self._prev_opt_data = []
         self._opt_data = None
         self._freq_data = None
         self._nbo_data = None
-        self._alignment_atom_indxs = alignto
+        self._alignment_atom_indxs = ()
+        if alignto: self.set_alignment_atoms(*alignto)
         
         if init_fname: self.add_initialgeom(init_fname)        
         if opt_fname: self.add_optimisation(opt_fname)
@@ -67,9 +70,16 @@ class Molecule:
         
         self._init_data = self._get_data(file_name, 'gausscom')
 
+    #TODO multiple optimisation files?
     def add_optimisation(self, file_name):
         
-        self._opt_data = self._get_data(file_name)
+        if type(file_name) is list:
+            self._opt_data = self._get_data(file_name[-1])
+            self._prev_opt_data = []
+            for f in file_name[:-1]:
+                self._prev_opt_data.append(self._get_data(f))
+        else:
+            self._opt_data = self._get_data(file_name)
 
     def add_frequency(self, file_name):
         
@@ -94,6 +104,7 @@ class Molecule:
     def get_optimisation_E(self, units='eV'):
         
         energies = self._opt_data.read('scfenergies')
+        
         if not units == 'eV':
             energies = convertor(energies, 'eV', units)
         return energies[-1]            
@@ -101,10 +112,13 @@ class Molecule:
     def plot_optimisation_E(self, units='eV'):
         
         energies = self._opt_data.read('scfenergies')
+        for data in reversed(self._prev_opt_data):
+            energies = np.concatenate([data.read('scfenergies'), energies])
+            
         if not units == 'eV':
             energies = convertor(energies, 'eV', units)
         
-        plt.plot(energies)   
+        plt.plot(energies)
         plt.ylabel('Energy ({0})'.format(units))
         plt.xlabel('Optimisation Step')
         plt.grid(True)
@@ -124,13 +138,15 @@ class Molecule:
         plt.ylabel('IR Intensities ($km/mol$)')
         plt.grid(True)
 
-    def add_alignment_atoms(self, idx1, idx2, idx3):
+    def set_alignment_atoms(self, idx1, idx2, idx3):
+        
+        assert type(idx1) is int and type(idx2) is int and type(idx3) is int
         
         self._alignment_atom_indxs = (idx1, idx2, idx3)    
         
     def remove_alignment_atoms(self):
         
-        self._alignment_atom_indxs = None   
+        self._alignment_atom_indxs = ()   
 
     def _midpoint_coordinates(self, coord_list):
 
@@ -160,7 +176,7 @@ class Molecule:
         # a plane is a*x+b*y+c*z+d=0 where[a,b,c] is the normal and d is 0  
         # (since the origin now intercepts the plane). Thus, we calculate;
         normal = np.cross(v2,v3)
-        a, b, c = normal
+        #a, b, c = normal
         vf3 = normal/np.linalg.norm(normal)
     
         vf1 =  v1/np.linalg.norm(v1)        
@@ -184,30 +200,35 @@ class Molecule:
             yield np.dot(transform_matrix, 
                     np.array(np.append(coord, 1))[np.newaxis].T)[:-1].flatten()
     
-    def _realign_geometry(self, molecule, atom_indxs):
-        """inputs molecule, atom index 1, atom index 2, atom index 3 """
+    def _realign_geometry(self, r_array, align_indxs):
+        """inputs coordinate array, index 1, index 2, index 3 """
         
-        a1, a2, a3 = atom_indxs
-        t_matrix = self._create_transform_matrix(molecule.r_array[a1-1], 
-                                           molecule.r_array[a2-1], 
-                                           molecule.r_array[a3-1])
-        molecule.r_array=np.array(
-            [r for r in self._apply_transfom_matrix(t_matrix, molecule.r_array)])
-        return molecule
+        a1, a2, a3 = align_indxs
+        t_matrix = self._create_transform_matrix(r_array[a1], r_array[a2], 
+                                                 r_array[a3])
+        new_array=np.array(
+            [r for r in self._apply_transfom_matrix(t_matrix, r_array)])
+        return new_array
 
-    def _create_molecule(self, optimised=True, opt_step=False, gbonds=True):
+    def _create_molecule(self, optimised=True, opt_step=False, gbonds=True,
+                         data=None):
 
         if not optimised:
-            molecule = self._init_data.read('molecule')              
-        elif type(opt_step) is int:
-            molecule = self._opt_data.read('molecule', step=opt_step)  
+            molecule = self._init_data.read('molecule')            
         else:
-            molecule = self._opt_data.read('molecule') 
+            indata = self._opt_data
+            if data: indata=data
+            if type(opt_step) is int:
+                molecule = indata.read('molecule', step=opt_step)  
+            else:
+                molecule = indata.read('molecule') 
             
         if gbonds: molecule.guess_bonds()
             
         if self._alignment_atom_indxs:
-            molecule = self._realign_geometry(molecule, self._alignment_atom_indxs)
+            a, b, c = self._alignment_atom_indxs
+            molecule.r_array = self._realign_geometry(molecule.r_array, 
+                                                      [a-1, b-1, c-1])
 
         return molecule
     
@@ -515,9 +536,9 @@ class Molecule:
         
         return angle #np.mod(angle, 360)
                                   
-    def calc_polar_coords_to_plane(self, p1, p2, p3, c, optimisation=True, 
+    def calc_polar_coords_from_plane(self, p1, p2, p3, c, optimisation=True, 
                                    units='nm'):
-        """ returns the distance r amd angles theta, phi of atom c 
+        """ returns the distance r and angles theta, phi of atom c 
         to the circumcenter of the plane formed by [p1, p2, p3]
         
         the plane formed will have;
@@ -552,6 +573,110 @@ class Molecule:
         
         return r, theta, phi  
 
+    def calc_2plane_angle(self, p1, p2, optimisation=True):
+        """return angle of planes """
+        a1, a2, a3 = p1
+        b1, b2, b3 = p2        
+        
+        if optimisation:
+            molecule = self._opt_data.read('molecule')  
+        else:
+            molecule = self._init_data.read('molecule')
+
+        v1a = molecule.r_array[a2-1] - molecule.r_array[a1-1]
+        v2a = molecule.r_array[a3-1] - molecule.r_array[a1-1]
+
+        v1b = molecule.r_array[b2-1] - molecule.r_array[b1-1]
+        v2b = molecule.r_array[b3-1] - molecule.r_array[b1-1]
+        
+        vnormala = np.cross(v1a,v2a)
+        vnormalb = np.cross(v1b,v2b)
+        
+        cos_theta = np.dot(vnormala, vnormalb)/(
+                    np.linalg.norm(vnormala)*np.linalg.norm(vnormalb))
+        #account for rounding errors
+        if cos_theta > 1.: cos_theta = 1.
+        if cos_theta < -1.: cos_theta = -1.                   
+        
+        return degrees(acos(cos_theta))
+
+    #TODO write function
+    def calc_opt_trajectory(self, atom, plane=[]):
+        """ calculate the trajectory of an atom as it is optimised,
+        relative to a plane of three atoms """
+        alignto = self._alignment_atom_indxs[:]
+        self._alignment_atom_indxs = plane
+
+        #get coord from init
+        mol = self._create_molecule(optimised=False)
+        init = mol.r_array[atom-1]
+        #get coords from opt
+        opts=[]
+        for data in self._prev_opt_data + [self._opt_data]:
+            run = []
+            for n in range(len(data.read('atomcoords'))):
+                mol = self._create_molecule(data=data, opt_step=n)
+                run.append(mol.r_array[atom-1])
+            opts.append(np.array(run))
+        
+        self._alignment_atom_indxs = alignto
+        
+        return init, opts
+
+    _SUFFIXES = {1: 'st', 2: 'nd', 3: 'rd'}
+    def _ordinal(self, num):
+        # I'm checking for 10-20 because those are the digits that
+        # don't follow the normal counting scheme. 
+        if 10 <= num % 100 <= 20:
+            suffix = 'th'
+        else:
+            # the second parameter is a default.
+            suffix = self._SUFFIXES.get(num % 10, 'th')
+        return str(num) + suffix
+
+    def plot_opt_trajectory(self, atom, plane=[], ax_lims=None):
+        """plot the trajectory of an atom as it is optimised,
+        relative to a plane of three atoms """        
+        init, opts = self.calc_opt_trajectory(atom, plane)
+  
+        fig = plt.figure()
+        ax = fig.add_subplot(111, projection='3d')
+        ax.scatter(init[0], init[1], init[2], c='r', s=30)
+        for i, opt in enumerate(opts):
+            ax.plot(opt[:,0], opt[:,1], opt[:,2], 
+                    label='{0} optimisation'.format(self._ordinal(i+1)))
+        ax.scatter(opts[-1][-1,0], opts[-1][-1,1], opts[-1][-1,2], c=['g'], s=30)
+
+        mol = self._create_molecule().r_array  
+        a,b,c=plane
+        ax.scatter(*mol[a-1], c='k', marker='^', s=30, label='Atom {0}'.format(a))
+        ax.scatter(*mol[b-1], c='k', marker='o', s=30, label='Atom {0}'.format(b))
+        ax.scatter(*mol[c-1], c='k', marker='s', s=30, label='Atom {0}'.format(c))
+
+        ax.legend(bbox_to_anchor=(1.05, 1), loc=2, borderaxespad=0.)  
+        
+        if ax_lims:
+            x, y, z = ax_lims
+            ax.set_xlim3d(-x, x)
+            ax.set_ylim3d(-y, y)
+            ax.set_zlim3d(-z, z)
+    
+        return ax
+        
+    def calc_nbo_charge(self, atoms=[]):
+        """ returns total charge of the atoms """
+        charges = self._nbo_data.read('atomcharges')['natural']
+        if atoms==[]: return np.sum(charges)
+            
+        atoms = np.array(atoms) -1 # 1->0 base        
+        try:
+            subcharges = charges[atoms]
+        except IndexError:
+            return np.nan
+        
+        return np.sum(subcharges)
+        
+    # TODO alignment atoms resetting on error / calculate without creating molecule
     def calc_nbo_charge_center(self, p1, p2, p3, positive=True, units='nm', 
                                atoms=[]):
         """ returns the distance r amd angles theta, phi of the positive/negative
@@ -575,7 +700,7 @@ class Molecule:
         coords = molecule.r_array   
         
         if atoms:
-            atoms = np.array(atoms) -1
+            atoms = np.array(atoms) -1 # 1->0 base
             charges = charges[atoms]
             coords = coords[atoms]
 
@@ -594,9 +719,8 @@ class Molecule:
         
         return r, theta, phi                     
 
-    # TODO visualise and analyse NBO bonds 
     def calc_SOPT_bonds(self, min_energy=20.):
-        
+        """Second Order Perturbation Theory analysis """
         sopt = self._nbo_data.read('sopt')
         sopt_e = [i for i in sopt if i[4]>=min_energy]
 
@@ -607,7 +731,7 @@ class Molecule:
                         width=300, height=300, axis_length=0, lines=[],
                         relative=False, minval=-1, maxval=1,
                         alpha=0.5):
-
+        """Second Order Perturbation Theory analysis """
         sopt_e = self.calc_SOPT_bonds(min_energy=min_energy)
         molecule = self._create_molecule(gbonds=gbonds)
         

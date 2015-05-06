@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-import os, inspect
+import os
 from itertools import product
 
 import pandas as pd
@@ -11,31 +11,39 @@ from IPython.core.display import clear_output
 
 from .molecule import Molecule
 
-from . import test_data
-def get_test_folder():
-    return os.path.dirname(inspect.getfile(test_data))
-
-class Analysis():
-    def __init__(self, file_path='', 
+class Analysis(object):
+    def __init__(self, folderpath='', 
                  headers=[]):
-                     
-        self.set_filepath(file_path)
+        """analysis class """    
+        self._folderpath = False
+        if folderpath: self.set_folderpath(folderpath)
+            
         heads = headers[:].append('Molecule')
+        
         self._df = pd.DataFrame(columns=heads)
         self._next_index = 0
         
     def __repr__(self):
         return self.get_table().to_string()
         
-    def set_filepath(self, filepath):
-        self._filepath = filepath
+    def get_folderpath(self):
+        if not self._folderpath:
+            raise IOError('folder path not set')
+        return self._folderpath
+    def set_folderpath(self, folderpath): 
+        if not os.path.exists(str(folderpath)):
+            raise ValueError("{0} does not exist".format(folderpath))
+        self._folderpath = folderpath
         
+    folderpath = property(get_folderpath, set_folderpath, 
+                        doc="The folderpath for gaussian runs")        
+
     def add_run(self, identifiers={}, 
                       init_fname=None, opt_fname=None, 
                       freq_fname=None, nbo_fname=None,
                       alignto=[]):
-                          
-        molecule = Molecule(self._filepath, init_fname, opt_fname, 
+        """add single Gaussian run input/outputs """             
+        molecule = Molecule(self.folderpath, init_fname, opt_fname, 
                                             freq_fname, nbo_fname,
                                             alignto=alignto)
         identifiers['Molecule'] = molecule
@@ -50,7 +58,7 @@ class Analysis():
                  init_pattern=None, opt_pattern=None, 
                  freq_pattern=None, nbo_pattern=None,
                  alignto=[], ipython_print=False):
-                     
+        """add multiple Gaussian run inputs/outputs """             
         read_errors=[]
         for idents in product(*values):
             identifiers = dict(zip(headers, idents))
@@ -71,8 +79,27 @@ class Analysis():
         return self.get_table(), read_errors
                 
     def get_table(self, rows=[], columns=[],  filters={},
-                  precision=4, head=False, mol=False):
-        
+                  precision=4, head=False, mol=False, 
+                  row_index=[], column_index=[]):
+        """return pandas table of requested data in requested format
+
+        rows : integer or list of integers
+            select row ids
+        columns : string/integer or list of strings/integers
+            select column names/positions
+        filters : dict
+            filter for rows with certain value(s) in specific columns
+        precision : int
+            decimal precision of displayed values
+        head : int
+            return only first n rows
+        mol : bool
+            include column containing the molecule objects
+        row_index : string or list of strings
+            columns to use as new index        
+        column_index : list of strings
+            srings to place in to higher order column indexs        
+        """
         pd.set_option('precision', precision)
         
         if mol:
@@ -91,9 +118,23 @@ class Analysis():
         if type(columns) is not list and type(columns) is not tuple:
             columns = [columns]
         if rows:
-            df = df.ix[rows] 
+            df = df.loc[rows] 
         if columns:
             df = df.ix[:,columns]            
+            
+        if row_index: df = df.set_index(row_index) 
+
+        if column_index:
+            col_index=[]
+            for col in df.columns:
+                col_tuple = (' ', col)
+                for term in column_index:
+                    if len(col)>len(term):
+                        if col[:len(term)] == term:
+                            col_tuple = (term, col[len(term)+1:])
+                            continue
+                col_index.append(col_tuple)
+            df.columns = pd.MultiIndex.from_tuples(col_index)
             
         if head:
             return df.head(head)
@@ -200,7 +241,7 @@ class Analysis():
                        filters=filters, mol=True)
         
         for mol in df.Molecule:
-            if align_to: mol.add_alignment_atoms(*align_to)
+            if align_to: mol.set_alignment_atoms(*align_to)
             if mtype == 'initial':
                 yield mol.show_initial(gbonds=gbonds, ball_stick=ball_stick, 
                                        rotations=rotations, zoom=zoom, 

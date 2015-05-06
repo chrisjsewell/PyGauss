@@ -4,10 +4,10 @@ Created on Fri May 01 04:11:16 2015
 
 @author: chris
 """
-import pygauss.analysis as pg
+import pygauss as pg
 folder = pg.get_test_folder()
 
-analysis = pg.Analysis(folder)
+analysis = pg.analysis.Analysis(folder)
 analysis.add_run({'Cation':'emim'},
                 init_fname='CJS1_emim_-_init.com', 
                 opt_fname='CJS1_emim_-_6-311+g-d-p-_gd3bj_opt_.log',
@@ -28,11 +28,14 @@ analysis.add_basic_properties()
 
 analysis.add_mol_property('Energy (au)', 'get_optimisation_E', units='hartree')
 analysis.add_mol_property('Cation chain, $\\psi$', 'calc_dihedral_angle', [1, 4, 9, 10])
-analysis.add_mol_property(['Charge center, $r$', 'Charge center, $\\theta$', 'Charge center, $\\phi$'], 
+analysis.add_mol_property('Cation Charge', 'calc_nbo_charge', range(1, 20))
+analysis.add_mol_property(['Cation Charge center, $r$', 'Cation Charge center, $\\theta$', 
+                           'Cation Charge center, $\\phi$'], 
                                'calc_nbo_charge_center', 3, 2, 1, atoms=range(1, 20))
-analysis.add_mol_property(['Anion-cation, $r$', 'Anion-cation, $\\theta$', 'Anion-cation, $\\phi$'], 
-                               'calc_polar_coords_to_plane', 3, 2, 1, 20)
-analysis.add_mol_property('Anion-cation, $d_{min}$', 'calc_min_dist', range(1, 20), range(20, 33))
+analysis.add_mol_property('Anion Charge', 'calc_nbo_charge', [20])
+analysis.add_mol_property(['Anion-Cation, $r$', 'Anion-Cation, $\\theta$', 'Anion-Cation, $\\phi$'], 
+                               'calc_polar_coords_from_plane', 3, 2, 1, 20)
+analysis.add_mol_property('Anion-Cation, $d_{min}$', 'calc_min_dist', range(1, 20), [20])
 
 analysis.add_mol_property_subset('Energy (eV)', 'get_optimisation_E', rows=2, kwargs={'units':'eV'})
 

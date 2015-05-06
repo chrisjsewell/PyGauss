@@ -6,9 +6,11 @@ This is a layer on top of the cclib/chemlab/chemview packages for analysing
 Gaussian output and outputting it to a word document.
 
 """
+#import cclib # version 1.3
+#import chemlab # version 0.4
 
-# mokeypatch classes improved for this implementation 
-# TOD don't think this is working
+# mokeypatch cclib/chemlab classes improved for this implementation 
+# TODO don't think this is working
 
 import sys
 
@@ -31,7 +33,10 @@ sys.modules['chemlab.graphics.renderers.ballandstick'] = ballandstick
 sys.modules['chemlab.graphics.renderers.bond'] = bond
 sys.modules['chemlab.graphics.renderers.line'] = line
 
-#import chemlab # version 0.4
-#import cclib # version 1.3
-
 from . import analysis
+from . import molecule
+
+import os, inspect
+from . import test_data
+def get_test_folder():
+    return os.path.dirname(inspect.getfile(test_data))

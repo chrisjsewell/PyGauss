@@ -8,9 +8,19 @@ Created on Thu May 07 14:34:45 2015
 
 from distutils.core import setup
 
+import os
+def readme(img_path):
+    if os.path.exists('README.rst'):
+        descript = open('README.rst').read()
+        descript = descript.replace('image:: ', 
+                                    'image:: {0}raw/master/'.format(img_path))
+        return descript
+    return ''
+
 setup(name='pygauss',
-      version='0.1',
+      version='0.1.5',
       description='PYthon GAUSSian DFT output analysis',
+      long_description=readme('https://github.com/chrisjsewell/PyGauss/'),
       author='Chris Sewell',
       author_email='chrisj_sewell@hotmail.com',
       url='https://github.com/chrisjsewell/PyGauss',
@@ -24,6 +34,14 @@ setup(name='pygauss',
                 'pygauss.chemview_patch',
                 'pygauss.test_data'],
       package_data={'': ['*.rst', '*.txt'],
-                    'pygauss.test_data': ['*.log', '*.com']}
-                
+                    'pygauss.test_data': ['*.log', '*.com']},
+      install_requires=[
+                          "numpy>=1.9.2",
+                          "scipy>=0.15.1",
+                          "pil>=1.1.7",
+                          "matplotlib>=1.4.3",
+                          "pandas>=0.15.2",
+                          "ipython>=3.0.0",
+                          "scikit-learn>=0.15.2, <0.16"
+                       ],               
      )

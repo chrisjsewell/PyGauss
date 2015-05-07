@@ -16,9 +16,14 @@ setup(name='PyGauss',
       url='https://github.com/chrisjsewell/PyGauss',
       platforms = ["Any."],
       packages=['pygauss', 
-                'pygauss.cclib_patch', 
-                'pygauss.chemlab_patch', 
+                'pygauss.cclib_patch','pygauss.cclib_patch.parser', 
+                'pygauss.chemlab_patch',
+                'pygauss.chemlab_patch.graphics', 
+                'pygauss.chemlab_patch.graphics.renderers',
+                'pygauss.chemlab_patch.io','pygauss.chemlab_patch.io.handlers',
                 'pygauss.chemview_patch',
                 'pygauss.test_data'],
+      package_data={'': ['*.rst', '*.txt'],
+                    'pygauss.test_data': ['*.log', '*.com']}
                 
      )

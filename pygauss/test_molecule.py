@@ -2,7 +2,7 @@
 """
 Created on Tue May 05 22:56:25 2015
 
-@author: chris
+@author: chris sewell
 """
 from IPython.display import display
 

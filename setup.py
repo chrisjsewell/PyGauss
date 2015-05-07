@@ -8,7 +8,7 @@ Created on Thu May 07 14:34:45 2015
 
 from distutils.core import setup
 
-setup(name='PyGauss',
+setup(name='pygauss',
       version='0.1',
       description='PYthon GAUSSian DFT output analysis',
       author='Chris Sewell',

@@ -1,8 +1,8 @@
 # CJS changed relative paths to chemlab ones
 
 from chemlab.graphics.renderers.base import AbstractRenderer
-from chemlab.graphics.renderers.atom import AtomRenderer
-from chemlab.graphics.renderers.bond import BondRenderer
+from .atom import AtomRenderer
+from .bond import BondRenderer
 
 from chemlab.db import ChemlabDB
 cdb = ChemlabDB()

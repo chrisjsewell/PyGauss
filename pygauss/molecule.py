@@ -8,23 +8,44 @@ import os
 from io import BytesIO
 import PIL
 from PIL import Image, ImageChops
+from types import MethodType
 
 from math import degrees, atan2, sqrt, acos
 
 import numpy as np
+from scipy.signal import argrelextrema
+
 import matplotlib as mpl
 import matplotlib.pyplot as plt
 import matplotlib.cm as cm
+from matplotlib.offsetbox import OffsetImage, AnnotationBbox
 from mpl_toolkits.mplot3d import Axes3D
+
+import pandas as pd
 
 from IPython.display import Image as ipy_Image
 
-# TODO why is this not being patched? 
-from chemlab.io.handlers._cclib import _create_cclib_handler
-#from .chemlab_patch.io.handlers._cclib  import _create_cclib_handler
+from .chemlab_patch.io.handlers._cclib  import _create_cclib_handler
 
 from chemlab.graphics.qtviewer import QtViewer
-from .chemlab_patch.graphics.renderers import AtomRenderer, BallAndStickRenderer, LineRenderer
+#have to add method to instances of chemlab.graphics.camera.Camera
+from chemlab.graphics.transformations import rotation_matrix
+def orbit_z(self, angle):
+    # Subtract pivot point
+    self.position -= self.pivot        
+    # Rotate
+    rot = rotation_matrix(-angle, self.c)[:3,:3]
+    self.position = np.dot(rot, self.position)        
+    # Add again the pivot point
+    self.position += self.pivot
+    
+    self.a = np.dot(rot, self.a)
+    self.b = np.dot(rot, self.b)
+    self.c = np.dot(rot, self.c)     
+
+from .chemlab_patch.graphics.renderers.atom import AtomRenderer
+from .chemlab_patch.graphics.renderers.ballandstick import BallAndStickRenderer
+from .chemlab_patch.graphics.renderers.line import LineRenderer
 from chemlab.graphics.postprocessing import SSAOEffect # Screen Space Ambient Occlusion
 from chemlab.utils import cartesian
 from cclib.parser.utils import convertor
@@ -36,17 +57,24 @@ from .chemview_patch.viewer import MolecularViewer
 
 from .circumcenter import circumcenter
 
-
 class Molecule:
     def __init__(self, folder, init_fname=False, opt_fname=False, 
-                 freq_fname=False, nbo_fname=False, alignto=[]):
+                 freq_fname=False, nbo_fname=False, 
+                 pes_fname=False,
+                 alignto=[]):
+        """a class to contain gaussian input/output 
+        for a single molecular geometry 
         
+        NB: nbo population analysis must be run with the GFInput flag to ensure 
+        data is output to the log file 
+        """
         self._folder = folder
         self._init_data = None
         self._prev_opt_data = []
         self._opt_data = None
         self._freq_data = None
         self._nbo_data = None
+        self._pes_data = []
         self._alignment_atom_indxs = ()
         if alignto: self.set_alignment_atoms(*alignto)
         
@@ -54,6 +82,7 @@ class Molecule:
         if opt_fname: self.add_optimisation(opt_fname)
         if freq_fname: self.add_frequency(freq_fname)
         if nbo_fname: self.add_nbo_analysis(nbo_fname)
+        if pes_fname: self.add_pes_analysis(pes_fname)
     
     def __repr__(self):
         return '<PyGauss Molecule>'
@@ -70,7 +99,6 @@ class Molecule:
         
         self._init_data = self._get_data(file_name, 'gausscom')
 
-    #TODO multiple optimisation files?
     def add_optimisation(self, file_name):
         
         if type(file_name) is list:
@@ -88,6 +116,12 @@ class Molecule:
     def add_nbo_analysis(self, file_name):
         
         self._nbo_data = self._get_data(file_name)
+
+    def add_pes_analysis(self, file_names):
+        
+        if type(file_names) is str:
+            file_names = [file_names]
+        self._pes_data = [self._get_data(fname) for fname in file_names]
 
     def get_basis_descript(self):
         
@@ -118,10 +152,13 @@ class Molecule:
         if not units == 'eV':
             energies = convertor(energies, 'eV', units)
         
-        plt.plot(energies)
-        plt.ylabel('Energy ({0})'.format(units))
-        plt.xlabel('Optimisation Step')
-        plt.grid(True)
+        f, ax = plt.subplots()
+        ax.plot(energies)
+        ax.set_ylabel('Energy ({0})'.format(units))
+        ax.set_xlabel('Optimisation Step')
+        ax.grid(True)
+        
+        return ax
 
     def is_conformer(self):
         
@@ -132,11 +169,14 @@ class Molecule:
         
         frequencies = self._freq_data.read('vibfreqs')
         irs = self._freq_data.read('vibirs')
+
+        f, ax = plt.subplots()        
+        ax.scatter(frequencies, irs)   
+        ax.set_xlabel('Frequency ($cm^{-1}$)')
+        ax.set_ylabel('IR Intensities ($km/mol$)')
+        ax.grid(True)
         
-        plt.scatter(frequencies, irs)   
-        plt.xlabel('Frequency ($cm^{-1}$)')
-        plt.ylabel('IR Intensities ($km/mol$)')
-        plt.grid(True)
+        return ax
 
     def set_alignment_atoms(self, idx1, idx2, idx3):
         
@@ -210,16 +250,16 @@ class Molecule:
             [r for r in self._apply_transfom_matrix(t_matrix, r_array)])
         return new_array
 
-    def _create_molecule(self, optimised=True, opt_step=False, gbonds=True,
-                         data=None):
-
+    def _create_molecule(self, optimised=True, opt_step=False, scan_step=False, 
+                         gbonds=True, data=None):
         if not optimised:
             molecule = self._init_data.read('molecule')            
         else:
-            indata = self._opt_data
-            if data: indata=data
-            if type(opt_step) is int:
-                molecule = indata.read('molecule', step=opt_step)  
+            indata = data if data else self._opt_data
+            if not type(opt_step) is bool:
+                molecule = indata.read('molecule', step=opt_step) 
+            elif not type(scan_step) is bool:
+                molecule = indata.read('molecule', scan=scan_step)
             else:
                 molecule = indata.read('molecule') 
             
@@ -276,6 +316,8 @@ class Molecule:
 
         v = QtViewer()
         w = v.widget
+        w.camera.orbit_z = MethodType(orbit_z, w.camera)
+        
         w.initializeGL()
 
         if ball_stick:
@@ -310,6 +352,7 @@ class Molecule:
         v.clear()
         del v
         del w
+        del r
         
         return self._trim_image(image)
 
@@ -329,8 +372,8 @@ class Molecule:
         
         return final_img
 
-    def _color_to_transparent(image, colour = (255, 255, 255)):
-        """ makes colour in the image transparent """
+    def _color_to_transparent(self, image, colour=(255, 255, 255)):
+        """ makes colour (default: white) in the image transparent """
         datas = image.getdata()
     
         newData = []
@@ -498,10 +541,12 @@ class Molecule:
         
         return self._converter(dist, 'nm', units)
                                   
-    def calc_bond_angle(self, indxs, optimisation=True):
+    def calc_bond_angle(self, indxs, optimisation=True, mol=None):
         """ Returns the angle in degrees between three points    """
 
-        if optimisation:
+        if mol:
+            molecule = mol
+        elif optimisation:
             molecule = self._opt_data.read('molecule')  
         else:
             molecule = self._init_data.read('molecule')
@@ -513,13 +558,15 @@ class Molecule:
         
         return np.degrees(np.arctan2(sinang, cosang))
 
-    def calc_dihedral_angle(self, indxs, optimisation=True):
+    def calc_dihedral_angle(self, indxs, optimisation=True, mol=None):
         """ Returns the angle in degrees between four points  """
 
-        if optimisation:
+        if mol:
+            molecule = mol
+        elif optimisation:
             molecule = self._opt_data.read('molecule')  
         else:
-          molecule = self._init_data.read('molecule')
+            molecule = self._init_data.read('molecule')
 
         p = np.array([molecule.r_array[indxs[0]-1], molecule.r_array[indxs[1]-1], 
                       molecule.r_array[indxs[2]-1], molecule.r_array[indxs[3]-1]])
@@ -600,7 +647,6 @@ class Molecule:
         
         return degrees(acos(cos_theta))
 
-    #TODO write function
     def calc_opt_trajectory(self, atom, plane=[]):
         """ calculate the trajectory of an atom as it is optimised,
         relative to a plane of three atoms """
@@ -634,18 +680,20 @@ class Molecule:
             suffix = self._SUFFIXES.get(num % 10, 'th')
         return str(num) + suffix
 
-    def plot_opt_trajectory(self, atom, plane=[], ax_lims=None):
+    def plot_opt_trajectory(self, atom, plane=[], ax_lims=None, ax_labels=False):
         """plot the trajectory of an atom as it is optimised,
         relative to a plane of three atoms """        
         init, opts = self.calc_opt_trajectory(atom, plane)
   
         fig = plt.figure()
         ax = fig.add_subplot(111, projection='3d')
-        ax.scatter(init[0], init[1], init[2], c='r', s=30)
+        ax.scatter(init[0], init[1], init[2], c='r', 
+                   s=30, label='Initial Position')
+        ax.scatter(opts[-1][-1,0], opts[-1][-1,1], opts[-1][-1,2], c=['g'], 
+                   s=30, label='Optimised Position')
         for i, opt in enumerate(opts):
             ax.plot(opt[:,0], opt[:,1], opt[:,2], 
                     label='{0} optimisation'.format(self._ordinal(i+1)))
-        ax.scatter(opts[-1][-1,0], opts[-1][-1,1], opts[-1][-1,2], c=['g'], s=30)
 
         mol = self._create_molecule().r_array  
         a,b,c=plane
@@ -660,6 +708,11 @@ class Molecule:
             ax.set_xlim3d(-x, x)
             ax.set_ylim3d(-y, y)
             ax.set_zlim3d(-z, z)
+        
+        if ax_labels:        
+            ax.set_xlabel('x (nm)')
+            ax.set_ylabel('y (nm)')
+            ax.set_zlabel('z (nm)')
     
         return ax
         
@@ -749,3 +802,82 @@ class Molecule:
                                   colorlist=colorlist,
                                   lines=drawlines, axis_length=axis_length,
                                   width=width, height=height, linestyle='lines') 
+
+    def _img_to_plot(self, x, y, image, ax=None, zoom=1):
+        """add image to matplotlib axes at (x,y) """
+        if ax is None:
+            ax = plt.gca()
+        im = OffsetImage(image, zoom=zoom)
+        artists = []
+        ab = AnnotationBbox(im, (x, y), xycoords='data', frameon=False)
+        artists.append(ax.add_artist(ab))
+        #ax.update_datalim(np.column_stack([x, y]))
+        ax.autoscale(tight=False)
+        return artists
+    
+    # TODO get fixed atoms from scan file
+    def plot_pes_scans(self, fixed_atoms, eunits='kJmol-1', 
+                       img_pos='', rotation=[0., 0., 0.], zoom=1, order=1):
+        """plot Potential Energy Scan
+
+        img_pos : <'','local_mins','local_maxs','global_min','global_max'>
+            position image(s) of molecule conformation(s) on plot
+        rotation : [float, float, float]
+            rotation of molecule image(s)
+        """
+        scan_datas = self._pes_data
+        if len(fixed_atoms) == 4:
+            xlabel = 'Dihedral Angle'
+            func = self.calc_dihedral_angle
+        elif len(fixed_atoms)==3:
+            xlabel = 'Valence Angle'
+            func = self.calc_bond_angle
+        else:
+            raise Exception('not 3 or 4 fixed atoms')
+            
+        angles = []
+        energies = []
+        for scan in scan_datas:
+            for i in range(scan.read('nscans')):
+                mol = scan.read('molecule', scan=i)
+                angles.append(func(fixed_atoms, mol=mol))
+            energies.extend(scan.read('scanenergies'))
+        
+        # remove duplicate angles and sort by angle 
+        # so that the local max are found correctly
+        df = pd.DataFrame({'energy':convertor(np.array(energies), 'eV', eunits), 
+                           'angle':angles})
+        df['rounded'] = df.angle.round(2) #rounding errors?
+        df.drop_duplicates('rounded', inplace=True)
+        df.sort('angle', inplace=True)
+        
+        angles = np.array(df.angle.tolist())
+        energies = np.array(df.energy.tolist())
+        
+        fig, ax = plt.subplots()
+        ax.plot(angles, energies)
+        ax.scatter(angles, energies)
+        ax.set_ylabel('Energy ({0})'.format(eunits))
+        ax.set_xlabel(xlabel)
+    
+        feature_dict = {
+        '':[],
+        'local_maxs' : argrelextrema(energies, np.greater, mode='wrap', order=order)[0],
+        'local_mins' : argrelextrema(energies, np.less, mode='wrap', order=order)[0],
+        'global_min' : [np.argmin(energies)],
+        'global_max' : [np.argmax(energies)]}
+         
+        for indx in feature_dict[img_pos]:
+            pscans = 0
+            for scan in scan_datas:
+                if indx < scan.read('nscans') + pscans:
+                    mol = self._create_molecule(data=scan, scan_step=indx-pscans)
+                    img = self._image_molecule(mol, rotation=rotation, ball_stick=True)
+                    break
+                else:
+                    pscans += scan.read('nscans') 
+                
+            img = self._color_to_transparent(img)
+            self._img_to_plot(angles[indx], energies[indx], img, zoom=zoom, ax=ax)
+            
+        return ax

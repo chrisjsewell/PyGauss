@@ -1,32 +1,50 @@
 
-#Python Gaussian Analysis Tool (pygauss)
+Python Gaussian Analysis Tool (pygauss)
+=======================================
 
-Pygauss is designed to be an API for parsing one or more input/output files from a [Gaussian](http://www.gaussian.com/) quantum chemical computation and provide functionality to assess  **molecular geometry** and **electronic distribution** both visually and quantitatively.
+Pygauss is designed to be an API for parsing one or more input/output
+files from a `Gaussian <http://www.gaussian.com/>`__ quantum chemical
+computation and provide functionality to assess **molecular geometry**
+and **electronic distribution** both visually and quantitatively.
 
-It is built on top of the [cclib](http://cclib.github.io/)/[chemlab](http://chemlab.readthedocs.org/en/latest/index.html)/[chemview](http://chemview.readthedocs.org/en/latest/) suite of packages and python scientific stack and is primarily designed to be used interactively in the [IPython Notebook](http://ipython.org/notebook.html) (within which this readme has been written). As shown below, a molecular optimisation can be assesed individually (much like in [gaussview](http://www.gaussian.com/g_prod/gv5b.htm)), but also as part of a group. The advantages of this package are then:
+It is built on top of the
+`cclib <http://cclib.github.io/>`__/`chemlab <http://chemlab.readthedocs.org/en/latest/index.html>`__/`chemview <http://chemview.readthedocs.org/en/latest/>`__
+suite of packages and python scientific stack and is primarily designed
+to be used interactively in the `IPython
+Notebook <http://ipython.org/notebook.html>`__ (within which this readme
+has been written). As shown below, a molecular optimisation can be
+assesed individually (much like in
+`gaussview <http://www.gaussian.com/g_prod/gv5b.htm>`__), but also as
+part of a group. The advantages of this package are then:
 
-- Faster, more efficient analysis
-- Reproducible analysis
-- Trend analysis
+-  Faster, more efficient analysis
+-  Reproducible analysis
+-  Trend analysis
 
 Detail instillation...
 
+::
+
     pip install pygauss
-    
+
     conda install -c http://conda.binstar.org/gabrielelanaro chemlab
 
 You should then be able to start an ipython notebook...
 
+.. code:: python
 
     from IPython.display import display
     %matplotlib inline
     import pygauss as pg
     folder = pg.get_test_folder()
 
-##Single Molecule Analysis
+Single Molecule Analysis
+------------------------
 
-A *molecule* can be created containg data about the inital geometry, optimisation process and analysis of the final configuration.
+A *molecule* can be created containg data about the inital geometry,
+optimisation process and analysis of the final configuration.
 
+.. code:: python
 
     mol = pg.molecule.Molecule(folder,
                     init_fname='CJS1_emim-cl_B_init.com', 
@@ -42,30 +60,36 @@ A *molecule* can be created containg data about the inital geometry, optimisatio
     display(mol.show_optimisation(ball_stick=True, rotations=[[0,0,90], [-90, 90, 0]]))
 
 
-![png](readme/output_6_0.png)
+
+.. image:: output_6_0.png
 
 
 
-![png](readme/readme/output_6_1.png)
+.. image:: output_6_1.png
 
 
 Basic analysis of optimisation...
 
+.. code:: python
 
     print('Optimised? {0}, Conformer? {1}, Energy = {2} a.u.'.format(
         mol.is_optimised(), mol.is_conformer(), round(mol.get_optimisation_E(units='hartree'),3)))
     ax = mol.plot_optimisation_E(units='hartree')
     ax.get_figure().set_size_inches(3, 2)
 
+
+.. parsed-literal::
+
     Optimised? True, Conformer? True, Energy = -805.105 a.u.
     
 
 
-![png](readme/output_8_1.png)
+.. image:: output_8_1.png
 
 
 Geometric analysis...
 
+.. code:: python
 
     print 'Cl optimised polar coords from aromatic ring : ({0}, {1},{2})'.format(
         *[round(i, 2) for i in mol.calc_polar_coords_from_plane(20,3,2,1)])
@@ -73,15 +97,19 @@ Geometric analysis...
     ax.set_title('Cl optimisation path')
     ax.get_figure().set_size_inches(4, 3)
 
+
+.. parsed-literal::
+
     Cl optimised polar coords from aromatic ring : (0.11, -116.42,-170.06)
     
 
 
-![png](readme/output_10_1.png)
+.. image:: output_10_1.png
 
 
 Potential Energy Scan analysis of geometric conformers...
 
+.. code:: python
 
     mol2 = pg.molecule.Molecule(folder, alignto=[3,2,1],
                 pes_fname=['CJS_emim_6311_plus_d3_scan.log', 
@@ -91,11 +119,13 @@ Potential Energy Scan analysis of geometric conformers...
     ax.get_figure().set_size_inches(7, 3)
 
 
-![png](readme/output_12_0.png)
+
+.. image:: output_12_0.png
 
 
 Natural Bond Orbital and Second Order Perturbation Theory analysis...
 
+.. code:: python
 
     print '+ve charge centre polar coords from aromatic ring: ({0} {1},{2})'.format(
         *[round(i, 2) for i in mol.calc_nbo_charge_center(3, 2, 1)])
@@ -103,21 +133,26 @@ Natural Bond Orbital and Second Order Perturbation Theory analysis...
                                   rotations=[[0,0,90], [-90, 90, 0]]))
     display(mol.show_SOPT_bonds(min_energy=15., rotations=[[0, 0, 90]]))
 
+
+.. parsed-literal::
+
     +ve charge centre polar coords from aromatic ring: (0.02 -51.77,-33.15)
     
 
 
-![png](readme/output_14_1.png)
+.. image:: output_14_1.png
 
 
 
-![png](readme/output_14_2.png)
+.. image:: output_14_2.png
 
 
-## Multiple Computations Analysis
+Multiple Computations Analysis
+------------------------------
 
 a
 
+.. code:: python
 
     analysis = pg.analysis.Analysis(folder)
     df, errors = analysis.add_runs(headers=['Cation', 'Anion', 'Initial'], 
@@ -129,9 +164,13 @@ a
                 nbo_pattern='CJS1_{0}-{1}_{2}_6-311+g-d-p-_gd3bj_pop-nbo-full-_unfrz.log')
     print 'Read Errors:', errors
 
+
+.. parsed-literal::
+
     Read Errors: [{'Cation': 'emim', 'Initial': 'FM', 'Anion': 'cl'}]
     
 
+.. code:: python
 
     analysis.add_mol_property('Opt', 'is_optimised')
     analysis.add_mol_property('Energy (au)', 'get_optimisation_E', units='hartree')
@@ -147,120 +186,126 @@ a
 
 
 
-<div style="max-height:1000px;max-width:1500px;overflow:auto;">
-<table border="1" class="dataframe">
-  <thead>
-    <tr>
-      <th></th>
-      <th></th>
-      <th></th>
-      <th colspan="2" halign="left"></th>
-      <th colspan="2" halign="left">Cation</th>
-      <th>Anion</th>
-      <th colspan="3" halign="left">Anion-Cation</th>
-    </tr>
-    <tr>
-      <th></th>
-      <th></th>
-      <th></th>
-      <th>Opt</th>
-      <th>Energy (au)</th>
-      <th>chain, $\psi$</th>
-      <th>Charge</th>
-      <th>Charge</th>
-      <th>$r$</th>
-      <th>$\theta$</th>
-      <th>$\phi$</th>
-    </tr>
-    <tr>
-      <th>Anion</th>
-      <th>Cation</th>
-      <th>Initial</th>
-      <th></th>
-      <th></th>
-      <th></th>
-      <th></th>
-      <th></th>
-      <th></th>
-      <th></th>
-      <th></th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr>
-      <th rowspan="5" valign="top">cl</th>
-      <th rowspan="5" valign="top">emim</th>
-      <th>B</th>
-      <td>True</td>
-      <td>-805.105</td>
-      <td>80.794</td>
-      <td>0.888</td>
-      <td>-0.888</td>
-      <td>0.420</td>
-      <td>-123.392</td>
-      <td>172.515</td>
-    </tr>
-    <tr>
-      <th>BE</th>
-      <td>True</td>
-      <td>-805.105</td>
-      <td>80.622</td>
-      <td>0.887</td>
-      <td>-0.887</td>
-      <td>0.420</td>
-      <td>-123.449</td>
-      <td>172.806</td>
-    </tr>
-    <tr>
-      <th>BM</th>
-      <td>True</td>
-      <td>-805.104</td>
-      <td>73.103</td>
-      <td>0.874</td>
-      <td>-0.874</td>
-      <td>0.420</td>
-      <td>124.121</td>
-      <td>-166.774</td>
-    </tr>
-    <tr>
-      <th>F</th>
-      <td>True</td>
-      <td>-805.118</td>
-      <td>147.026</td>
-      <td>0.840</td>
-      <td>-0.840</td>
-      <td>0.420</td>
-      <td>10.393</td>
-      <td>0.728</td>
-    </tr>
-    <tr>
-      <th>FE</th>
-      <td>True</td>
-      <td>-805.117</td>
-      <td>85.310</td>
-      <td>0.851</td>
-      <td>-0.851</td>
-      <td>0.417</td>
-      <td>-13.254</td>
-      <td>-4.873</td>
-    </tr>
-  </tbody>
-</table>
-</div>
+.. raw:: html
+
+    <div style="max-height:1000px;max-width:1500px;overflow:auto;">
+    <table border="1" class="dataframe">
+      <thead>
+        <tr>
+          <th></th>
+          <th></th>
+          <th></th>
+          <th colspan="2" halign="left"></th>
+          <th colspan="2" halign="left">Cation</th>
+          <th>Anion</th>
+          <th colspan="3" halign="left">Anion-Cation</th>
+        </tr>
+        <tr>
+          <th></th>
+          <th></th>
+          <th></th>
+          <th>Opt</th>
+          <th>Energy (au)</th>
+          <th>chain, $\psi$</th>
+          <th>Charge</th>
+          <th>Charge</th>
+          <th>$r$</th>
+          <th>$\theta$</th>
+          <th>$\phi$</th>
+        </tr>
+        <tr>
+          <th>Anion</th>
+          <th>Cation</th>
+          <th>Initial</th>
+          <th></th>
+          <th></th>
+          <th></th>
+          <th></th>
+          <th></th>
+          <th></th>
+          <th></th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <th rowspan="5" valign="top">cl</th>
+          <th rowspan="5" valign="top">emim</th>
+          <th>B</th>
+          <td>True</td>
+          <td>-805.105</td>
+          <td>80.794</td>
+          <td>0.888</td>
+          <td>-0.888</td>
+          <td>0.420</td>
+          <td>-123.392</td>
+          <td>172.515</td>
+        </tr>
+        <tr>
+          <th>BE</th>
+          <td>True</td>
+          <td>-805.105</td>
+          <td>80.622</td>
+          <td>0.887</td>
+          <td>-0.887</td>
+          <td>0.420</td>
+          <td>-123.449</td>
+          <td>172.806</td>
+        </tr>
+        <tr>
+          <th>BM</th>
+          <td>True</td>
+          <td>-805.104</td>
+          <td>73.103</td>
+          <td>0.874</td>
+          <td>-0.874</td>
+          <td>0.420</td>
+          <td>124.121</td>
+          <td>-166.774</td>
+        </tr>
+        <tr>
+          <th>F</th>
+          <td>True</td>
+          <td>-805.118</td>
+          <td>147.026</td>
+          <td>0.840</td>
+          <td>-0.840</td>
+          <td>0.420</td>
+          <td>10.393</td>
+          <td>0.728</td>
+        </tr>
+        <tr>
+          <th>FE</th>
+          <td>True</td>
+          <td>-805.117</td>
+          <td>85.310</td>
+          <td>0.851</td>
+          <td>-0.851</td>
+          <td>0.417</td>
+          <td>-13.254</td>
+          <td>-4.873</td>
+        </tr>
+      </tbody>
+    </table>
+    </div>
 
 
 
 RadViz is a way of visualizing multi-variate data.
 
+.. code:: python
 
     ax = analysis.plot_radviz_comparison('Anion', columns=range(4, 10))
 
 
-![png](readme/output_20_0.png)
+
+.. image:: output_20_0.png
 
 
-The KMeans algorithm clusters data by trying to separate samples in n groups of equal variance
+The KMeans algorithm clusters data by trying to separate samples in n
+groups of equal variance
 
+.. code:: python
 
     kwargs = {'mtype':'optimised', 'align_to':[3,2,1], 
                 'rotations':[[0, 0, 90], [-90, 90, 0]],
@@ -274,41 +319,52 @@ The KMeans algorithm clusters data by trying to separate samples in n groups of 
                 display(mol)
     show_groups(analysis.calc_kmean_groups('Anion', 'cl', 4, columns=range(4, 10)))
 
+
+.. parsed-literal::
+
     Category 0:
     (row 2)
     
 
 
-![png](readme/output_22_1.png)
+.. image:: output_22_1.png
 
+
+.. parsed-literal::
 
     Category 1:
     (row 0)
     
 
 
-![png](readme/output_22_3.png)
+.. image:: output_22_3.png
 
+
+.. parsed-literal::
 
     (row 1)
     
 
 
-![png](readme/output_22_5.png)
+.. image:: output_22_5.png
 
+
+.. parsed-literal::
 
     Category 2:
     (row 4)
     
 
 
-![png](readme/output_22_7.png)
+.. image:: output_22_7.png
 
+
+.. parsed-literal::
 
     Category 3:
     (row 3)
     
 
 
-![png](readme/output_22_9.png)
+.. image:: output_22_9.png
 

@@ -9,18 +9,19 @@ Created on Thu May 07 14:34:45 2015
 from distutils.core import setup
 
 import os
-def readme(img_path):
-    if os.path.exists('README.rst'):
-        descript = open('README.rst').read()
+def readme(file, git_img_path):
+    if os.path.exists(file):
+        descript = open(file).read()
         descript = descript.replace('image:: ', 
-                                    'image:: {0}raw/master/'.format(img_path))
+                                    'image:: {0}raw/master/'.format(git_img_path))
         return descript
     return ''
 
 setup(name='pygauss',
-      version='0.1.5',
+      version='0.1.6',
       description='PYthon GAUSSian DFT output analysis',
-      long_description=readme('https://github.com/chrisjsewell/PyGauss/'),
+      long_description=readme('setup_README.rst',
+                              'https://github.com/chrisjsewell/PyGauss/readme'),
       author='Chris Sewell',
       author_email='chrisj_sewell@hotmail.com',
       url='https://github.com/chrisjsewell/PyGauss',

@@ -179,115 +179,19 @@ a
     analysis.add_mol_property('Anion Charge', 'calc_nbo_charge', [20])
     analysis.add_mol_property(['Anion-Cation, $r$', 'Anion-Cation, $\\theta$', 'Anion-Cation, $\\phi$'], 
                                    'calc_polar_coords_from_plane', 3, 2, 1, 20)
-    df = analysis.get_table(row_index=['Anion', 'Cation', 'Initial'], 
-                       column_index=['Cation', 'Anion', 'Anion-Cation'])
-    df
+    analysis
 
 
 
 
-.. raw:: html
+.. parsed-literal::
 
-    <div style="max-height:1000px;max-width:1500px;overflow:auto;">
-    <table border="1" class="dataframe">
-      <thead>
-        <tr>
-          <th></th>
-          <th></th>
-          <th></th>
-          <th colspan="2" halign="left"></th>
-          <th colspan="2" halign="left">Cation</th>
-          <th>Anion</th>
-          <th colspan="3" halign="left">Anion-Cation</th>
-        </tr>
-        <tr>
-          <th></th>
-          <th></th>
-          <th></th>
-          <th>Opt</th>
-          <th>Energy (au)</th>
-          <th>chain, $\psi$</th>
-          <th>Charge</th>
-          <th>Charge</th>
-          <th>$r$</th>
-          <th>$\theta$</th>
-          <th>$\phi$</th>
-        </tr>
-        <tr>
-          <th>Anion</th>
-          <th>Cation</th>
-          <th>Initial</th>
-          <th></th>
-          <th></th>
-          <th></th>
-          <th></th>
-          <th></th>
-          <th></th>
-          <th></th>
-          <th></th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr>
-          <th rowspan="5" valign="top">cl</th>
-          <th rowspan="5" valign="top">emim</th>
-          <th>B</th>
-          <td>True</td>
-          <td>-805.105</td>
-          <td>80.794</td>
-          <td>0.888</td>
-          <td>-0.888</td>
-          <td>0.420</td>
-          <td>-123.392</td>
-          <td>172.515</td>
-        </tr>
-        <tr>
-          <th>BE</th>
-          <td>True</td>
-          <td>-805.105</td>
-          <td>80.622</td>
-          <td>0.887</td>
-          <td>-0.887</td>
-          <td>0.420</td>
-          <td>-123.449</td>
-          <td>172.806</td>
-        </tr>
-        <tr>
-          <th>BM</th>
-          <td>True</td>
-          <td>-805.104</td>
-          <td>73.103</td>
-          <td>0.874</td>
-          <td>-0.874</td>
-          <td>0.420</td>
-          <td>124.121</td>
-          <td>-166.774</td>
-        </tr>
-        <tr>
-          <th>F</th>
-          <td>True</td>
-          <td>-805.118</td>
-          <td>147.026</td>
-          <td>0.840</td>
-          <td>-0.840</td>
-          <td>0.420</td>
-          <td>10.393</td>
-          <td>0.728</td>
-        </tr>
-        <tr>
-          <th>FE</th>
-          <td>True</td>
-          <td>-805.117</td>
-          <td>85.310</td>
-          <td>0.851</td>
-          <td>-0.851</td>
-          <td>0.417</td>
-          <td>-13.254</td>
-          <td>-4.873</td>
-        </tr>
-      </tbody>
-    </table>
-    </div>
+      Anion Cation Initial   Opt  Energy (au)  Cation chain, $\psi$  Cation Charge  Anion Charge  Anion-Cation, $r$  Anion-Cation, $\theta$  Anion-Cation, $\phi$
+    0    cl   emim       B  True     -805.105                80.794          0.888        -0.888              0.420                -123.392               172.515
+    1    cl   emim      BE  True     -805.105                80.622          0.887        -0.887              0.420                -123.449               172.806
+    2    cl   emim      BM  True     -805.104                73.103          0.874        -0.874              0.420                 124.121              -166.774
+    3    cl   emim       F  True     -805.118               147.026          0.840        -0.840              0.420                  10.393                 0.728
+    4    cl   emim      FE  True     -805.117                85.310          0.851        -0.851              0.417                 -13.254                -4.873
 
 
 
@@ -323,7 +227,7 @@ groups of equal variance
 .. parsed-literal::
 
     Category 0:
-    (row 2)
+    (row 3)
     
 
 
@@ -352,7 +256,7 @@ groups of equal variance
 .. parsed-literal::
 
     Category 2:
-    (row 4)
+    (row 2)
     
 
 
@@ -362,9 +266,10 @@ groups of equal variance
 .. parsed-literal::
 
     Category 3:
-    (row 3)
+    (row 4)
     
 
 
 .. image:: output_22_9.png
+
 

@@ -40,11 +40,11 @@ A *molecule* can be created containg data about the inital geometry, optimisatio
     display(mol.show_optimisation(ball_stick=True, rotations=[[0,0,90], [-90, 90, 0]]))
 
 
-![png](readme\output_6_0.png)
+![png](readme/output_6_0.png)
 
 
 
-![png](readme\output_6_1.png)
+![png](readme/output_6_1.png)
 
 
 Basic analysis of optimisation...
@@ -59,7 +59,7 @@ Basic analysis of optimisation...
     
 
 
-![png](readme\output_8_1.png)
+![png](readme/output_8_1.png)
 
 
 Geometric analysis...
@@ -75,7 +75,7 @@ Geometric analysis...
     
 
 
-![png](readme\output_10_1.png)
+![png](readme/output_10_1.png)
 
 
 Potential Energy Scan analysis of geometric conformers...
@@ -89,7 +89,7 @@ Potential Energy Scan analysis of geometric conformers...
     ax.get_figure().set_size_inches(7, 3)
 
 
-![png](readme\output_12_0.png)
+![png](readme/output_12_0.png)
 
 
 Natural Bond Orbital analysis...
@@ -104,7 +104,7 @@ Natural Bond Orbital analysis...
     
 
 
-![png](readme\output_14_1.png)
+![png](readme/output_14_1.png)
 
 
 ## Multiple Computations Analysis
@@ -246,7 +246,7 @@ a
     ax = analysis.plot_radviz_comparison('Anion', columns=range(4, 10))
 
 
-![png](readme\output_19_0.png)
+![png](readme/output_19_0.png)
 
 
 
@@ -267,14 +267,14 @@ a
     
 
 
-![png](readme\output_20_1.png)
+![png](readme/output_20_1.png)
 
 
     (row 1)
     
 
 
-![png](readme\output_20_3.png)
+![png](readme/output_20_3.png)
 
 
     Category 1:
@@ -282,7 +282,7 @@ a
     
 
 
-![png](readme\output_20_5.png)
+![png](readme/output_20_5.png)
 
 
     Category 2:
@@ -290,7 +290,7 @@ a
     
 
 
-![png](readme\output_20_7.png)
+![png](readme/output_20_7.png)
 
 
     Category 3:
@@ -298,6 +298,6 @@ a
     
 
 
-![png](readme\output_20_9.png)
+![png](readme/output_20_9.png)
 
 

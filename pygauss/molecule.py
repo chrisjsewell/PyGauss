@@ -53,7 +53,11 @@ from cclib.parser.utils import convertor
 from chemlab.graphics.colors import get as str_to_colour
 
 #instead of chemview MolecularViewer to add defined colouring
-from .chemview_patch.viewer import MolecularViewer
+#also ignore; 'FutureWarning: IPython widgets are experimental and may change in the future.'
+import warnings
+with warnings.catch_warnings():
+    warnings.simplefilter("ignore")
+    from .chemview_patch.viewer import MolecularViewer
 
 from .circumcenter import circumcenter
 

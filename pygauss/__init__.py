@@ -6,9 +6,6 @@ This is a layer on top of the cclib/chemlab/chemview packages for analysing
 Gaussian output and outputting it to a word document.
 S
 """
-#import cclib # version 1.3
-#import chemlab # version 0.4
-
 # mokeypatch cclib/chemlab classes improved for this implementation 
 # TODO don't think this is working, use mock?
 
@@ -33,10 +30,13 @@ sys.modules['cclib.parser.data'] = data
 #sys.modules['chemlab.graphics.renderers.bond'] = bond
 #sys.modules['chemlab.graphics.renderers.line'] = line
 
-from . import analysis
-from . import molecule
+import cclib # version 1.3
+import chemlab # version 0.4
+
+from pygauss import molecule
+from pygauss import analysis
 
 import os, inspect
-from . import test_data
+from pygauss import test_data
 def get_test_folder():
     return os.path.dirname(inspect.getfile(test_data))

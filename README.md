@@ -15,6 +15,7 @@ Detail instillation...
     
     conda install -c http://conda.binstar.org/gabrielelanaro chemlab
 
+You should then be able to start an ipython notebook...
 
     from IPython.display import display
     %matplotlib inline

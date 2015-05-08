@@ -46,7 +46,7 @@ A *molecule* can be created containg data about the inital geometry, optimisatio
 
 
 
-![png](readme/readme/output_6_1.png)
+![png](readme/output_6_1.png)
 
 
 Basic analysis of optimisation...

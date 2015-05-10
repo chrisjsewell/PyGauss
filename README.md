@@ -87,11 +87,11 @@ A *molecule* can be created containg data about the inital geometry, optimisatio
     display(mol.show_optimisation(ball_stick=True, rotations=[[0,0,90], [-90, 90, 0]]))
 
 
-![png](output_8_0.png)
+![png](readme_images/output_8_0.png)
 
 
 
-![png](output_8_1.png)
+![png](readme_images/output_8_1.png)
 
 
 Basic analysis of optimisation...
@@ -106,7 +106,7 @@ Basic analysis of optimisation...
 
 
 
-![png](output_10_1.png)
+![png](readme_images/output_10_1.png)
 
 
 Geometric analysis...
@@ -122,7 +122,7 @@ Geometric analysis...
 
 
 
-![png](output_12_1.png)
+![png](readme_images/output_12_1.png)
 
 
 Potential Energy Scan analysis of geometric conformers...
@@ -136,7 +136,7 @@ Potential Energy Scan analysis of geometric conformers...
     ax.get_figure().set_size_inches(7, 3)
 
 
-![png](output_14_0.png)
+![png](readme_images/output_14_0.png)
 
 
 Natural Bond Orbital and Second Order Perturbation Theory analysis...
@@ -152,11 +152,11 @@ Natural Bond Orbital and Second Order Perturbation Theory analysis...
 
 
 
-![png](output_16_1.png)
+![png](readme_images/output_16_1.png)
 
 
 
-![png](output_16_2.png)
+![png](readme_images/output_16_2.png)
 
 
 ###Multiple Computations Analysis
@@ -303,7 +303,7 @@ RadViz is a way of visualizing multi-variate data.
     ax = analysis.plot_radviz_comparison('Anion', columns=range(4, 10))
 
 
-![png](output_23_0.png)
+![png](readme_images/output_23_0.png)
 
 
 The KMeans algorithm clusters data by trying to separate samples in n groups of equal variance.
@@ -326,7 +326,7 @@ The KMeans algorithm clusters data by trying to separate samples in n groups of 
 
 
 
-![png](output_25_1.png)
+![png](readme_images/output_25_1.png)
 
 
     Category 1:
@@ -334,14 +334,14 @@ The KMeans algorithm clusters data by trying to separate samples in n groups of 
 
 
 
-![png](output_25_3.png)
+![png](readme_images/output_25_3.png)
 
 
     (row 1)
 
 
 
-![png](output_25_5.png)
+![png](readme_images/output_25_5.png)
 
 
     Category 2:
@@ -349,7 +349,7 @@ The KMeans algorithm clusters data by trying to separate samples in n groups of 
 
 
 
-![png](output_25_7.png)
+![png](readme_images/output_25_7.png)
 
 
     Category 3:
@@ -357,7 +357,7 @@ The KMeans algorithm clusters data by trying to separate samples in n groups of 
 
 
 
-![png](output_25_9.png)
+![png](readme_images/output_25_9.png)
 
 
 MORE TO COME!!

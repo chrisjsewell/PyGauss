@@ -1,11 +1,13 @@
 # -*- coding: utf-8 -*-
 
-"""PYthon GAUSSian DFT output analysis 
+"""Python Gaussian chemical computation output analysis 
 
 This is a layer on top of the cclib/chemlab/chemview packages for analysing 
-Gaussian output and outputting it to a word document.
-S
+Gaussian input/output.
+
 """
+from ._version import __version__
+
 # mokeypatch cclib/chemlab classes improved for this implementation 
 # TODO don't think this is working, use mock?
 

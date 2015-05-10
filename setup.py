@@ -17,8 +17,18 @@ def readme(file, git_path, img_folder):
         return descript
     return ''
 
+import re
+    verstrline = open(path, "rt").read()
+    VSRE = r"^__version__ = ['\"]([^'\"]*)['\"]"
+    mo = re.search(VSRE, verstrline, re.M)
+    if mo:
+        verstr = mo.group(1)
+    else:
+        raise RuntimeError("Unable to find version string in %s." % (path,))
+    return verstr
+
 setup(name='pygauss',
-      version='0.2',
+      version=version("pygauss/_version.py"),
       description='PYthon GAUSSian Chemical Compuation Analysis',
       keywords = "chemistry gaussian dft",
       long_description=readme('setup_README.rst',

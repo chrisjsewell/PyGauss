@@ -24,55 +24,72 @@ part of a group. The advantages of this package are then:
 Instillation
 ------------
 
-**1.** The source code is available at
-`Github <https://github.com/chrisjsewell/PyGauss>`__, however, the
-recommended way to install PyGauss is to use the
-`Anaconda <http://continuum.io/downloads>`__ python distribution. Once
-downloaded a new environment can be created:
+-  The source code is hosted on GitHub;
+   https://github.com/chrisjsewell/PyGauss
+-  A PyPi distribution is available at;
+   https://pypi.python.org/pypi/pygauss
+-  A Conda distribution is available at; https://conda.binstar.org/cjs14
+
+The Easy Way (OSX)
+~~~~~~~~~~~~~~~~~~
+
+The recommended was to use pygauss is to download the
+`Anaconda <http://continuum.io/downloads>`__ Scientific Python
+Distribution (64-bit). Once downloaded a new environment can be created
+in terminal and pygauss installed:
 
 ::
 
-    conda create -n env python=2.7
+    conda create -n pg_env python=2.7
+    conda install -c https://conda.binstar.org/cjs14 -n pg_env pygauss
 
-**2.(L/O)** If using Linux or OS X then chemlab has already been
-pre-built and can be installed as such:
+The Middle Road (Linux)
+~~~~~~~~~~~~~~~~~~~~~~~
+
+There is currently no pygauss conda distributable for Linux, but there
+is for chemlab. So chemlab can be installed, then install a few
+dependancies that pip finds difficult / doesn't have, and finally
+install pygauss using pip (make sure to activate the required
+environment)
 
 ::
 
-    conda install -n env -c https://conda.binstar.org/gabrielelanaro chemlab    
-
-**3.** PyGauss is then available for installation from
-`PyPi <https://pypi.python.org/pypi/pygauss>`__ after some initial
-dependancy installs:
-
-::
-
-    conda install -n env pil 
-    conda install -n env scipy
-    activate env
+    conda create -n pg_env python=2.7
+    conda install -n pg_env -c https://conda.binstar.org/cjs14 chemlab  
+    conda install -n pg_env <pil, pandas, matplotlib, scikit-learn> 
+    activate pg_env
     pip install pygauss
 
-**2.(W)** Unfortuantely Windows has no pre-built installer, and so there
-are a few more steps to install from Github (you need to download git):
+The Hard Way (Windows)
+~~~~~~~~~~~~~~~~~~~~~~
+
+There is currently no pygauss conda distributable for Windows or for
+chemlab which has C-extensions that need to be built using a compiler.
+Therfore it will need to be cloned from GitHub. the extensions built,
+dependancies installed and finally installed.
 
 ::
 
-    conda install -n env -c https://conda.binstar.org/gabrielelanaro cclib
-
-    conda install -n env ipython-notebook
-    conda install -n env numpy
-    conda install -n env numba
-    git clone https://github.com/gabrielelanaro/chemview
-    cd chemview
-    activate env
-    pip install .
-        
+    conda create -n pg_env python=2.7
+    conda install -n pg_env -c https://conda.binstar.org/cjs14 cclib
+    conda install -n pg_env -c https://conda.binstar.org/cjs14 chemview
+    conda install -n pg_env -c https://conda.binstar.org/cjs14 pyopengl     
     git clone --recursive https://github.com/chemlab/chemlab.git
-    pip install pyopengl==3.0.2
+    cd chemlab
     python setup.py build_ext --inplace
-    add chemlab folder path to PYTHONPATH environmental variable
+    conda install -n pg_env <pil, pandas, matplotlib, scikit-learn, ...> 
+    activate pg_env
+    pip install . # or add to PYTHONPATH
+    pip install pygauss
 
-You should then be able to start an assessment in IPython Notebook
+If you encounter difficulties it may be useful for you to look in
+`working\_conda\_environments <https://github.com/chrisjsewell/PyGauss/tree/master/working_conda_environments>`__
+at conda environments known to work.
+
+Example Assessment
+------------------
+
+You should then be able to open an assessment in IPython Notebook
 starting with the following:
 
 .. code:: python
@@ -81,9 +98,19 @@ starting with the following:
     %matplotlib inline
     import pygauss as pg
     folder = pg.get_test_folder()
+    pg.__version__
+
+
+
+
+.. parsed-literal::
+
+    '0.2.0'
+
+
 
 Single Molecule Analysis
-------------------------
+~~~~~~~~~~~~~~~~~~~~~~~~
 
 A *molecule* can be created containg data about the inital geometry,
 optimisation process and analysis of the final configuration. Molecules
@@ -127,7 +154,7 @@ Basic analysis of optimisation...
 .. parsed-literal::
 
     Optimised? True, Conformer? True, Energy = -805.105 a.u.
-    
+
 
 
 .. image:: output_10_1.png
@@ -147,7 +174,7 @@ Geometric analysis...
 .. parsed-literal::
 
     Cl optimised polar coords from aromatic ring : (0.11, -116.42,-170.06)
-    
+
 
 
 .. image:: output_12_1.png
@@ -183,7 +210,7 @@ Natural Bond Orbital and Second Order Perturbation Theory analysis...
 .. parsed-literal::
 
     +ve charge centre polar coords from aromatic ring: (0.02 -51.77,-33.15)
-    
+
 
 
 .. image:: output_16_1.png
@@ -194,7 +221,7 @@ Natural Bond Orbital and Second Order Perturbation Theory analysis...
 
 
 Multiple Computations Analysis
-------------------------------
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Multiple computations, for instance of different starting conformations,
 can be grouped into an *Analysis* class.
@@ -215,7 +242,7 @@ can be grouped into an *Analysis* class.
 .. parsed-literal::
 
     Read Errors: [{'Cation': 'emim', 'Initial': 'FM', 'Anion': 'cl'}]
-    
+
 
 The methods mentioned for indivdiual molecules can then be applied to
 all or a subset of these computations.
@@ -229,19 +256,115 @@ all or a subset of these computations.
     analysis.add_mol_property('Anion Charge', 'calc_nbo_charge', [20])
     analysis.add_mol_property(['Anion-Cation, $r$', 'Anion-Cation, $\\theta$', 'Anion-Cation, $\\phi$'], 
                                    'calc_polar_coords_from_plane', 3, 2, 1, 20)
-    analysis
+    df = analysis.get_table(row_index=['Anion', 'Cation', 'Initial'], 
+                       column_index=['Cation', 'Anion', 'Anion-Cation'])
+    df
 
 
 
 
-.. parsed-literal::
+.. raw:: html
 
-      Anion Cation Initial   Opt  Energy (au)  Cation chain, $\psi$  Cation Charge  Anion Charge  Anion-Cation, $r$  Anion-Cation, $\theta$  Anion-Cation, $\phi$
-    0    cl   emim       B   NaN     -805.105                80.794          0.888        -0.888              0.420                -123.392               172.515
-    1    cl   emim      BE   NaN     -805.105                80.622          0.887        -0.887              0.420                -123.449               172.806
-    2    cl   emim      BM  True     -805.104                73.103          0.874        -0.874              0.420                 124.121              -166.774
-    3    cl   emim       F  True     -805.118               147.026          0.840        -0.840              0.420                  10.393                 0.728
-    4    cl   emim      FE   NaN     -805.117                85.310          0.851        -0.851              0.417                 -13.254                -4.873
+    <div style="max-height:1000px;max-width:1500px;overflow:auto;">
+    <table border="1" class="dataframe">
+      <thead>
+        <tr>
+          <th></th>
+          <th></th>
+          <th></th>
+          <th colspan="2" halign="left"></th>
+          <th colspan="2" halign="left">Cation</th>
+          <th>Anion</th>
+          <th colspan="3" halign="left">Anion-Cation</th>
+        </tr>
+        <tr>
+          <th></th>
+          <th></th>
+          <th></th>
+          <th>Opt</th>
+          <th>Energy (au)</th>
+          <th>chain, $\psi$</th>
+          <th>Charge</th>
+          <th>Charge</th>
+          <th>$r$</th>
+          <th>$\theta$</th>
+          <th>$\phi$</th>
+        </tr>
+        <tr>
+          <th>Anion</th>
+          <th>Cation</th>
+          <th>Initial</th>
+          <th></th>
+          <th></th>
+          <th></th>
+          <th></th>
+          <th></th>
+          <th></th>
+          <th></th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <th rowspan="5" valign="top">cl</th>
+          <th rowspan="5" valign="top">emim</th>
+          <th>B</th>
+          <td>NaN</td>
+          <td>-805.105</td>
+          <td>80.794</td>
+          <td>0.888</td>
+          <td>-0.888</td>
+          <td>0.420</td>
+          <td>-123.392</td>
+          <td>172.515</td>
+        </tr>
+        <tr>
+          <th>BE</th>
+          <td>NaN</td>
+          <td>-805.105</td>
+          <td>80.622</td>
+          <td>0.887</td>
+          <td>-0.887</td>
+          <td>0.420</td>
+          <td>-123.449</td>
+          <td>172.806</td>
+        </tr>
+        <tr>
+          <th>BM</th>
+          <td>True</td>
+          <td>-805.104</td>
+          <td>73.103</td>
+          <td>0.874</td>
+          <td>-0.874</td>
+          <td>0.420</td>
+          <td>124.121</td>
+          <td>-166.774</td>
+        </tr>
+        <tr>
+          <th>F</th>
+          <td>True</td>
+          <td>-805.118</td>
+          <td>147.026</td>
+          <td>0.840</td>
+          <td>-0.840</td>
+          <td>0.420</td>
+          <td>10.393</td>
+          <td>0.728</td>
+        </tr>
+        <tr>
+          <th>FE</th>
+          <td>NaN</td>
+          <td>-805.117</td>
+          <td>85.310</td>
+          <td>0.851</td>
+          <td>-0.851</td>
+          <td>0.417</td>
+          <td>-13.254</td>
+          <td>-4.873</td>
+        </tr>
+      </tbody>
+    </table>
+    </div>
 
 
 
@@ -277,8 +400,8 @@ groups of equal variance.
 .. parsed-literal::
 
     Category 0:
-    (row 0)
-    
+    (row 3)
+
 
 
 .. image:: output_25_1.png
@@ -286,8 +409,9 @@ groups of equal variance.
 
 .. parsed-literal::
 
-    (row 1)
-    
+    Category 1:
+    (row 0)
+
 
 
 .. image:: output_25_3.png
@@ -295,9 +419,8 @@ groups of equal variance.
 
 .. parsed-literal::
 
-    Category 1:
-    (row 3)
-    
+    (row 1)
+
 
 
 .. image:: output_25_5.png
@@ -307,7 +430,7 @@ groups of equal variance.
 
     Category 2:
     (row 2)
-    
+
 
 
 .. image:: output_25_7.png
@@ -317,7 +440,7 @@ groups of equal variance.
 
     Category 3:
     (row 4)
-    
+
 
 
 .. image:: output_25_9.png

@@ -11,51 +11,66 @@ It is built on top of the [cclib](http://cclib.github.io/)/[chemview](http://che
 
 ##Instillation
 
-**1.** The source code is available at [Github](https://github.com/chrisjsewell/PyGauss), however, the recommended way to install PyGauss is to use the [Anaconda](http://continuum.io/downloads) python distribution. Once downloaded a new environment can be created:
+- The source code is hosted on GitHub; https://github.com/chrisjsewell/PyGauss
+- A PyPi distribution is available at; https://pypi.python.org/pypi/pygauss
+- A Conda distribution is available at; https://conda.binstar.org/cjs14
 
+###The Easy Way (OSX)
 
-    conda create -n env python=2.7
+The recommended was to use pygauss is to download the [Anaconda](http://continuum.io/downloads) Scientific Python Distribution (64-bit). Once downloaded a new environment can be created in terminal and pygauss installed:
 
-**2.(L/O)** If using Linux or OS X then chemlab has already been pre-built and can be installed as such:
+    conda create -n pg_env python=2.7
+    conda install -c https://conda.binstar.org/cjs14 -n pg_env pygauss
 
-	conda install -n env -c https://conda.binstar.org/gabrielelanaro chemlab	
-    
-**3.** PyGauss is then available for installation from [PyPi](https://pypi.python.org/pypi/pygauss) after some initial dependancy installs: 
+###The Middle Road (Linux)
 
-    conda install -n env pil 
-    conda install -n env scipy
-    activate env
+There is currently no pygauss conda distributable for Linux, but there is for chemlab. So chemlab can be installed, then install a few dependancies that pip finds difficult / doesn't have, and finally install pygauss using pip (make sure to activate the required environment)   
+
+    conda create -n pg_env python=2.7
+	conda install -n pg_env -c https://conda.binstar.org/cjs14 chemlab	
+    conda install -n pg_env <pil, pandas, matplotlib, scikit-learn> 
+    activate pg_env
     pip install pygauss
+    
+###The Hard Way (Windows)
 
-**2.(W)** Unfortuantely Windows has no pre-built installer, and so there are a few more steps to install from Github (you need to download git):
+There is currently no pygauss conda distributable for Windows or for chemlab which has C-extensions that need to be built using a compiler. Therfore it will need to be cloned from GitHub. the extensions built, dependancies installed and finally installed.
 
-	conda install -n env -c https://conda.binstar.org/gabrielelanaro cclib
-	
-	conda install -n env ipython-notebook
-	conda install -n env numpy
-	conda install -n env numba
-	git clone https://github.com/gabrielelanaro/chemview
-	cd chemview
-	activate env
-	pip install .
-		
+    conda create -n pg_env python=2.7
+	conda install -n pg_env -c https://conda.binstar.org/cjs14 cclib
+    conda install -n pg_env -c https://conda.binstar.org/cjs14 chemview
+    conda install -n pg_env -c https://conda.binstar.org/cjs14 pyopengl		
 	git clone --recursive https://github.com/chemlab/chemlab.git
-	pip install pyopengl==3.0.2
+	cd chemlab
 	python setup.py build_ext --inplace
-	add chemlab folder path to PYTHONPATH environmental variable
+    conda install -n pg_env <pil, pandas, matplotlib, scikit-learn, ...> 
+    activate pg_env
+    pip install . # or add to PYTHONPATH
+    pip install pygauss
+    
+If you encounter difficulties it may be useful for you to look in [working_conda_environments](https://github.com/chrisjsewell/PyGauss/tree/master/working_conda_environments) at conda environments known to work.
 
+##Example Assessment
 
-You should then be able to start an assessment in IPython Notebook starting with the following:
+You should then be able to open an assessment in IPython Notebook starting with the following:
 
 
     from IPython.display import display
     %matplotlib inline
     import pygauss as pg
     folder = pg.get_test_folder()
+    pg.__version__
 
-##Single Molecule Analysis
 
-A *molecule* can be created containg data about the inital geometry, optimisation process and analysis of the final configuration.
+
+
+    '0.2.0'
+
+
+
+###Single Molecule Analysis
+
+A *molecule* can be created containg data about the inital geometry, optimisation process and analysis of the final configuration. Molecules can be viewed statically or interactively (not currently supported by Firefox).
 
 
     mol = pg.molecule.Molecule(folder,
@@ -72,11 +87,11 @@ A *molecule* can be created containg data about the inital geometry, optimisatio
     display(mol.show_optimisation(ball_stick=True, rotations=[[0,0,90], [-90, 90, 0]]))
 
 
-![png](readme_images/output_8_0.png)
+![png](output_8_0.png)
 
 
 
-![png](readme_images/output_8_1.png)
+![png](output_8_1.png)
 
 
 Basic analysis of optimisation...
@@ -88,10 +103,10 @@ Basic analysis of optimisation...
     ax.get_figure().set_size_inches(3, 2)
 
     Optimised? True, Conformer? True, Energy = -805.105 a.u.
-    
 
 
-![png](readme_images/output_10_1.png)
+
+![png](output_10_1.png)
 
 
 Geometric analysis...
@@ -104,10 +119,10 @@ Geometric analysis...
     ax.get_figure().set_size_inches(4, 3)
 
     Cl optimised polar coords from aromatic ring : (0.11, -116.42,-170.06)
-    
 
 
-![png](readme_images/output_12_1.png)
+
+![png](output_12_1.png)
 
 
 Potential Energy Scan analysis of geometric conformers...
@@ -121,7 +136,7 @@ Potential Energy Scan analysis of geometric conformers...
     ax.get_figure().set_size_inches(7, 3)
 
 
-![png](readme_images/output_14_0.png)
+![png](output_14_0.png)
 
 
 Natural Bond Orbital and Second Order Perturbation Theory analysis...
@@ -134,17 +149,17 @@ Natural Bond Orbital and Second Order Perturbation Theory analysis...
     display(mol.show_SOPT_bonds(min_energy=15., rotations=[[0, 0, 90]]))
 
     +ve charge centre polar coords from aromatic ring: (0.02 -51.77,-33.15)
-    
-
-
-![png](readme_images/output_16_1.png)
 
 
 
-![png](readme_images/output_16_2.png)
+![png](output_16_1.png)
 
 
-## Multiple Computations Analysis
+
+![png](output_16_2.png)
+
+
+###Multiple Computations Analysis
 
 Multiple computations, for instance of different starting conformations, can be grouped into an *Analysis* class.
 
@@ -160,7 +175,7 @@ Multiple computations, for instance of different starting conformations, can be 
     print 'Read Errors:', errors
 
     Read Errors: [{'Cation': 'emim', 'Initial': 'FM', 'Anion': 'cl'}]
-    
+
 
 The methods mentioned for indivdiual molecules can then be applied to all or a subset of these computations.
 
@@ -288,7 +303,7 @@ RadViz is a way of visualizing multi-variate data.
     ax = analysis.plot_radviz_comparison('Anion', columns=range(4, 10))
 
 
-![png](readme_images/output_23_0.png)
+![png](output_23_0.png)
 
 
 The KMeans algorithm clusters data by trying to separate samples in n groups of equal variance.
@@ -308,41 +323,41 @@ The KMeans algorithm clusters data by trying to separate samples in n groups of 
 
     Category 0:
     (row 3)
-    
 
 
-![png](readme_images/output_25_1.png)
+
+![png](output_25_1.png)
 
 
     Category 1:
     (row 0)
-    
 
 
-![png](readme_images/output_25_3.png)
+
+![png](output_25_3.png)
 
 
     (row 1)
-    
 
 
-![png](readme_images/output_25_5.png)
+
+![png](output_25_5.png)
 
 
     Category 2:
     (row 2)
-    
 
 
-![png](readme_images/output_25_7.png)
+
+![png](output_25_7.png)
 
 
     Category 3:
     (row 4)
-    
 
 
-![png](readme_images/output_25_9.png)
+
+![png](output_25_9.png)
 
 
 MORE TO COME!!

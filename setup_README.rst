@@ -1,19 +1,19 @@
 
-Python Gaussian Analysis Tool (pygauss)
+Python Gaussian Analysis Tool (PyGauss)
 =======================================
 
-Pygauss is designed to be an API for parsing one or more input/output
+PyGauss is designed to be an API for parsing one or more input/output
 files from a `Gaussian <http://www.gaussian.com/>`__ quantum chemical
 computation and provide functionality to assess **molecular geometry**
 and **electronic distribution** both visually and quantitatively.
 
 It is built on top of the
-`cclib <http://cclib.github.io/>`__/`chemlab <http://chemlab.readthedocs.org/en/latest/index.html>`__/`chemview <http://chemview.readthedocs.org/en/latest/>`__
+`cclib <http://cclib.github.io/>`__/`chemview <http://chemview.readthedocs.org/en/latest/>`__/`chemlab <http://chemlab.readthedocs.org/en/latest/index.html>`__
 suite of packages and python scientific stack and is primarily designed
 to be used interactively in the `IPython
 Notebook <http://ipython.org/notebook.html>`__ (within which this readme
-has been written). As shown below, a molecular optimisation can be
-assesed individually (much like in
+was created). As shown below, a molecular optimisation can be assesed
+individually (much like in
 `gaussview <http://www.gaussian.com/g_prod/gv5b.htm>`__), but also as
 part of a group. The advantages of this package are then:
 
@@ -21,15 +21,59 @@ part of a group. The advantages of this package are then:
 -  Reproducible analysis
 -  Trend analysis
 
-Detail instillation...
+Instillation
+------------
+
+**1.** The source code is available at
+`Github <https://github.com/chrisjsewell/PyGauss>`__, however, the
+recommended way to install PyGauss is to use the
+`Anaconda <http://continuum.io/downloads>`__ python distribution. Once
+downloaded a new environment can be created:
 
 ::
 
+    conda create -n env python=2.7
+
+**2.(L/O)** If using Linux or OS X then chemlab has already been
+pre-built and can be installed as such:
+
+::
+
+    conda install -n env -c https://conda.binstar.org/gabrielelanaro chemlab    
+
+**3.** PyGauss is then available for installation from
+`PyPi <https://pypi.python.org/pypi/pygauss>`__ after some initial
+dependancy installs:
+
+::
+
+    conda install -n env pil 
+    conda install -n env scipy
+    activate env
     pip install pygauss
 
-    conda install -c http://conda.binstar.org/gabrielelanaro chemlab
+**2.(W)** Unfortuantely Windows has no pre-built installer, and so there
+are a few more steps to install from Github (you need to download git):
 
-You should then be able to start an ipython notebook...
+::
+
+    conda install -n env -c https://conda.binstar.org/gabrielelanaro cclib
+
+    conda install -n env ipython-notebook
+    conda install -n env numpy
+    conda install -n env numba
+    git clone https://github.com/gabrielelanaro/chemview
+    cd chemview
+    activate env
+    pip install .
+        
+    git clone --recursive https://github.com/chemlab/chemlab.git
+    pip install pyopengl==3.0.2
+    python setup.py build_ext --inplace
+    add chemlab folder path to PYTHONPATH environmental variable
+
+You should then be able to start an assessment in IPython Notebook
+starting with the following:
 
 .. code:: python
 
@@ -42,7 +86,9 @@ Single Molecule Analysis
 ------------------------
 
 A *molecule* can be created containg data about the inital geometry,
-optimisation process and analysis of the final configuration.
+optimisation process and analysis of the final configuration. Molecules
+can be viewed statically or interactively (not currently supported by
+Firefox).
 
 .. code:: python
 
@@ -61,11 +107,11 @@ optimisation process and analysis of the final configuration.
 
 
 
-.. image:: output_6_0.png
+.. image:: output_8_0.png
 
 
 
-.. image:: output_6_1.png
+.. image:: output_8_1.png
 
 
 Basic analysis of optimisation...
@@ -84,7 +130,7 @@ Basic analysis of optimisation...
     
 
 
-.. image:: output_8_1.png
+.. image:: output_10_1.png
 
 
 Geometric analysis...
@@ -104,7 +150,7 @@ Geometric analysis...
     
 
 
-.. image:: output_10_1.png
+.. image:: output_12_1.png
 
 
 Potential Energy Scan analysis of geometric conformers...
@@ -120,7 +166,7 @@ Potential Energy Scan analysis of geometric conformers...
 
 
 
-.. image:: output_12_0.png
+.. image:: output_14_0.png
 
 
 Natural Bond Orbital and Second Order Perturbation Theory analysis...
@@ -140,17 +186,18 @@ Natural Bond Orbital and Second Order Perturbation Theory analysis...
     
 
 
-.. image:: output_14_1.png
+.. image:: output_16_1.png
 
 
 
-.. image:: output_14_2.png
+.. image:: output_16_2.png
 
 
 Multiple Computations Analysis
 ------------------------------
 
-a
+Multiple computations, for instance of different starting conformations,
+can be grouped into an *Analysis* class.
 
 .. code:: python
 
@@ -170,9 +217,12 @@ a
     Read Errors: [{'Cation': 'emim', 'Initial': 'FM', 'Anion': 'cl'}]
     
 
+The methods mentioned for indivdiual molecules can then be applied to
+all or a subset of these computations.
+
 .. code:: python
 
-    analysis.add_mol_property('Opt', 'is_optimised')
+    analysis.add_mol_property_subset('Opt', 'is_optimised', rows=[2,3])
     analysis.add_mol_property('Energy (au)', 'get_optimisation_E', units='hartree')
     analysis.add_mol_property('Cation chain, $\\psi$', 'calc_dihedral_angle', [1, 4, 9, 10])
     analysis.add_mol_property('Cation Charge', 'calc_nbo_charge', range(1, 20))
@@ -187,11 +237,11 @@ a
 .. parsed-literal::
 
       Anion Cation Initial   Opt  Energy (au)  Cation chain, $\psi$  Cation Charge  Anion Charge  Anion-Cation, $r$  Anion-Cation, $\theta$  Anion-Cation, $\phi$
-    0    cl   emim       B  True     -805.105                80.794          0.888        -0.888              0.420                -123.392               172.515
-    1    cl   emim      BE  True     -805.105                80.622          0.887        -0.887              0.420                -123.449               172.806
+    0    cl   emim       B   NaN     -805.105                80.794          0.888        -0.888              0.420                -123.392               172.515
+    1    cl   emim      BE   NaN     -805.105                80.622          0.887        -0.887              0.420                -123.449               172.806
     2    cl   emim      BM  True     -805.104                73.103          0.874        -0.874              0.420                 124.121              -166.774
     3    cl   emim       F  True     -805.118               147.026          0.840        -0.840              0.420                  10.393                 0.728
-    4    cl   emim      FE  True     -805.117                85.310          0.851        -0.851              0.417                 -13.254                -4.873
+    4    cl   emim      FE   NaN     -805.117                85.310          0.851        -0.851              0.417                 -13.254                -4.873
 
 
 
@@ -203,11 +253,11 @@ RadViz is a way of visualizing multi-variate data.
 
 
 
-.. image:: output_20_0.png
+.. image:: output_23_0.png
 
 
 The KMeans algorithm clusters data by trying to separate samples in n
-groups of equal variance
+groups of equal variance.
 
 .. code:: python
 
@@ -227,21 +277,11 @@ groups of equal variance
 .. parsed-literal::
 
     Category 0:
-    (row 3)
-    
-
-
-.. image:: output_22_1.png
-
-
-.. parsed-literal::
-
-    Category 1:
     (row 0)
     
 
 
-.. image:: output_22_3.png
+.. image:: output_25_1.png
 
 
 .. parsed-literal::
@@ -250,7 +290,17 @@ groups of equal variance
     
 
 
-.. image:: output_22_5.png
+.. image:: output_25_3.png
+
+
+.. parsed-literal::
+
+    Category 1:
+    (row 3)
+    
+
+
+.. image:: output_25_5.png
 
 
 .. parsed-literal::
@@ -260,7 +310,7 @@ groups of equal variance
     
 
 
-.. image:: output_22_7.png
+.. image:: output_25_7.png
 
 
 .. parsed-literal::
@@ -270,6 +320,7 @@ groups of equal variance
     
 
 
-.. image:: output_22_9.png
+.. image:: output_25_9.png
 
 
+MORE TO COME!!

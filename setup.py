@@ -18,13 +18,16 @@ def readme(file, git_path, img_folder):
     return ''
 
 setup(name='pygauss',
-      version='0.1.15',
+      version='0.2',
       description='PYthon GAUSSian Chemical Compuation Analysis',
+      keywords = "chemistry gaussian dft",
       long_description=readme('setup_README.rst',
-                              'https://github.com/chrisjsewell/PyGauss', 'readme'),
+                              'https://github.com/chrisjsewell/PyGauss',
+                              'readme_images'),
       author='Chris Sewell',
       author_email='chrisj_sewell@hotmail.com',
       url='https://github.com/chrisjsewell/PyGauss',
+      license = "GPL3",
       platforms = ["Any."],
       packages=['pygauss', 
                 'pygauss.cclib_patch','pygauss.cclib_patch.parser', 

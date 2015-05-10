@@ -18,6 +18,7 @@ def readme(file, git_path, img_folder):
     return ''
 
 import re
+def version(path):
     verstrline = open(path, "rt").read()
     VSRE = r"^__version__ = ['\"]([^'\"]*)['\"]"
     mo = re.search(VSRE, verstrline, re.M)

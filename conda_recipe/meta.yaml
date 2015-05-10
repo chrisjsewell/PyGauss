@@ -1,0 +1,88 @@
+package:
+  name: pygauss
+  version: "0.1.16"
+
+source:
+  fn: pygauss-0.1.16.zip
+  url: https://pypi.python.org/packages/source/p/pygauss/pygauss-0.1.16.zip
+  md5: 9a58c16efd338a1347a00d94dd835ad1
+#  patches:
+   # List any patch files here
+   # - fix.patch
+
+# build:
+  # preserve_egg_dir: True
+  # entry_points:
+    # Put any entry points (scripts to be generated automatically) here. The
+    # syntax is module:function.  For example
+    #
+    # - pygauss = pygauss:main
+    #
+    # Would create an entry point called pygauss that calls pygauss.main()
+
+
+  # If this is a new build for the same version, increment the build
+  # number. If you do not include this key, it defaults to 0.
+  # number: 1
+
+requirements:
+  build:
+    - python
+    - numpy >=1.9
+    - scipy >=0.15
+    - matplotlib >=1.4
+    - pandas >=0.15
+    - ipython >=3
+    - scikit-learn >=0.15
+    - pil
+    - cclib
+    - chemview
+    - chemlab
+
+  run:
+    - python
+    - numpy >=1.9
+    - scipy >=0.15
+    - matplotlib >=1.4
+    - pandas >=0.15
+    - ipython >=3
+    - scikit-learn >=0.15
+    - pil
+    - cclib
+    - chemview
+    - chemlab
+
+test:
+  # Python imports
+  imports:
+    - pygauss
+    - pygauss.cclib_patch
+    - pygauss.cclib_patch.parser
+    - pygauss.chemlab_patch
+    - pygauss.chemlab_patch.graphics
+    - pygauss.chemlab_patch.graphics.renderers
+    - pygauss.chemlab_patch.io
+    - pygauss.chemlab_patch.io.handlers
+    - pygauss.chemview_patch
+    - pygauss.test_data
+
+  # commands:
+    # You can put test commands to be run here.  Use this to test that the
+    # entry points work.
+
+
+  # You can also put a file called run_test.py in the recipe that will be run
+  # at test time.
+
+  # requires:
+    # Put any additional test requirements here.  For example
+    # - nose
+
+about:
+  home: https://github.com/chrisjsewell/PyGauss
+  license: GPL3
+  summary: 'PYthon GAUSSian Chemical Compuation Analysis'
+
+# See
+# http://docs.continuum.io/conda/build.html for
+# more information about meta.yaml

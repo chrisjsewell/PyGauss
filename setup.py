@@ -30,7 +30,7 @@ def version(path):
 
 setup(name='pygauss',
       version=version("pygauss/_version.py"),
-      description='PYthon GAUSSian Chemical Compuation Analysis',
+      description='Python API for Analysis of Gaussian Quantum Chemical Compuations',
       keywords = "chemistry gaussian dft",
       long_description=readme('setup_README.rst',
                               'https://github.com/chrisjsewell/PyGauss',

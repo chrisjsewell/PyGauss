@@ -39,4 +39,4 @@ from pygauss import analysis
 import os, inspect
 from pygauss import test_data
 def get_test_folder():
-    return os.path.dirname(inspect.getfile(test_data))
+    return os.path.dirname(os.path.abspath(inspect.getfile(test_data)))

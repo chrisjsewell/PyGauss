@@ -18,7 +18,7 @@ def readme(file, git_path, img_folder):
     return ''
 
 setup(name='pygauss',
-      version='0.1.10',
+      version='0.1.15',
       description='PYthon GAUSSian Chemical Compuation Analysis',
       long_description=readme('setup_README.rst',
                               'https://github.com/chrisjsewell/PyGauss', 'readme'),
@@ -37,12 +37,15 @@ setup(name='pygauss',
       package_data={'': ['*.rst', '*.txt'],
                     'pygauss.test_data': ['*.log', '*.com']},
       install_requires=[
-                          "numpy>=1.9.2",
-                          "scipy>=0.15.1",
-                          "pil", #>=1.1.7",
-                          "matplotlib>=1.4.3",
-                          "pandas>=0.15.2",
-                          "ipython>=3.0.0",
-                          "scikit-learn>=0.15.2, <0.16"
+                          "numpy>=1.9", #.2",
+                          "scipy>=0.15", #.1",
+                          "matplotlib>=1.4", #.3",
+                          "pandas>=0.15", #.2,
+                          "ipython>=3",
+                          "scikit-learn>=0.15",
+                          "pil",
+                          "cclib",
+                          "chemview",
+                          "chemlab"
                        ],               
      )

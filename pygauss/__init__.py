@@ -13,32 +13,21 @@ from ._version import __version__
 
 import sys
 
-#from .chemlab_patch.io.handlers import _cclib
-#sys.modules['chemlab.io.handlers._cclib'] = _cclib
-
-from .cclib_patch.parser import data#, gaussianparser
+from .cclib_patch.parser import data
 
 sys.modules['cclib.parser.data'] = data 
-#sys.modules['cclib.parser.gaussianparser'] = gaussianparser
-
-#from .chemlab_patch.graphics import camera
-
-#sys.modules['chemlab.graphics.camera']= camera
-
-#from .chemlab_patch.graphics.renderers import atom, ballandstick, bond, line
-
-#sys.modules['chemlab.graphics.renderers.atom'] = atom
-#sys.modules['chemlab.graphics.renderers.ballandstick'] = ballandstick
-#sys.modules['chemlab.graphics.renderers.bond'] = bond
-#sys.modules['chemlab.graphics.renderers.line'] = line
 
 import cclib # version 1.3
 import chemlab # version 0.4
 
-from pygauss import molecule
-from pygauss import analysis
+from .molecule import Molecule
+from .analysis import Analysis
 
 import os, inspect
-from pygauss import test_data
+from . import test_data
 def get_test_folder():
     return os.path.dirname(os.path.abspath(inspect.getfile(test_data)))
+
+from .utils import df_to_img, img_to_file
+
+from . import test_molecule, test_analysis

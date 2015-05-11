@@ -70,6 +70,12 @@ def circumcenter(pts):
     return center
 
 import os    
+# On OSx Conda creates its own environment with a reduced $PATH variable 
+if os.path.exists(os.path.sep + os.path.join('usr', 'local', 'bin')):
+    os.environ["PATH"] += os.pathsep + os.path.sep + os.path.join('usr', 'local', 'bin')
+if os.path.exists(os.path.sep + os.path.join('usr', 'texbin')):
+    os.environ["PATH"] += os.pathsep + os.path.sep + os.path.join('usr', 'texbin')
+
 import subprocess
 from subprocess import PIPE
 try:
@@ -78,6 +84,8 @@ except ImportError:
     DEVNULL = open(os.devnull, 'r+b', 0)
 
 from IPython.display import Image
+import random
+import warnings
 
 def df_to_img(df, na_rep='-', im_exe='convert', other_temp=None):
     """ converts a pandas Dataframe to an IPython image 
@@ -103,6 +111,7 @@ def df_to_img(df, na_rep='-', im_exe='convert', other_temp=None):
     existing application. To overcome this change its filename and use the 
     im_name variable.
     """
+
     # pandas 0.16 has a bug when using heirarchical row indexes
     use_indx = True
     if type(df.index) == MultiIndex:
@@ -110,11 +119,12 @@ def df_to_img(df, na_rep='-', im_exe='convert', other_temp=None):
         use_indx = False
     latex_str = df.to_latex(index=use_indx, escape=False, na_rep=na_rep)
     
-    filename = 'df_to_pdf_out.tex'
-    pdffile = 'df_to_pdf_out.pdf'
-    logname = 'df_to_pdf_out.log'
-    auxname = 'df_to_pdf_out.aux'
-    imgname = 'df_to_pdf_out.png'
+    rand = random.randint(1, 100000)
+    filename = 'df_to_pdf_out{0}.tex'.format(rand)
+    pdffile = 'df_to_pdf_out{0}.pdf'.format(rand)
+    logname = 'df_to_pdf_out{0}.log'.format(rand)
+    auxname = 'df_to_pdf_out{0}.aux'.format(rand)
+    imgname = 'df_to_pdf_out{0}.png'.format(rand)
     
     template = r'''\documentclass{{article}}
                 \usepackage{{graphicx}}
@@ -147,7 +157,7 @@ def df_to_img(df, na_rep='-', im_exe='convert', other_temp=None):
     if os.path.exists(logname): os.unlink(logname)
     if os.path.exists(auxname): os.unlink(auxname)
         
-    if err: 
+    if err:        
         raise RuntimeError('error in pdflatex run:\n {0}'.format(err))
     if not os.path.exists(pdffile): 
         raise RuntimeError('pdflatex did not produce a pdf file')
@@ -165,7 +175,10 @@ def df_to_img(df, na_rep='-', im_exe='convert', other_temp=None):
 
     os.unlink(pdffile)
     if err: 
-        raise RuntimeError('error in imagemagick run:\n {0}'.format(err))
+        if not os.path.exists(imgname):
+            raise RuntimeError('error in imagemagick run:\n {0}'.format(err))
+        else:
+            warnings.warn('non-fatal error in imagemagick run:\n {0}'.format(err))
     if not os.path.exists(imgname): 
         raise RuntimeError('imagemagick did not produce a png file')
     
@@ -174,6 +187,37 @@ def df_to_img(df, na_rep='-', im_exe='convert', other_temp=None):
     
     return ipy_img
 
+def img_to_file(img, folder_path, img_name):
+    """a function for outputing an IPython Image to a file
+    
+    img : IPython.display.Image
+        an IPyton image
+    folder_path : str
+        the desired folder path (abs or relative)
+    img_name : str
+        the desired name of the file
+    
+    """
+    try:
+        data = img.data
+    except AttributeError:
+        raise ValueError('the img is not an IPython Image')
+    
+    if not os.path.exists(folder_path):
+        raise ValueError('the folder_path does not exist')
+
+    #_PNG = b'\x89PNG\r\n\x1a\n'
+    _JPEG = b'\xff\xd8'
+    ext = '.png'
+    if data[:2] == _JPEG:
+        ext = '.jpg'
+    
+    with open(os.path.join(folder_path, img_name)+ext, "wb") as f:
+        f.write(data)
+    
+    return os.path.abspath(os.path.join(folder_path, img_name)+ext)
+    
+    
 
 if __name__ == '__main__':    
     print circumcenter([[1, 0, 0], [0, 1, 0], [0, 0, 1]])

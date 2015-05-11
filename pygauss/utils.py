@@ -87,7 +87,8 @@ from IPython.display import Image
 import random
 import warnings
 
-def df_to_img(df, na_rep='-', im_exe='convert', other_temp=None):
+def df_to_img(df, na_rep='-', im_exe='convert', other_temp=None,
+               width=None, height=None, unconfined=False):
     """ converts a pandas Dataframe to an IPython image 
     
     na_rep : str
@@ -182,7 +183,8 @@ def df_to_img(df, na_rep='-', im_exe='convert', other_temp=None):
     if not os.path.exists(imgname): 
         raise RuntimeError('imagemagick did not produce a png file')
     
-    ipy_img = Image(filename=imgname)
+    ipy_img = Image(filename=imgname, width=width, height=height, 
+                    unconfined=unconfined)
     os.unlink(imgname)
     
     return ipy_img

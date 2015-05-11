@@ -9,6 +9,7 @@ from io import BytesIO
 import PIL
 from PIL import Image, ImageChops
 from types import MethodType
+import copy 
 
 from math import degrees, atan2, sqrt, acos
 
@@ -91,6 +92,10 @@ class Molecule:
     def __repr__(self):
         return '<PyGauss Molecule>'
     
+    def copy(self):
+        clone = copy.deepcopy(self)
+        return clone        
+        
     def _get_data(self, log_file, ftype='gaussian'):
         
         gaussian_handler = _create_cclib_handler(ftype)

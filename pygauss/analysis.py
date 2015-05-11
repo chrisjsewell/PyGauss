@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import os
 from itertools import product
+import copy
 
 import pandas as pd
 from pandas.tools.plotting import radviz
@@ -27,6 +28,10 @@ class Analysis(object):
     def __repr__(self):
         return self.get_table().to_string()
         
+    def copy(self):
+        clone = copy.deepcopy(self)
+        return clone        
+
     def get_folderpath(self):
         if not self._folderpath:
             raise IOError('folder path not set')
@@ -77,12 +82,13 @@ class Analysis(object):
 
             if ipython_print: clear_output(wait=True)            
                         
-        return self.get_table(), read_errors
+        return self.get_table(), pd.DataFrame(read_errors)
                 
     def get_table(self, rows=[], columns=[],  filters={},
                   precision=4, head=False, mol=False, 
                   row_index=[], column_index=[], 
-                  as_image=False, na_rep='-', im_exe='convert'):
+                  as_image=False, na_rep='-', im_exe='convert',
+                  width=None, height=None, unconfined=False):
         """return pandas table of requested data in requested format
 
         rows : integer or list of integers
@@ -148,7 +154,8 @@ class Analysis(object):
             df = df.head(head)
         
         if as_image:
-            return df_to_img(df, na_rep=na_rep, im_exe=im_exe)            
+            return df_to_img(df, na_rep=na_rep, im_exe=im_exe,
+                             width=width, height=height, unconfined=unconfined)            
             
         return df
         
@@ -183,7 +190,11 @@ class Analysis(object):
                                           'optimised', 'conformer']):
         """adds columns giving info of basic run properties """
         for prop in props:
-            series = self.get_basic_property(prop)
+            try:
+                series = self.get_basic_property(prop)
+            except Exception:
+                print 'error reading {0} \n setting to NaN'.format(prop)
+                series = pd.np.nan
             self._df[prop.capitalize()] = series  
         
         return self.get_table()

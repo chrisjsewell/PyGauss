@@ -7,7 +7,7 @@ source:
 
 package:
   name: pygauss
-  version: {{ environ['GIT_DESCRIBE_TAG'] }}
+  version: 0.2.1
 
 # build:
   # preserve_egg_dir: True

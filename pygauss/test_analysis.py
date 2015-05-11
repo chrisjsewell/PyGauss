@@ -27,13 +27,13 @@ print 'Read Errors:', errors
 analysis.add_basic_properties()
 
 analysis.add_mol_property('Energy (au)', 'get_optimisation_E', units='hartree')
-analysis.add_mol_property('Cation chain, $\\psi$', 'calc_dihedral_angle', [1, 4, 9, 10])
+analysis.add_mol_property(r'Cation chain, $\psi$', 'calc_dihedral_angle', [1, 4, 9, 10])
 analysis.add_mol_property('Cation Charge', 'calc_nbo_charge', range(1, 20))
-analysis.add_mol_property(['Cation Charge center, $r$', 'Cation Charge center, $\\theta$', 
-                           'Cation Charge center, $\\phi$'], 
+analysis.add_mol_property(['Cation Charge center, $r$', r'Cation Charge center, $\theta$', 
+                           r'Cation Charge center, $\phi$'], 
                                'calc_nbo_charge_center', 3, 2, 1, atoms=range(1, 20))
 analysis.add_mol_property('Anion Charge', 'calc_nbo_charge', [20])
-analysis.add_mol_property(['Anion-Cation, $r$', 'Anion-Cation, $\\theta$', 'Anion-Cation, $\\phi$'], 
+analysis.add_mol_property(['Anion-Cation, $r$', r'Anion-Cation, $\theta$', r'Anion-Cation, $\phi$'], 
                                'calc_polar_coords_from_plane', 3, 2, 1, 20)
 analysis.add_mol_property('Anion-Cation, $d_{min}$', 'calc_min_dist', range(1, 20), [20])
 
@@ -52,3 +52,5 @@ analysis.plot_radviz_comparison('Anion', columns=range(7, 16), rows=range(1, 6))
 
 print analysis.calc_kmean_groups('Anion', 'cl', 4, columns=range(7, 16), rows=range(1, 6))                              
 
+df = analysis.get_table(columns=[0,1,2]+range(7, 18), row_index=['Anion', 'Cation', 'Initial'], 
+                   column_index=['Cation', 'Anion', 'Anion-Cation'])

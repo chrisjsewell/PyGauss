@@ -105,7 +105,7 @@ starting with the following:
 
 .. parsed-literal::
 
-    '0.2.0'
+    '0.2.1'
 
 
 
@@ -154,7 +154,7 @@ Basic analysis of optimisation...
 .. parsed-literal::
 
     Optimised? True, Conformer? True, Energy = -805.105 a.u.
-
+    
 
 
 .. image:: output_10_1.png
@@ -174,7 +174,7 @@ Geometric analysis...
 .. parsed-literal::
 
     Cl optimised polar coords from aromatic ring : (0.11, -116.42,-170.06)
-
+    
 
 
 .. image:: output_12_1.png
@@ -210,7 +210,7 @@ Natural Bond Orbital and Second Order Perturbation Theory analysis...
 .. parsed-literal::
 
     +ve charge centre polar coords from aromatic ring: (0.02 -51.77,-33.15)
-
+    
 
 
 .. image:: output_16_1.png
@@ -242,7 +242,7 @@ can be grouped into an *Analysis* class.
 .. parsed-literal::
 
     Read Errors: [{'Cation': 'emim', 'Initial': 'FM', 'Anion': 'cl'}]
-
+    
 
 The methods mentioned for indivdiual molecules can then be applied to
 all or a subset of these computations.
@@ -272,6 +272,24 @@ all or a subset of these computations.
 
 
 
+**NEW FEATURE:** there is now an option (requiring
+`pdflatex <http://www.tug.org/applications/pdftex/>`__ and
+`ghostscript <http://www.ghostscript.com/download/gsdnld.html>`__\ +\ `imagemagik <http://www.imagemagick.org/script/binary-releases.php>`__)
+to output the tables as a latex formatted image.
+
+.. code:: python
+
+    analysis.get_table(row_index=['Anion', 'Cation', 'Initial'],
+                       column_index=['Cation', 'Anion', 'Anion-Cation'],
+                       as_image=True, im_exe='convert_pdf')
+
+
+
+
+.. image:: output_23_0.png
+
+
+
 RadViz is a way of visualizing multi-variate data.
 
 .. code:: python
@@ -280,7 +298,7 @@ RadViz is a way of visualizing multi-variate data.
 
 
 
-.. image:: output_23_0.png
+.. image:: output_25_0.png
 
 
 The KMeans algorithm clusters data by trying to separate samples in n
@@ -304,50 +322,50 @@ groups of equal variance.
 .. parsed-literal::
 
     Category 0:
-    (row 3)
+    (row 2)
+    
 
 
-
-.. image:: output_25_1.png
+.. image:: output_27_1.png
 
 
 .. parsed-literal::
 
     Category 1:
     (row 0)
+    
 
 
-
-.. image:: output_25_3.png
+.. image:: output_27_3.png
 
 
 .. parsed-literal::
 
     (row 1)
+    
 
 
-
-.. image:: output_25_5.png
+.. image:: output_27_5.png
 
 
 .. parsed-literal::
 
     Category 2:
-    (row 2)
+    (row 4)
+    
 
 
-
-.. image:: output_25_7.png
+.. image:: output_27_7.png
 
 
 .. parsed-literal::
 
     Category 3:
-    (row 4)
+    (row 3)
+    
 
 
-
-.. image:: output_25_9.png
+.. image:: output_27_9.png
 
 
 MORE TO COME!!

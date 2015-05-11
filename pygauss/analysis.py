@@ -10,6 +10,7 @@ from sklearn.cluster import KMeans
 from IPython.core.display import clear_output
 
 from .molecule import Molecule
+from .utils import df_to_img
 
 class Analysis(object):
     def __init__(self, folderpath='', 
@@ -80,7 +81,8 @@ class Analysis(object):
                 
     def get_table(self, rows=[], columns=[],  filters={},
                   precision=4, head=False, mol=False, 
-                  row_index=[], column_index=[]):
+                  row_index=[], column_index=[], 
+                  as_image=False, na_rep='-', im_exe='convert'):
         """return pandas table of requested data in requested format
 
         rows : integer or list of integers
@@ -98,7 +100,13 @@ class Analysis(object):
         row_index : string or list of strings
             columns to use as new index        
         column_index : list of strings
-            srings to place in to higher order column indexs        
+            srings to place in to higher order column indexs 
+        as_image : bool
+            output the table as an image (used pygauss.utils.df_to_img)
+        na_rep : str
+            how to represent empty (nan) cells (if outputting image)
+        im_exe : str
+            the name of the imagemagick executable (for outputting image)
         """
         pd.set_option('precision', precision)
         
@@ -137,9 +145,12 @@ class Analysis(object):
             df.columns = pd.MultiIndex.from_tuples(col_index)
             
         if head:
-            return df.head(head)
-        else:
-            return df
+            df = df.head(head)
+        
+        if as_image:
+            return df_to_img(df, na_rep=na_rep, im_exe=im_exe)            
+            
+        return df
         
     def remove_rows(self, rows):
         

@@ -62,9 +62,7 @@ You should then be able to open an assessment in IPython Notebook starting with 
     pg.__version__
 
 
-
-
-    '0.2.0'
+    '0.2.1'
 
 
 
@@ -103,7 +101,7 @@ Basic analysis of optimisation...
     ax.get_figure().set_size_inches(3, 2)
 
     Optimised? True, Conformer? True, Energy = -805.105 a.u.
-
+    
 
 
 ![png](readme_images/output_10_1.png)
@@ -119,7 +117,7 @@ Geometric analysis...
     ax.get_figure().set_size_inches(4, 3)
 
     Cl optimised polar coords from aromatic ring : (0.11, -116.42,-170.06)
-
+    
 
 
 ![png](readme_images/output_12_1.png)
@@ -149,7 +147,7 @@ Natural Bond Orbital and Second Order Perturbation Theory analysis...
     display(mol.show_SOPT_bonds(min_energy=15., rotations=[[0, 0, 90]]))
 
     +ve charge centre polar coords from aromatic ring: (0.02 -51.77,-33.15)
-
+    
 
 
 ![png](readme_images/output_16_1.png)
@@ -175,7 +173,7 @@ Multiple computations, for instance of different starting conformations, can be 
     print 'Read Errors:', errors
 
     Read Errors: [{'Cation': 'emim', 'Initial': 'FM', 'Anion': 'cl'}]
-
+    
 
 The methods mentioned for indivdiual molecules can then be applied to all or a subset of these computations.
 
@@ -187,9 +185,8 @@ The methods mentioned for indivdiual molecules can then be applied to all or a s
     analysis.add_mol_property('Anion Charge', 'calc_nbo_charge', [20])
     analysis.add_mol_property(['Anion-Cation, $r$', 'Anion-Cation, $\\theta$', 'Anion-Cation, $\\phi$'], 
                                    'calc_polar_coords_from_plane', 3, 2, 1, 20)
-    df = analysis.get_table(row_index=['Anion', 'Cation', 'Initial'], 
+    analysis.get_table(row_index=['Anion', 'Cation', 'Initial'], 
                        column_index=['Cation', 'Anion', 'Anion-Cation'])
-    df
 
 
 
@@ -297,13 +294,27 @@ The methods mentioned for indivdiual molecules can then be applied to all or a s
 
 
 
+**NEW FEATURE:** there is now an option (requiring [pdflatex](http://www.tug.org/applications/pdftex/) and [ghostscript](http://www.ghostscript.com/download/gsdnld.html)+[imagemagik](http://www.imagemagick.org/script/binary-releases.php)) to output the tables as a latex formatted image.
+
+
+    analysis.get_table(row_index=['Anion', 'Cation', 'Initial'],
+                       column_index=['Cation', 'Anion', 'Anion-Cation'],
+                       as_image=True, im_exe='convert_pdf')
+
+
+
+
+![png](readme_images/output_23_0.png)
+
+
+
 RadViz is a way of visualizing multi-variate data.
 
 
     ax = analysis.plot_radviz_comparison('Anion', columns=range(4, 10))
 
 
-![png](readme_images/output_23_0.png)
+![png](readme_images/output_25_0.png)
 
 
 The KMeans algorithm clusters data by trying to separate samples in n groups of equal variance.
@@ -322,42 +333,42 @@ The KMeans algorithm clusters data by trying to separate samples in n groups of 
     show_groups(analysis.calc_kmean_groups('Anion', 'cl', 4, columns=range(4, 10)))
 
     Category 0:
-    (row 3)
-
-
-
-![png](readme_images/output_25_1.png)
-
-
-    Category 1:
     (row 0)
+    
 
 
-
-![png](readme_images/output_25_3.png)
+![png](readme_images/output_27_1.png)
 
 
     (row 1)
+    
 
 
+![png](readme_images/output_27_3.png)
 
-![png](readme_images/output_25_5.png)
+
+    Category 1:
+    (row 2)
+    
+
+
+![png](readme_images/output_27_5.png)
 
 
     Category 2:
-    (row 2)
+    (row 4)
+    
 
 
-
-![png](readme_images/output_25_7.png)
+![png](readme_images/output_27_7.png)
 
 
     Category 3:
-    (row 4)
+    (row 3)
+    
 
 
-
-![png](readme_images/output_25_9.png)
+![png](readme_images/output_27_9.png)
 
 
 MORE TO COME!!

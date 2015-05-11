@@ -59,7 +59,7 @@ with warnings.catch_warnings():
     warnings.simplefilter("ignore")
     from .chemview_patch.viewer import MolecularViewer
 
-from .circumcenter import circumcenter
+from .utils import circumcenter
 
 class Molecule:
     def __init__(self, folder, init_fname=False, opt_fname=False, 

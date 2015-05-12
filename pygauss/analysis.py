@@ -134,7 +134,6 @@ class Analysis(object):
         if not sftp and self._ssh_server:
             ssh.close()
         
-        return self.get_table()
              
     def add_runs(self, headers=[], values=[], 
                  init_pattern=None, opt_pattern=None, 
@@ -180,7 +179,7 @@ class Analysis(object):
         if self._ssh_server:
             ssh.close()
                         
-        return self.get_table(), pd.DataFrame(read_errors)
+        return pd.DataFrame(read_errors)
                 
     def get_table(self, rows=[], columns=[],  filters={},
                   precision=4, head=False, mol=False, 

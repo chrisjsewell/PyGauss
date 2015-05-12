@@ -138,12 +138,15 @@ class Molecule(object):
             return result
         
     def _resolve_wildcards(self, file_name, folder, sftp=False):        
-        """resolve wildcards in file_name """
+        """resolve the wildcard * in file_name """
+        if not '*' in file_name:
+            return file_name
         
         if sftp:
             allfiles = sftp.listdir(folder)
-            if file_name[0]=='*':
-                file_name = '.*'+file_name                
+            file_name = "".join(
+            [ c if c.isalnum() or c=='*' else "["+c+"]" for c in file_name ]
+            ).replace('*', '.*')
             files = filter(lambda x: re.match(file_name,x), allfiles)
         else:
             files = glob.glob(os.path.join(folder, file_name))       

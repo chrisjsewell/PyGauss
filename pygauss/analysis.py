@@ -359,27 +359,27 @@ class Analysis(object):
         df = self.get_table(columns=['Molecule'], rows=rows, 
                        filters=filters, mol=True)
         
-        for mol in df.Molecule:
+        for indx, mol in zip(df.index, df.Molecule):
             if align_to: mol.set_alignment_atoms(*align_to)
             if mtype == 'initial':
-                yield mol.show_initial(gbonds=gbonds, ball_stick=ball_stick, 
+                yield indx, mol.show_initial(gbonds=gbonds, ball_stick=ball_stick, 
                                        rotations=rotations, zoom=zoom, 
                                        width=width, height=height, 
                                        axis_length=axis_length)
             elif mtype == 'optimised':
-                yield mol.show_optimisation(gbonds=gbonds, ball_stick=ball_stick, 
+                yield indx, mol.show_optimisation(gbonds=gbonds, ball_stick=ball_stick, 
                                        rotations=rotations, zoom=zoom, 
                                        width=width, height=height, 
                                        axis_length=axis_length)
             elif mtype == 'nbo':
-                yield mol.show_nbo_charges(gbonds=gbonds, ball_stick=ball_stick, 
+                yield indx, mol.show_nbo_charges(gbonds=gbonds, ball_stick=ball_stick, 
                                        rotations=rotations, zoom=zoom, 
                                        width=width, height=height, 
                                        axis_length=axis_length,
                                        relative=relative, 
                                        minval=minval, maxval=maxval)
             elif mtype == 'highlight':
-                yield mol.show_highlight_atoms(highlight, gbonds=gbonds, 
+                yield indx, mol.show_highlight_atoms(highlight, gbonds=gbonds, 
                                                ball_stick=ball_stick, 
                                        rotations=rotations, zoom=zoom, 
                                        width=width, height=height, 

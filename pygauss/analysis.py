@@ -14,9 +14,15 @@ from .molecule import Molecule
 from .utils import df_to_img
 
 class Analysis(object):
-    def __init__(self, folderpath='', 
+    def __init__(self, folderpath, 
                  headers=[]):
-        """analysis class """    
+        """analysis class 
+
+        folderpath : str
+            the folder directory storing the file to be analysed
+        headers : list
+            the variable categories for each computation
+        """    
         self._folderpath = False
         if folderpath: self.set_folderpath(folderpath)
             
@@ -59,7 +65,7 @@ class Analysis(object):
         self._next_index += 1
         
         return self.get_table()
-     
+             
     def add_runs(self, headers=[], values=[], 
                  init_pattern=None, opt_pattern=None, 
                  freq_pattern=None, nbo_pattern=None,
@@ -70,7 +76,10 @@ class Analysis(object):
             identifiers = dict(zip(headers, idents))
             if ipython_print: print identifiers
             init = init_pattern.format(*idents) if init_pattern else None
-            opt = opt_pattern.format(*idents) if opt_pattern else None
+            if type(opt_pattern) is str:
+                opt = opt_pattern.format(*idents) if opt_pattern else None
+            elif type(opt_pattern) is list or type(opt_pattern) is tuple:
+                opt = [o.format(*idents) for o in opt_pattern]
             freq = freq_pattern.format(*idents) if freq_pattern else None
             nbo = nbo_pattern.format(*idents) if nbo_pattern else None
             
@@ -87,7 +96,7 @@ class Analysis(object):
     def get_table(self, rows=[], columns=[],  filters={},
                   precision=4, head=False, mol=False, 
                   row_index=[], column_index=[], 
-                  as_image=False, na_rep='-', im_exe='convert',
+                  as_image=False, na_rep='-',
                   width=None, height=None, unconfined=False):
         """return pandas table of requested data in requested format
 
@@ -111,8 +120,8 @@ class Analysis(object):
             output the table as an image (used pygauss.utils.df_to_img)
         na_rep : str
             how to represent empty (nan) cells (if outputting image)
-        im_exe : str
-            the name of the imagemagick executable (for outputting image)
+        width, height, unconfined : int, int, bool
+            args for IPy Image
         """
         pd.set_option('precision', precision)
         
@@ -154,7 +163,7 @@ class Analysis(object):
             df = df.head(head)
         
         if as_image:
-            return df_to_img(df, na_rep=na_rep, im_exe=im_exe,
+            return df_to_img(df, na_rep=na_rep,
                              width=width, height=height, unconfined=unconfined)            
             
         return df

@@ -4,7 +4,7 @@ Created on Fri May 01 21:24:31 2015
 
 @author: chris
 """
-import os
+import os, glob
 from io import BytesIO
 import PIL
 from PIL import Image, ImageChops
@@ -70,6 +70,22 @@ class Molecule:
         """a class to contain gaussian input/output 
         for a single molecular geometry 
         
+        folder : str
+            the folder path
+        init_fname : str
+            the intial geometry (.com) file
+        opt_fname : str or list of str
+            the optimisation log file
+        freq_fname : str
+            the frequency analysis log file
+        nbo_fname : str
+            the population analysis logfile
+        alignto: [int, int, int]
+            the atom numbers to align the geometry to
+        
+        any of the file names can have wildcards (e.g. 'filename*.log) in them, 
+        as long as this resolves to a single path in the directory 
+        
         NB: nbo population analysis must be run with the GFInput flag to ensure 
         data is output to the log file 
         """
@@ -96,21 +112,36 @@ class Molecule:
         clone = copy.deepcopy(self)
         return clone        
         
+    def _resolve_wildcards(self, folder, file_name):        
+        """resolve wildcards in file_name """
+        
+        files = glob.glob(os.path.join(folder, file_name))
+        if not files:
+            raise IOError(
+                'no files of format {0} in path: \n {1}'.format(file_name, folder))
+        if len(files)>1:
+            raise IOError(
+            'multiple files found conforming to format {0} in path: \n {1}'.format(
+            file_name, folder))
+            
+        return os.path.basename(files[0])
+
     def _get_data(self, log_file, ftype='gaussian'):
         
+        file_name = self._resolve_wildcards(self._folder, log_file)
         gaussian_handler = _create_cclib_handler(ftype)
-        fd = open(os.path.join(self._folder, log_file), 'rb')
+        fd = open(os.path.join(self._folder, file_name), 'rb')
         data = gaussian_handler(fd)
         fd.close()
-        return data
-
+        return data       
+    
     def add_initialgeom(self, file_name):
         
-        self._init_data = self._get_data(file_name, 'gausscom')
+        self._init_data = self._get_data(file_name, ftype='gausscom')
 
     def add_optimisation(self, file_name):
-        
-        if type(file_name) is list:
+                
+        if type(file_name) is list or type(file_name) is tuple:
             self._opt_data = self._get_data(file_name[-1])
             self._prev_opt_data = []
             for f in file_name[:-1]:

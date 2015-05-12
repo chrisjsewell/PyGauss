@@ -87,14 +87,18 @@ from IPython.display import Image
 import random
 import warnings
 
-def df_to_img(df, na_rep='-', im_exe='convert', other_temp=None,
+_IMGMAGIK = 'convert'
+def set_imagik_exe(name):
+    assert type(name) is str
+    global _IMGMAGIK
+    _IMGMAGIK=name
+
+def df_to_img(df, na_rep='-', other_temp=None,
                width=None, height=None, unconfined=False):
     """ converts a pandas Dataframe to an IPython image 
     
     na_rep : str
         how to represent empty (nan) cells
-    im_name : str
-        the name of the imagemagick executable
     other_temp : str
         a latex template to use for the table other than the default 
         
@@ -164,7 +168,7 @@ def df_to_img(df, na_rep='-', im_exe='convert', other_temp=None,
         raise RuntimeError('pdflatex did not produce a pdf file')
         
     try:
-        proc = subprocess.Popen([im_exe, '-density', '300', '-trim', 
+        proc = subprocess.Popen([_IMGMAGIK, '-trim', '-density', '300', 
                                pdffile, 
                                '-quality', '100', '-sharpen', '0x1.0', 
                                imgname],

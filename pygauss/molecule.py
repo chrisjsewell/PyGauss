@@ -10,6 +10,8 @@ import PIL
 from PIL import Image, ImageChops
 from types import MethodType
 import copy 
+import warnings
+import re
 
 from math import degrees, atan2, sqrt, acos
 
@@ -53,6 +55,8 @@ from cclib.parser.utils import convertor
 
 from chemlab.graphics.colors import get as str_to_colour
 
+import paramiko
+
 #instead of chemview MolecularViewer to add defined colouring
 #also ignore; 'FutureWarning: IPython widgets are experimental and may change in the future.'
 import warnings
@@ -62,11 +66,14 @@ with warnings.catch_warnings():
 
 from .utils import circumcenter
 
-class Molecule:
+class Molecule(object):
+    
     def __init__(self, folder, init_fname=False, opt_fname=False, 
                  freq_fname=False, nbo_fname=False, 
                  pes_fname=False,
-                 alignto=[]):
+                 alignto=[],
+                 ssh_server='', ssh_username='', ssh_passwrd='', verify_ssh=False,
+                 sftp=None):
         """a class to contain gaussian input/output 
         for a single molecular geometry 
         
@@ -90,6 +97,7 @@ class Molecule:
         data is output to the log file 
         """
         self._folder = folder
+        
         self._init_data = None
         self._prev_opt_data = []
         self._opt_data = None
@@ -97,7 +105,16 @@ class Molecule:
         self._nbo_data = None
         self._pes_data = []
         self._alignment_atom_indxs = ()
-        if alignto: self.set_alignment_atoms(*alignto)
+        if alignto: 
+            self.set_alignment_atoms(*alignto)
+        
+        self._ssh_server = ssh_server
+        self._ssh_username = ssh_username
+        self._ssh_passwrd = ssh_passwrd
+        if verify_ssh:
+            raise NotImplementedError(
+            'assumed ssh connection verification done by analysis class for the moment')
+        self._sftp = sftp
         
         if init_fname: self.add_initialgeom(init_fname)        
         if opt_fname: self.add_optimisation(opt_fname)
@@ -107,32 +124,74 @@ class Molecule:
     
     def __repr__(self):
         return '<PyGauss Molecule>'
-    
-    def copy(self):
-        clone = copy.deepcopy(self)
-        return clone        
+            
+    def __deepcopy__(self, memo):
+        if self._ssh_server or self._sftp:
+            warnings.warn('Cannot deepcopy a molecule created via an ssh connection')
+            return copy.copy(self)
+        else:
+            cls = self.__class__
+            result = cls.__new__(cls)
+            memo[id(self)] = result
+            for k, v in self.__dict__.items():
+                setattr(result, k, copy.deepcopy(v, memo))
+            return result
         
-    def _resolve_wildcards(self, folder, file_name):        
+    def _resolve_wildcards(self, file_name, folder, sftp=False):        
         """resolve wildcards in file_name """
         
-        files = glob.glob(os.path.join(folder, file_name))
+        if sftp:
+            allfiles = sftp.listdir(folder)
+            if file_name[0]=='*':
+                file_name = '.*'+file_name                
+            files = filter(lambda x: re.match(file_name,x), allfiles)
+        else:
+            files = glob.glob(os.path.join(folder, file_name))       
+                
         if not files:
             raise IOError(
-                'no files of format {0} in path: \n {1}'.format(file_name, folder))
+                'no files of format {0} in path: {1}'.format(file_name, folder))
         if len(files)>1:
             raise IOError(
-            'multiple files found conforming to format {0} in path: \n {1}'.format(
+            'multiple files found conforming to format {0} in path: {1}'.format(
             file_name, folder))
             
         return os.path.basename(files[0])
 
-    def _get_data(self, log_file, ftype='gaussian'):
-        
-        file_name = self._resolve_wildcards(self._folder, log_file)
+    def _get_data(self, log_file, ftype='gaussian',
+                  ):
+                      
+        if self._ssh_server or self._sftp:
+            if not self._sftp:
+                ssh = paramiko.SSHClient() 
+                ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+    
+                ssh.connect(self._ssh_server, 
+                            username=self._ssh_username, 
+                            password=self._ssh_passwrd)
+                sftp = ssh.open_sftp()
+            else:
+                sftp = self._sftp
+            
+            file_name = self._resolve_wildcards(log_file, self._folder, sftp=sftp)
+            
+            try:
+                fd = sftp.file(os.path.join(self._folder, file_name), 'rb')
+            except:
+                raise IOError('could not find {0}'.format(file_name))
+            
+        else:       
+            file_name = self._resolve_wildcards(log_file, self._folder)
+            fd = open(os.path.join(self._folder, file_name), 'rb')
+               
         gaussian_handler = _create_cclib_handler(ftype)
-        fd = open(os.path.join(self._folder, file_name), 'rb')
         data = gaussian_handler(fd)
+        
         fd.close()
+        
+        if self._ssh_server and not self._sftp:
+            ssh.close()
+
         return data       
     
     def add_initialgeom(self, file_name):

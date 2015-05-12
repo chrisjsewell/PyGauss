@@ -13,9 +13,13 @@ from IPython.core.display import clear_output
 from .molecule import Molecule
 from .utils import df_to_img
 
+import paramiko
+import socket
+import errno
+
 class Analysis(object):
-    def __init__(self, folderpath, 
-                 headers=[]):
+    def __init__(self, folderpath='', 
+                 headers=[], ssh_server='', ssh_username='', ssh_passwrd=''):
         """analysis class 
 
         folderpath : str
@@ -24,9 +28,14 @@ class Analysis(object):
             the variable categories for each computation
         """    
         self._folderpath = False
-        if folderpath: self.set_folderpath(folderpath)
+        self._ssh_server = False
+        self._ssh_username = False
+        #TODO encrypt?
+        self._ssh_passwrd = False
+        if folderpath: self.set_folderpath(folderpath, ssh_server, 
+                                           ssh_username, ssh_passwrd)
             
-        heads = headers[:].append('Molecule')
+        heads = headers[:]+['Molecule']
         
         self._df = pd.DataFrame(columns=heads)
         self._next_index = 0
@@ -41,28 +50,89 @@ class Analysis(object):
     def get_folderpath(self):
         if not self._folderpath:
             raise IOError('folder path not set')
-        return self._folderpath
-    def set_folderpath(self, folderpath): 
-        if not os.path.exists(str(folderpath)):
-            raise ValueError("{0} does not exist".format(folderpath))
-        self._folderpath = folderpath
+        return self._folderpath, self._ssh_server, self._ssh_username
         
+    def set_folderpath(self, folderpath, ssh_server='', 
+                       ssh_username='', ssh_passwrd=''): 
+                   
+        if not ssh_server:
+            if not os.path.exists(str(folderpath)):
+                raise IOError("{0} does not exist".format(folderpath))
+            self._folderpath = folderpath
+        else:
+            ssh = paramiko.SSHClient() 
+            ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+            if not ssh_passwrd:
+                ssh_passwrd = raw_input('Please enter ssh server password:')
+                try:
+                    clear_output()    
+                except:
+                    pass
+
+            
+            #verify ssh connection
+            try:
+                ssh.connect(ssh_server, username=ssh_username, password=ssh_passwrd)
+            except socket.error, e:
+                raise IOError(
+                'could not connect to the ssh server: \n {0} \n {1}'.format(ssh_server, e))
+            except paramiko.ssh_exception.AuthenticationException, e:
+                raise IOError(
+                'username or password authentication error \n {0}'.format(e))
+            except Exception, e:
+                raise IOError('error connectin to server: \n {0}'.format(e))
+            
+            sftp = ssh.open_sftp()
+            try:
+                sftp.stat(folderpath)
+            except IOError, e:
+                ssh.close()
+                if e.errno == errno.ENOENT:
+                    raise IOError("{0} does not exist on server: {1}".format(folderpath, 
+                                                                          ssh_server))
+                else:
+                    IOError('error trying to validate folder \n {0}'.format(e))
+            
+            ssh.close()
+            
+            self._folderpath = folderpath
+            self._ssh_server = ssh_server
+            self._ssh_username = ssh_username
+            self._ssh_passwrd = ssh_passwrd
+            
     folderpath = property(get_folderpath, set_folderpath, 
                         doc="The folderpath for gaussian runs")        
 
     def add_run(self, identifiers={}, 
                       init_fname=None, opt_fname=None, 
                       freq_fname=None, nbo_fname=None,
-                      alignto=[]):
+                      alignto=[], sftp=None):
         """add single Gaussian run input/outputs """             
-        molecule = Molecule(self.folderpath, init_fname, opt_fname, 
-                                            freq_fname, nbo_fname,
-                                            alignto=alignto)
+
+        if not sftp and self._ssh_server:
+            ssh = paramiko.SSHClient() 
+            ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+    
+            ssh.connect(self._ssh_server, 
+                        username=self._ssh_username, 
+                        password=self._ssh_passwrd)
+            mol_sftp = ssh.open_sftp()
+        else:
+            mol_sftp = sftp
+
+        molecule = Molecule(self._folderpath,
+                            init_fname, opt_fname, 
+                            freq_fname, nbo_fname,
+                            sftp=mol_sftp,
+                            alignto=alignto)
         identifiers['Molecule'] = molecule
         series = pd.DataFrame(identifiers, 
                               index=[self._next_index])
         self._df = self._df.copy().append(series)#, ignore_index=True)
         self._next_index += 1
+        
+        if not sftp and self._ssh_server:
+            ssh.close()
         
         return self.get_table()
              
@@ -71,6 +141,17 @@ class Analysis(object):
                  freq_pattern=None, nbo_pattern=None,
                  alignto=[], ipython_print=False):
         """add multiple Gaussian run inputs/outputs """             
+        if self._ssh_server:
+            ssh = paramiko.SSHClient() 
+            ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+    
+            ssh.connect(self._ssh_server, 
+                        username=self._ssh_username, 
+                        password=self._ssh_passwrd)
+            sftp = ssh.open_sftp()
+        else:
+            sftp=None
+
         read_errors=[]
         for idents in product(*values):
             identifiers = dict(zip(headers, idents))
@@ -85,11 +166,19 @@ class Analysis(object):
             
             try:
                 self.add_run(identifiers, init, opt, freq, nbo,
-                             alignto=alignto)
-            except IOError:
+                             alignto=alignto, sftp=sftp)
+            except IOError, e:
+                identifiers['Error_Message'] = str(e)
                 read_errors.append(identifiers)
 
-            if ipython_print: clear_output(wait=True)            
+            if ipython_print: 
+                try:
+                    clear_output(wait=True)    
+                except:
+                    pass
+        
+        if self._ssh_server:
+            ssh.close()
                         
         return self.get_table(), pd.DataFrame(read_errors)
                 

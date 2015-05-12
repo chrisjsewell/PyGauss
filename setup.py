@@ -58,6 +58,7 @@ setup(name='pygauss',
                           "ipython>=3",
                           "scikit-learn>=0.15",
                           "pil",
+                          "paramiko",
                           "cclib",
                           "chemview",
                           "chemlab"

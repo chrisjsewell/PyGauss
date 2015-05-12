@@ -5,6 +5,7 @@ import copy
 
 import pandas as pd
 from pandas.tools.plotting import radviz
+import matplotlib.pyplot as plt
 
 from sklearn.cluster import KMeans
 
@@ -407,6 +408,7 @@ class Analysis(object):
         if category_column not in col_names:
             raise ValueError('{0} not in columns'.format(category_column))
         
+        columns = columns[:]
         if columns and category_column not in columns:
             if all(isinstance(item, int) for item in columns):
                 columns.append(col_names.index(category_column))
@@ -415,7 +417,8 @@ class Analysis(object):
             
         df = self.get_table(rows, columns, filters)
 
-        ax = radviz(df, category_column, s=point_size)
+        f, ax = plt.subplots()
+        ax = radviz(df, category_column, ax=ax, s=point_size)
         ax.axes.get_xaxis().set_visible(False)
         ax.axes.get_yaxis().set_visible(False)
         #ax.set_frame_on(False)

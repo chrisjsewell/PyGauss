@@ -70,7 +70,7 @@ class Molecule(object):
     
     def __init__(self, folder, init_fname=False, opt_fname=False, 
                  freq_fname=False, nbo_fname=False, 
-                 pes_fname=False,
+                 pes_fname=False, fail_silently=False,
                  alignto=[],
                  ssh_server='', ssh_username='', ssh_passwrd='', verify_ssh=False,
                  sftp=None):
@@ -87,6 +87,10 @@ class Molecule(object):
             the frequency analysis log file
         nbo_fname : str
             the population analysis logfile
+        pes_fname : str
+            the potential energy scan logfile
+        fail_silently : bool
+            whether to raise an error if a file read fails (if True can use get_init_read_errors to see errors)
         alignto: [int, int, int]
             the atom numbers to align the geometry to
         
@@ -116,12 +120,25 @@ class Molecule(object):
             'assumed ssh connection verification done by analysis class for the moment')
         self._sftp = sftp
         
-        if init_fname: self.add_initialgeom(init_fname)        
-        if opt_fname: self.add_optimisation(opt_fname)
-        if freq_fname: self.add_frequency(freq_fname)
-        if nbo_fname: self.add_nbo_analysis(nbo_fname)
-        if pes_fname: self.add_pes_analysis(pes_fname)
+        parts=[[init_fname, self.add_initialgeom],
+               [opt_fname,  self.add_optimisation],
+               [freq_fname, self.add_frequency],
+               [nbo_fname, self.add_nbo_analysis],
+               [pes_fname, self.add_pes_analysis]]
+        self._init_read_errors = []
+        for fname, method in parts:
+            if fname:
+                if fail_silently:
+                    try:
+                        method(fname)
+                    except Exception, e:
+                        self._init_read_errors.append([fname, str(e)])   
+                else:
+                    method(fname)
     
+    def get_init_read_errors(self):
+        return self._init_read_errors[:]
+                     
     def __repr__(self):
         return '<PyGauss Molecule>'
             

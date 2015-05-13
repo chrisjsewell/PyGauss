@@ -1,7 +1,8 @@
 # -*- coding: utf-8 -*-
-import os
+import os, glob
 from itertools import product
 import copy
+import re
 
 import pandas as pd
 from pandas.tools.plotting import radviz
@@ -102,11 +103,37 @@ class Analysis(object):
             self._ssh_passwrd = ssh_passwrd
             
     folderpath = property(get_folderpath, set_folderpath, 
-                        doc="The folderpath for gaussian runs")        
+                        doc="The folderpath for gaussian runs")      
+    
+    def list_files_in_dir(self, pattern=None):
+        if not self._folderpath:
+            raise IOError('no folder set')
+        if self._ssh_server:
+            ssh = paramiko.SSHClient() 
+            ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+
+            ssh.connect(self._ssh_server, 
+                        username=self._ssh_username, 
+                        password=self._ssh_passwrd)
+            sftp = ssh.open_sftp()
+            files = sftp.listdir(self._folderpath)
+            if pattern:
+                pattern = "".join(
+                [ c if c.isalnum() or c=='*' else "["+c+"]" for c in pattern]
+                ).replace('*', '.*')
+                files = filter(lambda x: re.match(pattern,x), files)
+        else:
+            if not pattern:
+                pattern = '*'
+            filepaths = glob.glob(os.path.join(self._folderpath, pattern))
+            files = [os.path.basename(f) for f in filepaths]
+        
+        return files
 
     def add_run(self, identifiers={}, 
                       init_fname=None, opt_fname=None, 
                       freq_fname=None, nbo_fname=None,
+                      add_if_error=False,
                       alignto=[], sftp=None):
         """add single Gaussian run input/outputs """             
 
@@ -125,20 +152,29 @@ class Analysis(object):
                             init_fname, opt_fname, 
                             freq_fname, nbo_fname,
                             sftp=mol_sftp,
-                            alignto=alignto)
-        identifiers['Molecule'] = molecule
-        series = pd.DataFrame(identifiers, 
-                              index=[self._next_index])
-        self._df = self._df.copy().append(series)#, ignore_index=True)
-        self._next_index += 1
+                            alignto=alignto,
+                            fail_silently=True)
+        
+        num_files = filter(lambda x:x, [init_fname, opt_fname, 
+                                        freq_fname, nbo_fname])
+        if not len(molecule.get_init_read_errors()) == num_files:
+            if not molecule.get_init_read_errors() or add_if_error:
+                    
+                identifiers['Molecule'] = molecule
+                series = pd.DataFrame(identifiers, 
+                                      index=[self._next_index])
+                self._df = self._df.copy().append(series)#, ignore_index=True)
+                self._next_index += 1
         
         if not sftp and self._ssh_server:
             ssh.close()
         
+        return molecule.get_init_read_errors() 
              
     def add_runs(self, headers=[], values=[], 
                  init_pattern=None, opt_pattern=None, 
                  freq_pattern=None, nbo_pattern=None,
+                 add_if_error=False,
                  alignto=[], ipython_print=False):
         """add multiple Gaussian run inputs/outputs """             
         if self._ssh_server:
@@ -166,12 +202,15 @@ class Analysis(object):
             freq = freq_pattern.format(*idents) if freq_pattern else None
             nbo = nbo_pattern.format(*idents) if nbo_pattern else None
             
-            try:
-                self.add_run(identifiers, init, opt, freq, nbo,
-                             alignto=alignto, sftp=sftp)
-            except IOError, e:
-                identifiers['Error_Message'] = str(e)
-                read_errors.append(identifiers)
+            file_read_errs = self.add_run(identifiers, init, opt, freq, nbo,
+                        add_if_error=add_if_error, alignto=alignto, sftp=sftp)
+            
+            for fname, msg in file_read_errs:
+                idents = identifiers.copy()
+                idents.pop('Molecule', '_')
+                idents['File'] = fname
+                idents['Error_Message'] = msg
+                read_errors.append(idents)
 
             if ipython_print: 
                 try:
@@ -182,7 +221,16 @@ class Analysis(object):
         if self._ssh_server:
             ssh.close()
                         
-        return pd.DataFrame(read_errors)
+        err_df = pd.DataFrame(read_errors)
+        if read_errors:
+            cols = err_df.columns.tolist()
+            cols.remove('File')
+            cols.append('File')
+            cols.remove('Error_Message')
+            cols.append('Error_Message')
+            err_df = err_df[cols]
+        
+        return err_df
                 
     def get_table(self, rows=[], columns=[],  filters={},
                   precision=4, head=False, mol=False, 
@@ -234,6 +282,11 @@ class Analysis(object):
         if rows:
             df = df.loc[rows] 
         if columns:
+            if type(row_index) is list:
+                columns += row_index
+            else:
+                columns.append(row_index)
+            columns = list(set(columns))
             df = df.ix[:,columns]            
             
         if row_index: df = df.set_index(row_index) 
@@ -277,14 +330,22 @@ class Analysis(object):
                        'conformer': 'is_conformer'}
                        
     def get_basic_property(self, prop):
-        """returns a series of a basic run property
+        """returns a series of a basic run property or nan if it is not available
 
         prop = 'basis', 'nbasis', 'optimised' or 'conformer'        
         """
         if prop not in self._basic_properties.keys():
             raise ValueError('{0} not a molecule property'.format(prop))
-        return self._df.Molecule.map(
-            lambda m: getattr(m, self._basic_properties[prop])())
+        
+        def get_prop(m):
+            method = getattr(m, self._basic_properties[prop])
+            try: 
+                out = method()
+            except:
+                out = pd.np.nan
+            return out
+            
+        return self._df.Molecule.map(get_prop)
 
     def add_basic_properties(self, props=['basis', 'nbasis', 
                                           'optimised', 'conformer']):
@@ -301,13 +362,13 @@ class Analysis(object):
     
     def remove_non_optimised(self):
         """removes runs that were not optimised """
-        non_optimised = self._df[self.get_basic_property('optimised')==False].copy()
+        non_optimised = self._df[self.get_basic_property('optimised')!=True].copy()
         self._df = self._df[self.get_basic_property('optimised')==True]
         return non_optimised
         
     def remove_non_conformers(self):
         """removes runs with negative frequencies """
-        non_conformers = self._df[self.get_basic_property('conformer')==False].copy()
+        non_conformers = self._df[self.get_basic_property('conformer')!=True].copy()
         self._df = self._df[self.get_basic_property('conformer')==True]
         return non_conformers
 
@@ -334,17 +395,19 @@ class Analysis(object):
         if type(name) is tuple or type(name) is list:
             for idx, n in enumerate(name):
                 func = lambda m: getattr(m, method)(*args, **kwargs)[idx]
+                vals = df.Molecule.map(func)
                 if n in self._df.columns:
-                    self._df[n] = df.Molecule.map(func).combine_first(self._df[n])
+                    self._df[n] = vals.combine_first(self._df[n])
                 else:                
-                    self._df[n] = df.Molecule.map(func)
+                    self._df[n] = vals
     
         else:
             func = lambda m: getattr(m, method)(*args, **kwargs)
+            vals = df.Molecule.map(func)
             if name in self._df.columns:
-                self._df[name] = df.Molecule.map(func).combine_first(self._df[name])
+                self._df[name] = vals.combine_first(self._df[name])
             else:                
-                self._df[name] = df.Molecule.map(func)
+                self._df[name] = vals
         
         return self.get_table()
             

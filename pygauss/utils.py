@@ -83,17 +83,50 @@ try:
 except ImportError:
     DEVNULL = open(os.devnull, 'r+b', 0)
 
-from IPython.display import Image
+from IPython.display import Image as IPy_Image
+#from PIL import Image
+#from io import BytesIO
 import random
 import warnings
 
+from scipy.interpolate import interp1d
 _IMGMAGIK = 'convert'
 def set_imagik_exe(name):
     assert type(name) is str
     global _IMGMAGIK
     _IMGMAGIK=name
 
-def df_to_img(df, na_rep='-', other_temp=None,
+_PTS_TO_PIX = {
+10.5: 14,
+  10: 13,
+  11: 15,
+  12: 16,
+  13.5: 18,
+  13: 17,
+  14.5: 20,
+  14: 19,
+  15: 21,
+  16: 22,
+  17: 23,
+  18: 24,
+  20: 26,
+  22: 29,
+  24: 32,
+  26: 35,
+  27: 36,
+  28: 37,
+  29: 38,
+  30: 40,
+  32: 42,
+  34: 45,
+  36: 48,
+  6: 8,
+  7.5: 10,
+  7: 9,
+  8: 11,
+  9: 12}
+  
+def df_to_img(df, na_rep='-', other_temp=None, font_size=None,
                width=None, height=None, unconfined=False):
     """ converts a pandas Dataframe to an IPython image 
     
@@ -116,6 +149,15 @@ def df_to_img(df, na_rep='-', other_temp=None,
     existing application. To overcome this change its filename and use the 
     im_name variable.
     """
+    if font_size:
+        #estimate height of table to give certain font size
+        row_height = interp1d(_PTS_TO_PIX.keys(),
+                              _PTS_TO_PIX.values())(font_size) 
+        if hasattr(df.columns, 'levels'):
+            header_rows = len(df.columns.levels)
+        else:
+            header_rows = 1
+        tbl_height = int((header_rows + df.shape[0])*row_height*1.15)
 
     # pandas 0.16 has a bug when using heirarchical row indexes
     use_indx = True
@@ -167,11 +209,13 @@ def df_to_img(df, na_rep='-', other_temp=None,
     if not os.path.exists(pdffile): 
         raise RuntimeError('pdflatex did not produce a pdf file')
         
+    inargs = [_IMGMAGIK, '-trim', '-density', '600',  pdffile, 
+              '-quality', '100', '-sharpen', '0x1.0', imgname]
+    if font_size:
+        inargs.insert(2, '-resize')
+        inargs.insert(3, 'x{0}'.format(tbl_height))
     try:
-        proc = subprocess.Popen([_IMGMAGIK, '-trim', '-density', '300', 
-                               pdffile, 
-                               '-quality', '100', '-sharpen', '0x1.0', 
-                               imgname],
+        proc = subprocess.Popen(inargs,
                      stdin=DEVNULL, stdout=PIPE, stderr=PIPE)
         out, err = proc.communicate()
     except:
@@ -187,13 +231,25 @@ def df_to_img(df, na_rep='-', other_temp=None,
     if not os.path.exists(imgname): 
         raise RuntimeError('imagemagick did not produce a png file')
     
-    ipy_img = Image(filename=imgname, width=width, height=height, 
+    
+#    img = Image.open(imgname)
+#    hpercent = (tbl_height / float(img.size[1]))
+#    tbl_width = int((float(img.size[0]) * float(hpercent)))
+#
+#    img = img.resize((tbl_width, tbl_height), Image.ANTIALIAS)    
+#
+#    b = BytesIO()
+#    img.save(b, format='png')    
+#    
+#    ipy_img = IPy_Image(data=b.getvalue(), width=width, height=height, 
+#                    unconfined=unconfined)
+    ipy_img = IPy_Image(filename=imgname, width=width, height=height, 
                     unconfined=unconfined)
     os.unlink(imgname)
     
     return ipy_img
 
-def img_to_file(img, folder_path, img_name):
+def ipy_img_tofile(img, folder_path, img_name):
     """a function for outputing an IPython Image to a file
     
     img : IPython.display.Image
@@ -222,7 +278,26 @@ def img_to_file(img, folder_path, img_name):
         f.write(data)
     
     return os.path.abspath(os.path.join(folder_path, img_name)+ext)
-    
+
+from IPython.display import display
+
+def iprint_kmean_groups(analysis, category, cat_name, groups,
+                columns, filters={}, output=[], **kwargs):
+    df = analysis.calc_kmean_groups(
+        category, cat_name, groups, columns=columns, 
+        filters=filters)
+    for cat, gf in df.groupby('Category'):
+        print '-------------'
+        print 'Category {0}:'.format(cat)
+        print '-------------'
+        mols = analysis.yield_mol_images(
+            rows=gf.index.tolist(), **kwargs)
+        for row, mol in mols: 
+            info=analysis.get_table(rows=row).iloc[0]
+            outstr = ', '.join(
+                ['{0}: {1}'.format(v, getattr(info, v)) for v in output])
+            print outstr
+            display(mol)    
     
 
 if __name__ == '__main__':    

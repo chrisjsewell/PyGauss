@@ -185,7 +185,7 @@ class Analysis(object):
     def get_table(self, rows=[], columns=[],  filters={},
                   precision=4, head=False, mol=False, 
                   row_index=[], column_index=[], 
-                  as_image=False, na_rep='-',
+                  as_image=False, na_rep='-', font_size=None,
                   width=None, height=None, unconfined=False):
         """return pandas table of requested data in requested format
 
@@ -252,7 +252,7 @@ class Analysis(object):
             df = df.head(head)
         
         if as_image:
-            return df_to_img(df, na_rep=na_rep,
+            return df_to_img(df, na_rep=na_rep, font_size=font_size,
                              width=width, height=height, unconfined=unconfined)            
             
         return df
@@ -421,7 +421,9 @@ class Analysis(object):
         ax = radviz(df, category_column, ax=ax, s=point_size)
         ax.axes.get_xaxis().set_visible(False)
         ax.axes.get_yaxis().set_visible(False)
-        #ax.set_frame_on(False)
+        ax.set_frame_on(False)
+        ax.legend(bbox_to_anchor=(1.05, 1), loc=2, borderaxespad=0.)
+        
         return ax
     
     def calc_kmean_groups(self, category_column, category_name, groups,

@@ -161,6 +161,8 @@ class Analysis(object):
                 opt = opt_pattern.format(*idents) if opt_pattern else None
             elif type(opt_pattern) is list or type(opt_pattern) is tuple:
                 opt = [o.format(*idents) for o in opt_pattern]
+            else:
+                opt = None
             freq = freq_pattern.format(*idents) if freq_pattern else None
             nbo = nbo_pattern.format(*idents) if nbo_pattern else None
             

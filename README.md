@@ -232,7 +232,7 @@ Multiple computations, for instance of different starting conformations, can be 
 
 
 
-**New Feature:** you can now access files on a server over ssh in the following manner:
+**New Feature:** you can now access files on a server over ssh (using [paramiko](http://www.paramiko.org/)) in the following manner:
 
     analysis = pg.Analysis( '/path/to/folder', 
                     ssh_server='login.server.com',

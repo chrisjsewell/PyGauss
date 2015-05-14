@@ -53,6 +53,23 @@ class Analysis(object):
         if not self._folderpath:
             raise IOError('folder path not set')
         return self._folderpath, self._ssh_server, self._ssh_username
+
+    def _connect_ssh(self, ssh_server, ssh_username, ssh_passwrd):
+        """ connect and verify ssh connection """
+        ssh = paramiko.SSHClient() 
+        ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+        try:
+            ssh.connect(ssh_server, username=ssh_username, password=ssh_passwrd)
+        except socket.error, e:
+            raise IOError(
+            'could not connect to the ssh server: \n {0} \n {1}'.format(ssh_server, e))
+        except paramiko.ssh_exception.AuthenticationException, e:
+            raise IOError(
+            'username or password authentication error \n {0}'.format(e))
+        except Exception, e:
+            raise IOError('error connectin to server: \n {0}'.format(e))
+
+        return ssh
         
     def set_folderpath(self, folderpath, ssh_server='', 
                        ssh_username='', ssh_passwrd=''): 
@@ -62,8 +79,6 @@ class Analysis(object):
                 raise IOError("{0} does not exist".format(folderpath))
             self._folderpath = folderpath
         else:
-            ssh = paramiko.SSHClient() 
-            ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
             if not ssh_passwrd:
                 ssh_passwrd = raw_input('Please enter ssh server password:')
                 try:
@@ -71,19 +86,8 @@ class Analysis(object):
                 except:
                     pass
 
-            
-            #verify ssh connection
-            try:
-                ssh.connect(ssh_server, username=ssh_username, password=ssh_passwrd)
-            except socket.error, e:
-                raise IOError(
-                'could not connect to the ssh server: \n {0} \n {1}'.format(ssh_server, e))
-            except paramiko.ssh_exception.AuthenticationException, e:
-                raise IOError(
-                'username or password authentication error \n {0}'.format(e))
-            except Exception, e:
-                raise IOError('error connectin to server: \n {0}'.format(e))
-            
+            ssh = self._connect_ssh(ssh_server, ssh_username, ssh_passwrd)
+
             sftp = ssh.open_sftp()
             try:
                 sftp.stat(folderpath)
@@ -109,14 +113,14 @@ class Analysis(object):
         if not self._folderpath:
             raise IOError('no folder set')
         if self._ssh_server:
-            ssh = paramiko.SSHClient() 
-            ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
 
-            ssh.connect(self._ssh_server, 
-                        username=self._ssh_username, 
-                        password=self._ssh_passwrd)
+            ssh = self._connect_ssh(self._ssh_server, 
+                              self._ssh_username, self._ssh_passwrd)
+
             sftp = ssh.open_sftp()
             files = sftp.listdir(self._folderpath)
+            
+            ssh.close()
             if pattern:
                 pattern = "".join(
                 [ c if c.isalnum() or c=='*' else "["+c+"]" for c in pattern]
@@ -138,12 +142,10 @@ class Analysis(object):
         """add single Gaussian run input/outputs """             
 
         if not sftp and self._ssh_server:
-            ssh = paramiko.SSHClient() 
-            ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
     
-            ssh.connect(self._ssh_server, 
-                        username=self._ssh_username, 
-                        password=self._ssh_passwrd)
+            ssh = self._connect_ssh(self._ssh_server, 
+                              self._ssh_username, self._ssh_passwrd)
+                              
             mol_sftp = ssh.open_sftp()
         else:
             mol_sftp = sftp
@@ -178,12 +180,10 @@ class Analysis(object):
                  alignto=[], ipython_print=False):
         """add multiple Gaussian run inputs/outputs """             
         if self._ssh_server:
-            ssh = paramiko.SSHClient() 
-            ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
     
-            ssh.connect(self._ssh_server, 
-                        username=self._ssh_username, 
-                        password=self._ssh_passwrd)
+            ssh = self._connect_ssh(self._ssh_server, 
+                              self._ssh_username, self._ssh_passwrd)
+                              
             sftp = ssh.open_sftp()
         else:
             sftp=None

@@ -197,8 +197,8 @@ class Molecule(object):
             
             try:
                 fd = sftp.file(os.path.join(self._folder, file_name), 'rb')
-            except:
-                raise IOError('could not find {0}'.format(file_name))
+            except Exception, e:
+                raise IOError('could not find {0} (errno {1})'.format(file_name, e.errno))
             
         else:       
             file_name = self._resolve_wildcards(log_file, self._folder)

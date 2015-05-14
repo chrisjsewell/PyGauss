@@ -64,8 +64,8 @@ The Hard Way (Windows)
 ~~~~~~~~~~~~~~~~~~~~~~
 
 There is currently no pygauss conda distributable for Windows or for
-chemlab which has C-extensions that need to be built using a compiler.
-Therfore it will need to be cloned from GitHub. the extensions built,
+chemlab, which has C-extensions that need to be built using a compiler.
+Therefore it will need to be cloned from GitHub. the extensions built,
 dependancies installed and finally installed.
 
 ::
@@ -105,7 +105,7 @@ starting with the following:
 
 .. parsed-literal::
 
-    '0.2.2'
+    '0.3.0'
 
 
 
@@ -228,21 +228,43 @@ can be grouped into an *Analysis* class.
 
 .. code:: python
 
-    analysis = pg.analysis.Analysis(folder)
-    df, errors = analysis.add_runs(headers=['Cation', 'Anion', 'Initial'], 
+    analysis = pg.Analysis(folder)
+    errors = analysis.add_runs(headers=['Cation', 'Anion', 'Initial'], 
                                    values=[['emim'], ['cl'],
                                            ['B', 'BE', 'BM', 'F', 'FE', 'FM']],
-                init_pattern='CJS1_{0}-{1}_{2}_init.com',
-                opt_pattern='CJS1_{0}-{1}_{2}_6-311+g-d-p-_gd3bj_opt-modredundant_unfrz.log',
-                freq_pattern='CJS1_{0}-{1}_{2}_6-311+g-d-p-_gd3bj_freq_unfrz.log',
-                nbo_pattern='CJS1_{0}-{1}_{2}_6-311+g-d-p-_gd3bj_pop-nbo-full-_unfrz.log')
-    print 'Read Errors:', errors
+                init_pattern='*{0}-{1}_{2}_init.com',
+                opt_pattern='*{0}-{1}_{2}_6-311+g-d-p-_gd3bj_opt*unfrz.log',
+                freq_pattern='*{0}-{1}_{2}_6-311+g-d-p-_gd3bj_freq*.log',
+                nbo_pattern='*{0}-{1}_{2}_6-311+g-d-p-_gd3bj_pop-nbo-full-*.log')
+    print 'Read Errors:'
+    errors.File
 
 
 .. parsed-literal::
 
-    Read Errors: [{'Cation': 'emim', 'Initial': 'FM', 'Anion': 'cl'}]
+    Read Errors:
     
+
+
+
+.. parsed-literal::
+
+    0                                 *emim-cl_FM_init.com
+    1         *emim-cl_FM_6-311+g-d-p-_gd3bj_opt*unfrz.log
+    2             *emim-cl_FM_6-311+g-d-p-_gd3bj_freq*.log
+    3    *emim-cl_FM_6-311+g-d-p-_gd3bj_pop-nbo-full-*.log
+    Name: File, dtype: object
+
+
+
+**New Feature:** you can now access files on a server over ssh in the
+following manner:
+
+::
+
+    analysis = pg.Analysis( '/path/to/folder', 
+                    ssh_server='login.server.com',
+                    ssh_username='username')
 
 The methods mentioned for indivdiual molecules can then be applied to
 all or a subset of these computations.
@@ -256,6 +278,8 @@ all or a subset of these computations.
     analysis.add_mol_property('Anion Charge', 'calc_nbo_charge', [20])
     analysis.add_mol_property(['Anion-Cation, $r$', 'Anion-Cation, $\\theta$', 'Anion-Cation, $\\phi$'], 
                                    'calc_polar_coords_from_plane', 3, 2, 1, 20)
+    analysis.get_table(row_index=['Anion', 'Cation', 'Initial'], 
+                       column_index=['Cation', 'Anion', 'Anion-Cation'])
     analysis
 
 
@@ -281,12 +305,12 @@ to output the tables as a latex formatted image.
 
     analysis.get_table(row_index=['Anion', 'Cation', 'Initial'],
                        column_index=['Cation', 'Anion', 'Anion-Cation'],
-                       as_image=True, im_exe='convert_pdf')
+                       as_image=True, font_size=12)
 
 
 
 
-.. image:: output_23_0.png
+.. image:: output_24_0.png
 
 
 
@@ -298,10 +322,10 @@ RadViz is a way of visualizing multi-variate data.
 
 
 
-.. image:: output_25_0.png
+.. image:: output_26_0.png
 
 
-The KMeans algorithm clusters data by trying to separate samples in n
+The KMeans algorithm clusters data by trying to separate samples into n
 groups of equal variance.
 
 .. code:: python
@@ -309,63 +333,66 @@ groups of equal variance.
     kwargs = {'mtype':'optimised', 'align_to':[3,2,1], 
                 'rotations':[[0, 0, 90], [-90, 90, 0]],
                 'axis_length':0.3}
-    def show_groups(df):
-        for cat, gf in df.groupby('Category'):
-            print 'Category {0}:'.format(cat)
-            mols = analysis.yield_mol_images(rows=gf.index.tolist(), **kwargs)
-            for mol, row in zip(mols, gf.index.tolist()): 
-                print '(row {0})'.format(row)
-                display(mol)
-    show_groups(analysis.calc_kmean_groups('Anion', 'cl', 4, columns=range(4, 10)))
+    pg.utils.iprint_kmean_groups(analysis, 'Anion', 'cl', 4, 
+                                 range(4, 10), output=['Initial'],
+                                 **kwargs)
 
 
 .. parsed-literal::
 
+    -------------
     Category 0:
-    (row 2)
+    -------------
+    Initial: B
     
 
 
-.. image:: output_27_1.png
+.. image:: output_28_1.png
 
 
 .. parsed-literal::
 
+    Initial: BE
+    
+
+
+.. image:: output_28_3.png
+
+
+.. parsed-literal::
+
+    -------------
     Category 1:
-    (row 0)
+    -------------
+    Initial: BM
     
 
 
-.. image:: output_27_3.png
+.. image:: output_28_5.png
 
 
 .. parsed-literal::
 
-    (row 1)
-    
-
-
-.. image:: output_27_5.png
-
-
-.. parsed-literal::
-
+    -------------
     Category 2:
-    (row 4)
+    -------------
+    Initial: FE
     
 
 
-.. image:: output_27_7.png
+.. image:: output_28_7.png
 
 
 .. parsed-literal::
 
+    -------------
     Category 3:
-    (row 3)
+    -------------
+    Initial: F
     
 
 
-.. image:: output_27_9.png
+.. image:: output_28_9.png
 
 
 MORE TO COME!!

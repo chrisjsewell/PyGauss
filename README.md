@@ -34,7 +34,7 @@ There is currently no pygauss conda distributable for Linux, but there is for ch
     
 ###The Hard Way (Windows)
 
-There is currently no pygauss conda distributable for Windows or for chemlab which has C-extensions that need to be built using a compiler. Therfore it will need to be cloned from GitHub. the extensions built, dependancies installed and finally installed.
+There is currently no pygauss conda distributable for Windows or for chemlab, which has C-extensions that need to be built using a compiler. Therefore it will need to be cloned from GitHub. the extensions built, dependancies installed and finally installed.
 
     conda create -n pg_env python=2.7
 	conda install -n pg_env -c https://conda.binstar.org/cjs14 cclib
@@ -62,7 +62,9 @@ You should then be able to open an assessment in IPython Notebook starting with 
     pg.__version__
 
 
-    '0.2.1'
+
+
+    '0.3.0'
 
 
 
@@ -159,21 +161,82 @@ Natural Bond Orbital and Second Order Perturbation Theory analysis...
 
 ###Multiple Computations Analysis
 
-Multiple computations, for instance of different starting conformations, can be grouped into an *Analysis* class.
+Multiple computations, for instance of different starting conformations, can be grouped into an *Analysis* class. 
 
 
-    analysis = pg.analysis.Analysis(folder)
-    df, errors = analysis.add_runs(headers=['Cation', 'Anion', 'Initial'], 
+    analysis = pg.Analysis(folder)
+    errors = analysis.add_runs(headers=['Cation', 'Anion', 'Initial'], 
                                    values=[['emim'], ['cl'],
                                            ['B', 'BE', 'BM', 'F', 'FE', 'FM']],
-                init_pattern='CJS1_{0}-{1}_{2}_init.com',
-                opt_pattern='CJS1_{0}-{1}_{2}_6-311+g-d-p-_gd3bj_opt-modredundant_unfrz.log',
-                freq_pattern='CJS1_{0}-{1}_{2}_6-311+g-d-p-_gd3bj_freq_unfrz.log',
-                nbo_pattern='CJS1_{0}-{1}_{2}_6-311+g-d-p-_gd3bj_pop-nbo-full-_unfrz.log')
-    print 'Read Errors:', errors
+                init_pattern='*{0}-{1}_{2}_init.com',
+                opt_pattern='*{0}-{1}_{2}_6-311+g-d-p-_gd3bj_opt*unfrz.log',
+                freq_pattern='*{0}-{1}_{2}_6-311+g-d-p-_gd3bj_freq*.log',
+                nbo_pattern='*{0}-{1}_{2}_6-311+g-d-p-_gd3bj_pop-nbo-full-*.log')
+    print 'Read Errors:'
+    errors
 
-    Read Errors: [{'Cation': 'emim', 'Initial': 'FM', 'Anion': 'cl'}]
+    Read Errors:
     
+
+
+
+
+<div style="max-height:1000px;max-width:1500px;overflow:auto;">
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>Anion</th>
+      <th>Cation</th>
+      <th>Initial</th>
+      <th>File</th>
+      <th>Error_Message</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>cl</td>
+      <td>emim</td>
+      <td>FM</td>
+      <td>*emim-cl_FM_init.com</td>
+      <td>no files of format *emim-cl_FM_init.com in pat...</td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>cl</td>
+      <td>emim</td>
+      <td>FM</td>
+      <td>*emim-cl_FM_6-311+g-d-p-_gd3bj_opt*unfrz.log</td>
+      <td>no files of format *emim-cl_FM_6-311+g-d-p-_gd...</td>
+    </tr>
+    <tr>
+      <th>2</th>
+      <td>cl</td>
+      <td>emim</td>
+      <td>FM</td>
+      <td>*emim-cl_FM_6-311+g-d-p-_gd3bj_freq*.log</td>
+      <td>no files of format *emim-cl_FM_6-311+g-d-p-_gd...</td>
+    </tr>
+    <tr>
+      <th>3</th>
+      <td>cl</td>
+      <td>emim</td>
+      <td>FM</td>
+      <td>*emim-cl_FM_6-311+g-d-p-_gd3bj_pop-nbo-full-*.log</td>
+      <td>no files of format *emim-cl_FM_6-311+g-d-p-_gd...</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+
+
+
+**New Feature:** you can now access files on a server over ssh in the following manner:
+
+    analysis = pg.Analysis( '/path/to/folder', 
+                    ssh_server='login.server.com',
+                    ssh_username='username')
 
 The methods mentioned for indivdiual molecules can then be applied to all or a subset of these computations.
 
@@ -299,12 +362,12 @@ The methods mentioned for indivdiual molecules can then be applied to all or a s
 
     analysis.get_table(row_index=['Anion', 'Cation', 'Initial'],
                        column_index=['Cation', 'Anion', 'Anion-Cation'],
-                       as_image=True, im_exe='convert_pdf')
+                       as_image=True, font_size=12)
 
 
 
 
-![png](readme_images/output_23_0.png)
+![png](readme_images/output_24_0.png)
 
 
 
@@ -314,61 +377,64 @@ RadViz is a way of visualizing multi-variate data.
     ax = analysis.plot_radviz_comparison('Anion', columns=range(4, 10))
 
 
-![png](readme_images/output_25_0.png)
+![png](readme_images/output_26_0.png)
 
 
-The KMeans algorithm clusters data by trying to separate samples in n groups of equal variance.
+The KMeans algorithm clusters data by trying to separate samples into n groups of equal variance.
 
 
     kwargs = {'mtype':'optimised', 'align_to':[3,2,1], 
                 'rotations':[[0, 0, 90], [-90, 90, 0]],
                 'axis_length':0.3}
-    def show_groups(df):
-        for cat, gf in df.groupby('Category'):
-            print 'Category {0}:'.format(cat)
-            mols = analysis.yield_mol_images(rows=gf.index.tolist(), **kwargs)
-            for mol, row in zip(mols, gf.index.tolist()): 
-                print '(row {0})'.format(row)
-                display(mol)
-    show_groups(analysis.calc_kmean_groups('Anion', 'cl', 4, columns=range(4, 10)))
+    pg.utils.iprint_kmean_groups(analysis, 'Anion', 'cl', 4, 
+                                 range(4, 10), output=['Initial'],
+                                 **kwargs)
 
+    -------------
     Category 0:
-    (row 0)
+    -------------
+    Initial: B
     
 
 
-![png](readme_images/output_27_1.png)
+![png](readme_images/output_28_1.png)
 
 
-    (row 1)
+    Initial: BE
     
 
 
-![png](readme_images/output_27_3.png)
+![png](readme_images/output_28_3.png)
 
 
+    -------------
     Category 1:
-    (row 2)
+    -------------
+    Initial: BM
     
 
 
-![png](readme_images/output_27_5.png)
+![png](readme_images/output_28_5.png)
 
 
+    -------------
     Category 2:
-    (row 4)
+    -------------
+    Initial: FE
     
 
 
-![png](readme_images/output_27_7.png)
+![png](readme_images/output_28_7.png)
 
 
+    -------------
     Category 3:
-    (row 3)
+    -------------
+    Initial: F
     
 
 
-![png](readme_images/output_27_9.png)
+![png](readme_images/output_28_9.png)
 
 
 MORE TO COME!!

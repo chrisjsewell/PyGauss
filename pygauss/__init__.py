@@ -30,4 +30,3 @@ def get_test_folder():
 
 from .utils import df_to_img, ipy_img_tofile, set_imagik_exe
 
-from . import test_molecule, test_analysis

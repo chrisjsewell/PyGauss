@@ -195,10 +195,15 @@ class Molecule(object):
             
             file_name = self._resolve_wildcards(log_file, self._folder, sftp=sftp)
             
+            #assume it is a linux server (so '/' is path seperator)
+            #otherwise if you use os.path.join on a windows os it will not find
+            if not self._folder[-1] == '/':
+                self._folder += '/'
+            file_path = self._folder + file_name
             try:
-                fd = sftp.file(os.path.join(self._folder, file_name), 'rb')
+                fd = sftp.file(file_path, 'rb')
             except Exception, e:
-                raise IOError('could not find {0} (errno {1})'.format(file_name, e.errno))
+                raise IOError('could not find {0} (errno {1})'.format(file_path, e.errno))
             
         else:       
             file_name = self._resolve_wildcards(log_file, self._folder)

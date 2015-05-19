@@ -226,12 +226,13 @@ class Analysis(object):
     _basic_properties={'nbasis':'get_basis_funcs',
                         'basis':'get_basis_descript',
                        'optimised':'is_optimised',
+                       'opt_error': 'get_run_error',
                        'conformer': 'is_conformer'}
                        
     def get_basic_property(self, prop):
         """returns a series of a basic run property or nan if it is not available
 
-        prop = 'basis', 'nbasis', 'optimised' or 'conformer'        
+        prop = 'basis', 'nbasis', 'optimised', 'opt_error' or 'conformer'        
         """
         if prop not in self._basic_properties.keys():
             raise ValueError('{0} not a molecule property'.format(prop))

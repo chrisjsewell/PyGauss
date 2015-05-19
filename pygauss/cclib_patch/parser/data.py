@@ -80,7 +80,7 @@ class ccData(object):
             the 11th molecular orbital is the HOMO
     """
 
-    # CJS added some attributes; basis_descript, nscans, sopt
+    # CJS added some attributes; basis_descript, nscans, sopt, run_error
     # The expected types for all supported attributes.
     _attrtypes = {
         "aonames":        list,
@@ -125,6 +125,7 @@ class ccData(object):
         "nocoeffs":       numpy.ndarray,
         "nscans":         int,
         "optdone":        bool,
+        "run_error":      bool,
         "scancoords":     numpy.ndarray,
         "scanenergies":   list,
         "scannames":      list,

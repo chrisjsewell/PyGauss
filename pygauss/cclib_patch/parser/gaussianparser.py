@@ -80,7 +80,7 @@ class Gaussian(logfileparser.Logfile):
         # CJS to catch unfinished optimisations
         if not hasattr(self, 'optdone'):
             self.optdone = []
-
+        self.set_attribute('run_error', False)
 
     def after_parsing(self):
 
@@ -1449,6 +1449,10 @@ class Gaussian(logfileparser.Logfile):
             self.set_attribute('freenergy', float(line.split()[7]))
         if line[1:12] == "Temperature":
             self.set_attribute('temperature', float(line.split()[1]))
+        
+        #CJS to capture errors in the run
+        if line[1:18] == 'Error termination':
+            self.run_error = True
 
 
 if __name__ == "__main__":

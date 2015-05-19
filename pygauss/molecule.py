@@ -201,6 +201,10 @@ class Molecule(object):
         
         return self._opt_data.read('nbasis')
         
+    def get_run_error(self, rtype='opt'):
+        
+        return getattr(self, '_{0}_data'.format(rtype)).read('run_error')
+        
     def is_optimised(self):
         
         return self._opt_data.read('optdone')
@@ -237,9 +241,9 @@ class Molecule(object):
         
         return ax
 
-    def is_conformer(self):
+    def is_conformer(self, cutoff=0.):
         
-        imgaginary_freqs = self._freq_data.read('vibfreqs') < 0. 
+        imgaginary_freqs = self._freq_data.read('vibfreqs') < cutoff 
         return not imgaginary_freqs.any()
         
     def plot_IRfreqs(self):

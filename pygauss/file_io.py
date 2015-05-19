@@ -180,25 +180,54 @@ class Folder:
         else:
             return files[0]
     
-    def open_file(self, file_name, mode='rb'):
+    def read_file(self, file_name):
         """ """
+        mode='rb'
+        
         file_name = self.list_files(file_name, one_file=True)
         
         if self._local:
             return open(os.path.join(self._path, file_name), mode)
 
-        #assume it is a linux server (so '/' is path seperator)
+        #assume it is a unix server (so '/' is path seperator)
         #otherwise if you use os.path.join on a windows os it will not find
         if not self._path[-1] == '/':
             file_path = self._path + '/' + file_name
         else:
             file_path = self._path + file_name
         
-        if not self._ssh:  
-            raise IOError('must have an open ssh connection (use with statement)')
+        if not self._sftp:  
+            raise IOError('must have an open ssh connection (use `with` statement)')
               
         return self._sftp.file(file_path, mode)
-            
+
+    def write_file(self, file_name, overwrite=False):
+        """ """
+        mode = 'w'
+        
+        if not overwrite:
+            f = None
+            try:
+                f = self.list_files(file_name, one_file=True)                
+            except:
+                pass
+            if f:
+                raise IOError('the file {0} already exists'.format(file_name))
+        
+        if self._local:
+            return open(os.path.join(self._path, file_name), mode)
+        
+        #assume it is a unix server (so '/' is path seperator)
+        #otherwise if you use os.path.join on a windows os it will not find
+        if not self._path[-1] == '/':
+            file_path = self._path + '/' + file_name
+        else:
+            file_path = self._path + file_name
+
+        if not self._sftp:  
+            raise IOError('must have an open ssh connection (use `with` statement)')
+        
+        return self._sftp.file(file_path, mode)
             
             
 

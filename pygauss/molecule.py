@@ -60,7 +60,7 @@ with warnings.catch_warnings():
     from .chemview_patch.viewer import MolecularViewer
 
 from .utils import circumcenter
-from .folder import Folder
+from .file_io import Folder
 
 class Molecule(object):
     
@@ -69,7 +69,7 @@ class Molecule(object):
                  freq_fname=False, nbo_fname=False, 
                  pes_fname=False, 
                  fail_silently=False,
-                 alignto=[],
+                 atom_groups={}, alignto=[],
                  server=None, username=None, passwrd=None,
                  folder_obj=None):
         """a class to contain gaussian input/output 
@@ -89,6 +89,8 @@ class Molecule(object):
             the potential energy scan logfile
         fail_silently : bool
             whether to raise an error if a file read fails (if True can use get_init_read_errors to see errors)
+        atom_groups: {str:[int, ...]}
+            groups of atoms that can be selected as a subset
         alignto: [int, int, int]
             the atom numbers to align the geometry to
         
@@ -113,6 +115,7 @@ class Molecule(object):
         self._alignment_atom_indxs = ()
         if alignto: 
             self.set_alignment_atoms(*alignto)
+        self._atom_groups = atom_groups
                 
         parts=[[init_fname, self.add_initialgeom],
                [opt_fname,  self.add_optimisation],
@@ -157,10 +160,10 @@ class Molecule(object):
         
         if not self._folder.active():
             with self._folder as folder:
-                with folder.open_file(file_name) as fd:            
+                with folder.read_file(file_name) as fd:            
                     data = gaussian_handler(fd)
         else:
-            with self._folder.open_file(file_name) as fd:            
+            with self._folder.read_file(file_name) as fd:            
                 data = gaussian_handler(fd)
         
         return data       
@@ -472,7 +475,7 @@ class Molecule(object):
                        ball_stick=False, zoom=1., width=300, height=300,
                        rotations=[[0., 0., 0.]],
                        colorlist=[], lines=[], axis_length=0,
-                       linestyle='impostors'):
+                       linestyle='impostors', ipyimg=True):
                 
         if active:
             return self._view_molecule(molecule, ball_stick=ball_stick, 
@@ -496,25 +499,29 @@ class Molecule(object):
                                     lines=drawlines, linestyle=linestyle))  
             image = self._concat_images_horizontal(images)
             del images
-                
-            b = BytesIO()
-            image.save(b, format='png')    
-            return ipy_Image(data=b.getvalue())
             
+            if ipyimg:
+                b = BytesIO()
+                image.save(b, format='png')    
+                return ipy_Image(data=b.getvalue())
+            else:
+                return image
+                                
     def show_initial(self, gbonds=True, active=False, ball_stick=False, 
                      rotations=[[0., 0., 0.]], zoom=1., width=300, height=300,
-                     axis_length=0, lines=[]):
+                     axis_length=0, lines=[], ipyimg=True):
         
         molecule = self._create_molecule(optimised=False, gbonds=gbonds)
         
         return self._show_molecule(molecule, active=active, 
                                    ball_stick=ball_stick, 
                                    rotations=rotations, zoom=zoom, 
-                                   lines=lines, axis_length=axis_length)      
+                                   lines=lines, axis_length=axis_length, ipyimg=ipyimg)      
        
     def show_optimisation(self, opt_step=False, gbonds=True, active=False,
                           ball_stick=False, rotations=[[0., 0., 0.]], zoom=1.,
-                          width=300, height=300, axis_length=0, lines=[]):
+                          width=300, height=300, axis_length=0, lines=[], 
+                          ipyimg=True):
         
         molecule = self._create_molecule(optimised=True, opt_step=opt_step, 
                                          gbonds=gbonds)
@@ -523,21 +530,13 @@ class Molecule(object):
                                   ball_stick=ball_stick, 
                                   rotations=rotations, zoom=zoom,
                                   lines=lines, axis_length=axis_length,
-                                  width=width, height=height)             
+                                  width=width, height=height, ipyimg=ipyimg)             
 
     def _rgb_to_hex(self, rgb):
         
         return int('0x%02x%02x%02x' % rgb[:3], 16)
        
-    def show_highlight_atoms(self, atomlists, gbonds=True, active=False, 
-                             optimised=True,
-                        ball_stick=False, rotations=[[0., 0., 0.]], zoom=1.,
-                        width=300, height=300, axis_length=0, lines=[]):
-               
-        if optimised:
-            natoms = self._opt_data.read('natom')        
-        else:
-            natoms = self._init_data.read('natom')
+    def _get_highlight_colors(self, natoms, atomlists, active=False):
 
         norm = mpl.colors.Normalize(vmin=1, vmax=len(atomlists))
         cmap = cm.jet_r
@@ -553,7 +552,23 @@ class Molecule(object):
           
         if active:           
             colorlist = [self._rgb_to_hex(col) for col in colorlist]
-            
+        
+        return colorlist
+
+    def show_highlight_atoms(self, atomlists, gbonds=True, active=False, 
+                             optimised=True,
+                        ball_stick=False, rotations=[[0., 0., 0.]], zoom=1.,
+                        width=300, height=300, axis_length=0, lines=[], ipyimg=True):
+               
+        if optimised:
+            natoms = self._opt_data.read('natom')        
+        else:
+            natoms = self._init_data.read('natom')
+        
+        atomlists=[self._atom_groups[grp] if type(grp) is str else grp for grp in atomlists]
+
+        colorlist = self._get_highlight_colors(natoms, atomlists, active)
+        
         molecule = self._create_molecule(optimised=optimised, gbonds=gbonds)
 
         return self._show_molecule(molecule, active=active, 
@@ -561,8 +576,79 @@ class Molecule(object):
                                   rotations=rotations, zoom=zoom,
                                   colorlist=colorlist,
                                   lines=lines, axis_length=axis_length,
-                                  width=width, height=height) 
+                                  width=width, height=height, ipyimg=ipyimg) 
                                   
+    def _write_init_file(self, molecule, file_name, descript='', 
+                         overwrite=False, decimals=8,
+                         charge=0, multiplicity=1):
+        """ write a template gaussian input file to folder
+        
+                
+        """
+        if not type(charge) is int or not type(multiplicity) is int:
+            raise ValueError('charge and multiplicity of molecule must be defined')
+        
+        with self._folder as folder:
+            with folder.write_file(file_name+'_init.com', overwrite) as f:
+                f.write('%chk={0}_init.chk \n'.format(file_name))
+                f.write('# opt b3lyp/3-21g \n')
+                f.write('\n')
+                f.write('{0} \n'.format(descript))
+                f.write('\n')
+                f.write('{0} {1} \n'.format(charge, multiplicity))
+                for t, c in zip(molecule.type_array, molecule.r_array*10.): # nanometers to angstrom
+                    x, y, z = c.round(decimals)
+                    f.write(' {0}\t{1}\t{2}\t{3} \n'.format(t, x, y, z))
+                f.write('\n')
+        
+        return True
+        
+    def combine_molecules(self, other_mol, self_atoms=False, other_atoms=False, 
+                          self_opt=True, other_opt=True,
+                          charge=None, multiplicity=None,
+                          out_name=False, descript='', overwrite=False,
+                          active=False,
+                          ball_stick=True, rotations=[[0., 0., 0.]], zoom=1.,
+                          width=300, height=300, axis_length=0, ipyimg=True):
+        """ """                      
+        mol = self._create_molecule(optimised=self_opt)
+        if self_atoms:
+            if type(self_atoms) is str:
+                self_atoms = self._atom_groups[self_atoms]
+            self_indxs = np.array(self_atoms) - 1
+            mol.r_array = mol.r_array[self_indxs]
+            mol.type_array = mol.type_array[self_indxs]
+        
+        mol_atoms = [i+1 for i in range(len(mol.type_array))]
+        
+        other = other_mol._create_molecule(optimised=other_opt)
+        if other_atoms:
+            if type(other_atoms) is str:
+                other_atoms = other_mol._atom_groups[other_atoms]
+            other_indxs = np.array(other_atoms) - 1
+            other.r_array = other.r_array[other_indxs]
+            other.type_array = other.type_array[other_indxs]
+
+        other_atoms = [i+1+len(mol.type_array) for i in range(len(other.type_array))]        
+        
+        mol.r_array = np.concatenate([mol.r_array, other.r_array])
+        mol.type_array = np.concatenate([mol.type_array, other.type_array])
+        mol.guess_bonds()
+        
+        if out_name:
+            self._write_init_file(mol, out_name, descript, overwrite,
+                                  charge=charge, multiplicity=multiplicity)
+            
+        colorlist = self._get_highlight_colors(len(mol.type_array), 
+                                               [mol_atoms, other_atoms], active)
+            
+        return self._show_molecule(mol, active=active, 
+                                  ball_stick=ball_stick, 
+                                  rotations=rotations, zoom=zoom,
+                                  colorlist=colorlist,
+                                  axis_length=axis_length,
+                                  width=width, height=height, ipyimg=ipyimg) 
+        
     def _get_charge_colors(self, relative=False, minval=-1, maxval=1, alpha=None):
         
         charges = self._nbo_data.read('atomcharges')['natural']
@@ -577,7 +663,7 @@ class Molecule(object):
     def show_nbo_charges(self, gbonds=True, active=False, 
                          relative=False, minval=-1, maxval=1,
                          ball_stick=False, rotations=[[0., 0., 0.]], zoom=1.,
-                         width=300, height=300, axis_length=0, lines=[]):
+                         width=300, height=300, axis_length=0, lines=[], ipyimg=True):
         
         colorlist = self._get_charge_colors(relative, minval, maxval)
 
@@ -588,7 +674,7 @@ class Molecule(object):
                                   rotations=rotations, zoom=zoom,
                                   colorlist=colorlist,
                                   lines=lines, axis_length=axis_length,
-                                  width=width, height=height) 
+                                  width=width, height=height, ipyimg=ipyimg) 
 
     def _converter(self, val, unit1, unit2):
         
@@ -605,6 +691,11 @@ class Molecule(object):
             molecule = self._opt_data.read('molecule')  
         else:
             molecule = self._init_data.read('molecule')
+            
+        if type(idx_list1) is str:
+            idx_list1 = self._atom_groups[idx_list1]
+        if type(idx_list2) is str:
+            idx_list2 = self._atom_groups[idx_list2]
         
         # remove atoms not in molecule
         if ignore_missing:

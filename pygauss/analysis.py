@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 from itertools import product
 import copy
+import math
+import string
 
 import pandas as pd
 from pandas.tools.plotting import radviz
@@ -12,7 +14,7 @@ from IPython.core.display import clear_output
 
 from .molecule import Molecule
 from .utils import df_to_img
-from .folder import Folder
+from .file_io import Folder
 
 class Analysis(object):
     def __init__(self, folderpath='', 
@@ -55,8 +57,8 @@ class Analysis(object):
     def add_run(self, identifiers={}, 
                       init_fname=None, opt_fname=None, 
                       freq_fname=None, nbo_fname=None,
-                      add_if_error=False,
-                      alignto=[], folder_obj=None):
+                      alignto=[], atom_groups={},
+                      add_if_error=False, folder_obj=None):
         """add single Gaussian run input/outputs """             
         if not folder_obj:
             folder_obj = self._folder
@@ -66,7 +68,7 @@ class Analysis(object):
                             freq_fname=freq_fname, 
                             nbo_fname=nbo_fname,
                             folder_obj=folder_obj,
-                            alignto=alignto,
+                            alignto=alignto, atom_groups=atom_groups,
                             fail_silently=True)
         
         num_files = filter(lambda x:x, [init_fname, opt_fname, 
@@ -86,7 +88,8 @@ class Analysis(object):
                  init_pattern=None, opt_pattern=None, 
                  freq_pattern=None, nbo_pattern=None,
                  add_if_error=False,
-                 alignto=[], ipython_print=False):
+                 alignto=[], atom_groups={},
+                 ipython_print=False):
         """add multiple Gaussian run inputs/outputs """             
         with self._folder as folder:
             
@@ -105,7 +108,8 @@ class Analysis(object):
                 nbo = nbo_pattern.format(*idents) if nbo_pattern else None
                 
                 file_read_errs = self.add_run(identifiers, init, opt, freq, nbo,
-                            add_if_error=add_if_error, alignto=alignto, folder_obj=folder)
+                            alignto=alignto, atom_groups=atom_groups,
+                            add_if_error=add_if_error, folder_obj=folder)
                 
                 for fname, msg in file_read_errs:
                     idents = identifiers.copy()
@@ -317,7 +321,7 @@ class Analysis(object):
                         gbonds=True, ball_stick=True, rotations=[[0., 0., 0.]], 
                        zoom=1., width=300, height=300, axis_length=0,
                        relative=False, minval=-1, maxval=1,
-                       highlight=[], active=False):
+                       highlight=[], active=False, ipyimg=True):
         """show molecules
         
         mtype = 'initial', 'optimised', 'nbo' or 'highlight'
@@ -331,28 +335,75 @@ class Analysis(object):
                 yield indx, mol.show_initial(gbonds=gbonds, ball_stick=ball_stick, 
                                        rotations=rotations, zoom=zoom, 
                                        width=width, height=height, 
-                                       axis_length=axis_length)
+                                       axis_length=axis_length, ipyimg=ipyimg)
             elif mtype == 'optimised':
                 yield indx, mol.show_optimisation(gbonds=gbonds, ball_stick=ball_stick, 
                                        rotations=rotations, zoom=zoom, 
                                        width=width, height=height, 
-                                       axis_length=axis_length)
+                                       axis_length=axis_length, ipyimg=ipyimg)
             elif mtype == 'nbo':
                 yield indx, mol.show_nbo_charges(gbonds=gbonds, ball_stick=ball_stick, 
                                        rotations=rotations, zoom=zoom, 
                                        width=width, height=height, 
                                        axis_length=axis_length,
                                        relative=relative, 
-                                       minval=minval, maxval=maxval)
+                                       minval=minval, maxval=maxval, ipyimg=ipyimg)
             elif mtype == 'highlight':
                 yield indx, mol.show_highlight_atoms(highlight, gbonds=gbonds, 
                                                ball_stick=ball_stick, 
                                        rotations=rotations, zoom=zoom, 
                                        width=width, height=height, 
-                                       axis_length=axis_length)
+                                       axis_length=axis_length, ipyimg=ipyimg)
             else:
                 raise ValueError('mtype must be initial, optimised, nbo or highlight')                
                 
+    def plot_mol_images(self, max_cols=1, mtype='optimised',
+                        rows=[], filters={}, align_to=[], rotations=[[0., 0., 0.]],
+                        gbonds=True, ball_stick=True,
+                        zoom=1., width=300, height=300, axis_length=0,
+                        relative=False, minval=-1, maxval=1,
+                        highlight=[], frame_on=False, label_size=20):
+        """show molecules in matplotlib table of axes
+        
+        mtype = 'initial', 'optimised', 'nbo' or 'highlight'
+        max_width takes precedent over max_height
+        """
+        df = self.get_table(rows=rows, filters=filters)
+        num_mols = len(df)
+        
+        imgs = self.yield_mol_images(rows=rows, filters=filters, mtype=mtype,
+                        align_to=align_to, gbonds=gbonds, ball_stick=ball_stick, 
+                        rotations=rotations, zoom=zoom, 
+                        width=width, height=height, axis_length=axis_length,
+                        relative=relative, minval=minval, maxval=maxval,
+                        highlight=highlight, active=False, ipyimg=False)
+        
+        num_rows = int(math.ceil(num_mols/float(max_cols)))
+        num_cols = min([max_cols, num_mols])
+        fig, axes = plt.subplots(num_rows, num_cols, squeeze=False)
+        for ax in fig.get_axes():
+            ax.axes.get_xaxis().set_visible(False)
+            ax.axes.get_yaxis().set_visible(False)
+            ax.set_frame_on(False)
+
+        mol_num = 0                       
+        for indx, img in imgs:
+
+            ax = axes[int(math.ceil((mol_num+1)/float(max_cols)))-1,
+                      mol_num % max_cols]
+            ax.imshow(img)
+            ax.set_frame_on(frame_on)
+            if label_size:
+                ax.text(0,1.0,string.ascii_uppercase[mol_num], 
+                        size=label_size, weight="bold")
+            
+            mol_num += 1                            
+
+        fig.tight_layout()
+        #fig.savefig('untitled1.png', dpi=256)
+        
+        return axes                                       
+    
     def plot_radviz_comparison(self, category_column, 
                                columns=[], rows=[], filters={}, point_size=30):
         """return plot axis of radviz graph

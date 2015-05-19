@@ -3,6 +3,7 @@
 Created on Thu May 14 18:55:52 2015
 
 @author: cjs14
+
 """
 from nose import tools as that
 from nose_parameterized import parameterized

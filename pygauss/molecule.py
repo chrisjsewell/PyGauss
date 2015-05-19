@@ -4,14 +4,12 @@ Created on Fri May 01 21:24:31 2015
 
 @author: chris
 """
-import os, glob
 from io import BytesIO
 import PIL
 from PIL import Image, ImageChops
 from types import MethodType
 import copy 
 import warnings
-import re
 
 from math import degrees, atan2, sqrt, acos
 
@@ -57,7 +55,6 @@ from chemlab.graphics.colors import get as str_to_colour
 
 #instead of chemview MolecularViewer to add defined colouring
 #also ignore; 'FutureWarning: IPython widgets are experimental and may change in the future.'
-import warnings
 with warnings.catch_warnings():
     warnings.simplefilter("ignore")
     from .chemview_patch.viewer import MolecularViewer
@@ -208,13 +205,20 @@ class Molecule(object):
         
         return self._opt_data.read('optdone')
 
-    def get_optimisation_E(self, units='eV'):
+    def get_optimisation_E(self, units='eV', final=True):
+        
+        if not self._opt_data:
+            return np.nan
         
         energies = self._opt_data.read('scfenergies')
         
+        if energies.shape[0] == 0:
+            return np.nan if final else energies
+        
         if not units == 'eV':
             energies = convertor(energies, 'eV', units)
-        return energies[-1]            
+        
+        return energies[-1] if final else energies  
             
     def plot_optimisation_E(self, units='eV'):
         

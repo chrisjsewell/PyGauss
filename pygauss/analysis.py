@@ -28,8 +28,7 @@ class Analysis(object):
         """  
         self._folder = None                                             
         if folderpath or server: 
-            self.set_folder(folderpath, 
-                                           server, username, passwrd)
+            self.set_folder(folderpath, server, username, passwrd)
             
         heads = headers[:]+['Molecule']
         
@@ -315,6 +314,9 @@ class Analysis(object):
         
         return self.get_table()
             
+    def get_molecule(self, row):
+        return copy.deepcopy(self._df.Molecule.loc[row])
+    
     ## TODO will active work?
     def yield_mol_images(self, rows=[], filters={}, mtype='optimised',
                        align_to=[],
@@ -357,18 +359,23 @@ class Analysis(object):
             else:
                 raise ValueError('mtype must be initial, optimised, nbo or highlight')                
                 
-    def plot_mol_images(self, max_cols=1, mtype='optimised',
+    def plot_mol_images(self, mtype='optimised', info_columns=[],
+                        max_cols=1, label_size=20, start_letter='A', save_fpath=None,
                         rows=[], filters={}, align_to=[], rotations=[[0., 0., 0.]],
                         gbonds=True, ball_stick=True,
-                        zoom=1., width=300, height=300, axis_length=0,
+                        zoom=1., width=500, height=500, axis_length=0,
                         relative=False, minval=-1, maxval=1,
-                        highlight=[], frame_on=False, label_size=20):
+                        highlight=[], frame_on=False):
         """show molecules in matplotlib table of axes
         
         mtype = 'initial', 'optimised', 'nbo' or 'highlight'
         max_width takes precedent over max_height
         """
-        df = self.get_table(rows=rows, filters=filters)
+        letter_offset = string.ascii_uppercase.find(start_letter)
+        if letter_offset == -1:
+            raise ValueError('start_letter must be an uppercase single letter')
+        
+        df = self.get_table(rows=rows, columns=info_columns, filters=filters)
         num_mols = len(df)
         
         imgs = self.yield_mol_images(rows=rows, filters=filters, mtype=mtype,
@@ -380,29 +387,47 @@ class Analysis(object):
         
         num_rows = int(math.ceil(num_mols/float(max_cols)))
         num_cols = min([max_cols, num_mols])
-        fig, axes = plt.subplots(num_rows, num_cols, squeeze=False)
+        #TODO ensure all plots have same dimensions
+        fig, axes = plt.subplots(num_rows, num_cols, squeeze=False,
+                                 gridspec_kw={'width_ratios':[1]*num_cols})#, 'height_ratios':[1]*num_rows})
+                                 #, sharex=True, sharey=True)
         for ax in fig.get_axes():
             ax.axes.get_xaxis().set_visible(False)
             ax.axes.get_yaxis().set_visible(False)
+            ax.set_anchor('NW')
             ax.set_frame_on(False)
 
-        mol_num = 0                       
+        mol_num = 0
+        caption = []                       
         for indx, img in imgs:
 
             ax = axes[int(math.ceil((mol_num+1)/float(max_cols)))-1,
                       mol_num % max_cols]
-            ax.imshow(img)
+            ax.imshow(img)#, aspect='equal')
             ax.set_frame_on(frame_on)
             if label_size:
-                ax.text(0,1.0,string.ascii_uppercase[mol_num], 
+                ax.text(0,0.8,string.ascii_uppercase[mol_num+letter_offset], 
                         size=label_size, weight="bold")
+            
+            info=[]
+            for col in info_columns:
+                try:
+                    isnan = pd.np.isnan(df[col].loc[indx])
+                except TypeError:
+                    isnan = False
+                if not isnan:
+                    info.append(str(df[col].loc[indx]))
+                                
+            caption.append(
+                '(' + string.ascii_uppercase[mol_num+letter_offset] + ') ' + ', '.join(info))
             
             mol_num += 1                            
 
-        fig.tight_layout()
-        #fig.savefig('untitled1.png', dpi=256)
+        fig.tight_layout(h_pad=2.0)
+        if save_fpath:
+            fig.savefig(save_fpath, dpi=256, bbox_inches='tight')
         
-        return axes                                       
+        return fig, 'Figure: ' + ', '.join(caption)                                       
     
     def plot_radviz_comparison(self, category_column, 
                                columns=[], rows=[], filters={}, point_size=30):

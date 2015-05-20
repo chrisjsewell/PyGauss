@@ -143,8 +143,8 @@ class Molecule(object):
         return '<PyGauss Molecule>'
             
     def __deepcopy__(self, memo):
-        if self._ssh_server or self._sftp:
-            warnings.warn('Cannot deepcopy a molecule created via an ssh connection')
+        if not self._folder.islocal():
+            warnings.warn('Cannot deepcopy a molecule created via non-local IO')
             return copy.copy(self)
         else:
             cls = self.__class__
@@ -483,11 +483,15 @@ class Molecule(object):
         else:
             drawlines=lines[:]
             if axis_length:
-                drawlines.append([(-1*axis_length,0,0), (axis_length,0,0), 
+                if type(axis_length) is list or type(axis_length) is tuple:
+                    neg_length, pos_length = axis_length
+                else:
+                    neg_length = pos_length = axis_length
+                drawlines.append([(-1*neg_length,0,0), (pos_length,0,0), 
                               'red', 'dark_red', 3, True])
-                drawlines.append([(0,-1*axis_length,0), (0,axis_length,0), 
+                drawlines.append([(0,-1*neg_length,0), (0,pos_length,0), 
                               'light_green', 'dark_green', 3, True])
-                drawlines.append([(0,0,-1*axis_length), (0,0,axis_length), 
+                drawlines.append([(0,0,-1*neg_length), (0,0,pos_length), 
                               'light_blue', 'dark_blue', 3, True])
 
             images = []
@@ -580,7 +584,8 @@ class Molecule(object):
                                   
     def _write_init_file(self, molecule, file_name, descript='', 
                          overwrite=False, decimals=8,
-                         charge=0, multiplicity=1):
+                         charge=0, multiplicity=1,
+                         folder_obj=None):
         """ write a template gaussian input file to folder
         
                 
@@ -588,7 +593,10 @@ class Molecule(object):
         if not type(charge) is int or not type(multiplicity) is int:
             raise ValueError('charge and multiplicity of molecule must be defined')
         
-        with self._folder as folder:
+        if not folder_obj:
+            folder_obj = self._folder           
+            
+        with folder_obj as folder:
             with folder.write_file(file_name+'_init.com', overwrite) as f:
                 f.write('%chk={0}_init.chk \n'.format(file_name))
                 f.write('# opt b3lyp/3-21g \n')

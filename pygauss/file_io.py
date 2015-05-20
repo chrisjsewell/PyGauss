@@ -85,6 +85,9 @@ class Folder:
     def get_path(self):
         return self._path
     
+    def islocal(self):
+        return self._local
+    
     def active(self):
         if self._local:
             return True

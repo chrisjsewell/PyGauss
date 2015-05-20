@@ -279,26 +279,21 @@ def ipy_img_tofile(img, folder_path, img_name):
     
     return os.path.abspath(os.path.join(folder_path, img_name)+ext)
 
-from IPython.display import display
-
-def iprint_kmean_groups(analysis, category, cat_name, groups,
-                columns, filters={}, output=[], **kwargs):
+import matplotlib.pyplot as plt
+def imgplot_kmean_groups(analysis, category, cat_name, groups,
+                columns, filters={}, output=[], max_cols=2, **kwargs):
     df = analysis.calc_kmean_groups(
         category, cat_name, groups, columns=columns, 
         filters=filters)
     for cat, gf in df.groupby('Category'):
-        print '-------------'
-        print 'Category {0}:'.format(cat)
-        print '-------------'
-        mols = analysis.yield_mol_images(
+        fig, caption = analysis.plot_mol_images(
+            max_cols=max_cols, info_columns=output,
             rows=gf.index.tolist(), **kwargs)
-        for row, mol in mols: 
-            info=analysis.get_table(rows=row).iloc[0]
-            outstr = ', '.join(
-                ['{0}: {1}'.format(v, getattr(info, v)) for v in output])
-            print outstr
-            display(mol)    
-    
-
+        fig.suptitle('Category {0}:'.format(cat+1),
+                    fontsize=20, x=0, color='blue')
+        fig.subplots_adjust(top=0.8)        
+        plt.show()  
+        print caption
+        
 if __name__ == '__main__':    
     print circumcenter([[1, 0, 0], [0, 1, 0], [0, 0, 1]])

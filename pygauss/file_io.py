@@ -231,6 +231,70 @@ class Folder:
             raise IOError('must have an open ssh connection (use `with` statement)')
         
         return self._sftp.file(file_path, mode)
+
+    #TODO write save_mplfig for non-local      
+    def save_mplfig(self, fig, fig_name, dpi=256, format='png'):
+        """a function for outputing a matplotlib figure to a file
+        
+        fig : Matplotlib.figure.Figure
+            a Matplotlib figure
+        fig_name : str
+            the desired name of the file
+        
+        """
+        try:
+            fig.get_figwidth()
+        except AttributeError:
+            raise ValueError('the fig is not a Matplotlib figure')
+        
+        if not os.path.splitext(fig_name)[1]:
+            fig_name += os.path.extsep + 'png'
+        
+        if self._local:
+            full_path = os.path.join(self._path, fig_name)
+            fig.savefig(full_path, dpi=dpi, 
+                        bbox_inches='tight')
+            return os.path.abspath(full_path)
+
+        else:
+            raise NotImplementedError
+    
+    #TODO write save_ipyimg for non-local
+    def save_ipyimg(self, img, img_name):
+        """a function for outputing an IPython Image to a file
+        
+        img : IPython.display.Image
+            an IPyton image
+        img_name : str
+            the desired name of the file
+        
+        """
+        try:
+            data = img.data
+        except AttributeError:
+            raise ValueError('the img is not an IPython Image')
             
+        #_PNG = b'\x89PNG\r\n\x1a\n'
+        _JPEG = b'\xff\xd8'
+        ext = 'png'
+        if data[:2] == _JPEG:
+            ext = 'jpg'
+        
+        if self._local:
+            
+            full_path = os.path.join(self._path, img_name)+ os.path.extsep + ext
+            with open(full_path, "wb") as f:
+                f.write(data)
+        
+            return os.path.abspath(full_path)
+
+        else:
+            raise NotImplementedError
+        
+    #TODO write save_pilimg
+    def save_pilimg(self, img, img_name):
+        raise NotImplementedError
+
+        
             
 

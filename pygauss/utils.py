@@ -249,36 +249,6 @@ def df_to_img(df, na_rep='-', other_temp=None, font_size=None,
     
     return ipy_img
 
-def ipy_img_tofile(img, folder_path, img_name):
-    """a function for outputing an IPython Image to a file
-    
-    img : IPython.display.Image
-        an IPyton image
-    folder_path : str
-        the desired folder path (abs or relative)
-    img_name : str
-        the desired name of the file
-    
-    """
-    try:
-        data = img.data
-    except AttributeError:
-        raise ValueError('the img is not an IPython Image')
-    
-    if not os.path.exists(folder_path):
-        raise ValueError('the folder_path does not exist')
-
-    #_PNG = b'\x89PNG\r\n\x1a\n'
-    _JPEG = b'\xff\xd8'
-    ext = '.png'
-    if data[:2] == _JPEG:
-        ext = '.jpg'
-    
-    with open(os.path.join(folder_path, img_name)+ext, "wb") as f:
-        f.write(data)
-    
-    return os.path.abspath(os.path.join(folder_path, img_name)+ext)
-
 import matplotlib.pyplot as plt
 def imgplot_kmean_groups(analysis, category, cat_name, groups,
                 columns, filters={}, output=[], max_cols=2, **kwargs):

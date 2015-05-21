@@ -324,10 +324,12 @@ class Analysis(object):
                          zoom=1., width=300, height=300, axis_length=0,
                          relative=False, minval=-1, maxval=1,
                          highlight=[], active=False, ipyimg=True, 
-                         min_sopt_energy=20., alpha=0.5, transparent=False):
+                         sopt_min_energy=20., sopt_cutoff_energy=0.,
+                         atom_groups=[], alpha=0.5, transparent=False,
+                         hbondwidth=5):
         """show molecules
         
-        mtype = 'initial', 'optimised', 'nbo', 'highlight' or 'sopt'
+        mtype = 'initial', 'optimised', 'nbo', 'highlight', 'sopt' or 'hbond'
         """
         df = self.get_table(columns=['Molecule'], rows=rows, 
                        filters=filters, mol=True)
@@ -358,7 +360,20 @@ class Analysis(object):
                                        width=width, height=height, 
                                        axis_length=axis_length, ipyimg=ipyimg)
             elif mtype == 'sopt':
-                yield indx, mol.show_SOPT_bonds(min_energy=min_sopt_energy,
+                yield indx, mol.show_SOPT_bonds(min_energy=sopt_min_energy,
+                                    cutoff_energy=sopt_cutoff_energy,
+                                    atom_groups=atom_groups,
+                                    alpha=alpha, transparent=transparent,
+                                    gbonds=gbonds, ball_stick=ball_stick, 
+                                    rotations=rotations, zoom=zoom, 
+                                    width=width, height=height, 
+                                    axis_length=axis_length,
+                                    relative=relative, 
+                                    minval=minval, maxval=maxval, ipyimg=ipyimg)
+            elif mtype == 'hbond':
+                yield indx, mol.show_SOPT_bonds(min_energy=sopt_min_energy,
+                                    cutoff_energy=sopt_cutoff_energy,
+                                    atom_groups=atom_groups, bondwidth=hbondwidth,
                                     alpha=alpha, transparent=transparent,
                                     gbonds=gbonds, ball_stick=ball_stick, 
                                     rotations=rotations, zoom=zoom, 
@@ -367,7 +382,8 @@ class Analysis(object):
                                     relative=relative, 
                                     minval=minval, maxval=maxval, ipyimg=ipyimg)
             else:
-                raise ValueError('mtype must be initial, optimised, nbo, highlight or sopt')                
+                raise ValueError(
+                'mtype must be initial, optimised, nbo, highlight, sopt or hbond')                
                 
     def plot_mol_images(self, mtype='optimised', info_columns=[],
                         max_cols=1, label_size=20, start_letter='A', save_fpath=None,
@@ -434,8 +450,9 @@ class Analysis(object):
             mol_num += 1                            
 
         fig.tight_layout(h_pad=2.0)
+        
         if save_fpath:
-            fig.savefig(save_fpath, dpi=256, bbox_inches='tight')
+            self._folder.save_mplfig(fig, save_fpath)
         
         return fig, 'Figure: ' + ', '.join(caption)                                       
     

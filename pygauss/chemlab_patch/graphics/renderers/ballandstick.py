@@ -7,7 +7,7 @@ from .bond import BondRenderer
 from chemlab.db import ChemlabDB
 cdb = ChemlabDB()
 
-# CJS added option to color atoms by predefined colors
+# CJS added option to color atoms by predefined colors and optin for transoarent atoms
 class BallAndStickRenderer(AbstractRenderer):
     '''Render a ball and stick representation of a series of
     coordinates and bonds.
@@ -29,7 +29,7 @@ class BallAndStickRenderer(AbstractRenderer):
 
     '''
     def __init__(self, widget, r_array, type_array, bonds, shading='phong', 
-                 rgba_array=[], linestyle='impostors'):
+                 rgba_array=[], linestyle='impostors', transparent=False):
         super(BallAndStickRenderer, self).__init__(widget)
         vdw_dict = cdb.get("data", 'vdwdict')        
         
@@ -40,7 +40,8 @@ class BallAndStickRenderer(AbstractRenderer):
         self.has_bonds = len(bonds) > 0
         
         self.ar = AtomRenderer(widget, r_array, type_array,
-                               radii_map = vdw_dict, shading=shading, rgba_array=rgba_array)
+                               radii_map = vdw_dict, shading=shading, rgba_array=rgba_array,
+                               transparent=transparent)
         
         if self.has_bonds:
             self.br = BondRenderer(widget, bonds, r_array, type_array, style=linestyle,

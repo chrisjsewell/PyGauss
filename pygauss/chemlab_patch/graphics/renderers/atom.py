@@ -47,7 +47,8 @@ class AtomRenderer(AbstractRenderer):
                  color_scheme=colors.default_atom_map,
                  radii_map=vdw_dict,
                  shading='phong',
-                 rgba_array=[]):
+                 rgba_array=[],
+                 transparent=False):
         radii = []
         colorlist = []
         natoms = len(r_array)
@@ -70,7 +71,7 @@ class AtomRenderer(AbstractRenderer):
             
         elif backend == 'impostors':
             self.sr = SphereImpostorRenderer(widget, r_array, radii,
-                                             colorlist, shading=shading)
+                                             colorlist, shading=shading, transparent=transparent)
         elif backend == 'points':
             self.sr = PointRenderer(widget, r_array, colorlist)
         else:

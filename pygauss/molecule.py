@@ -31,7 +31,7 @@ from .chemlab_patch.io.handlers._cclib  import _create_cclib_handler
 from chemlab.graphics.qtviewer import QtViewer
 #have to add method to instances of chemlab.graphics.camera.Camera
 #from chemlab.graphics.transformations import rotation_matrix
-from .transformations import rotation_matrix, translation_matrix
+from .transformations import rotation_matrix
 def orbit_z(self, angle):
     # Subtract pivot point
     self.position -= self.pivot        
@@ -401,7 +401,7 @@ class Molecule(object):
 
     def _image_molecule(self, molecule, ball_stick=False, colorlist=[],
                          rotation=[0., 0., 0.], width=300, height=300, zoom=1.,
-                        lines=[], linestyle='impostors'):
+                        lines=[], linestyle='impostors', transparent=False):
 
         v = QtViewer()
         w = v.widget
@@ -415,12 +415,14 @@ class Molecule(object):
                                 molecule.type_array,
                                 molecule.bonds,
                                 rgba_array=colorlist,
-                                linestyle=linestyle)
+                                linestyle=linestyle,
+                                transparent=transparent)
         else:
             r = v.add_renderer(AtomRenderer, 
                                 molecule.r_array, 
                                 molecule.type_array, 
-                                rgba_array=colorlist)
+                                rgba_array=colorlist,
+                                transparent=transparent)
         
         for line in lines:
             #line = [start_coord, end_coord, start_color, end_color, width, dashed]
@@ -480,7 +482,8 @@ class Molecule(object):
                        ball_stick=False, zoom=1., width=300, height=300,
                        rotations=[[0., 0., 0.]],
                        colorlist=[], lines=[], axis_length=0,
-                       linestyle='impostors', ipyimg=True):
+                       linestyle='impostors', transparent=False,
+                       ipyimg=True):
                 
         if active:
             return self._view_molecule(molecule, ball_stick=ball_stick, 
@@ -505,7 +508,8 @@ class Molecule(object):
                                     ball_stick=ball_stick, colorlist=colorlist, 
                                     rotation=rotation, zoom=zoom,
                                     width=width, height=width,
-                                    lines=drawlines, linestyle=linestyle))  
+                                    lines=drawlines, linestyle=linestyle,
+                                    transparent=transparent))  
             image = self._concat_images_horizontal(images)
             del images
             
@@ -981,26 +985,52 @@ class Molecule(object):
         
         return r, theta, phi                     
 
-    def calc_SOPT_bonds(self, min_energy=20.):
-        """Second Order Perturbation Theory analysis """
-        sopt = self._nbo_data.read('sopt')
-        sopt_e = [i for i in sopt if i[4]>=min_energy]
+    def get_SOPT_analysis(self, eunits='kJmol-1'):
+        """Second Order Perturbation Theory analysis
+        
+        """
+        
+        sopt = copy.deepcopy(self._nbo_data.read('sopt'))
+        
+        df = pd.DataFrame(sopt, 
+                          columns=['Dtype', 'Donors', 'Atype', 'Acceptors', 'E2'])
+                
+        if not eunits=='kcal': 
+            df.E2 = convertor(df.E2, 'kcal', eunits)
 
-        return sopt_e 
-
+        typ = self._nbo_data.read('molecule').type_array        
+        df['D_Symbols'] = df.Donors.apply(lambda x: [typ[i-1] for i in x])
+        df['A_Symbols'] = df.Acceptors.apply(lambda x: [typ[i-1] for i in x])
+        
+        chrg= self._nbo_data.read('atomcharges')['natural']
+        df['D_Charges'] = df.Donors.apply(lambda x: [chrg[i-1] for i in x])
+        df['A_Charges'] = df.Acceptors.apply(lambda x: [chrg[i-1] for i in x])
+        
+        return df[['Dtype', 'Donors', 'D_Symbols', 'D_Charges', 
+                   'Atype', 'Acceptors', 'A_Symbols', 'A_Charges', 
+                   'E2']] 
+        
     def show_SOPT_bonds(self, min_energy=20., gbonds=True, active=False,
                         ball_stick=True, rotations=[[0., 0., 0.]], zoom=1.,
                         width=300, height=300, axis_length=0, lines=[],
                         relative=False, minval=-1, maxval=1,
-                        alpha=0.5):
-        """Second Order Perturbation Theory analysis """
-        sopt_e = self.calc_SOPT_bonds(min_energy=min_energy)
+                        alpha=0.5, transparent=True,
+                        ipyimg=True, sopt_df=None):
+        """Second Order Perturbation Theory analysis
+        energy in kJmol-1        
+        """
+        if type(sopt_df)==type(pd.DataFrame()):
+            df = sopt_df
+        else:
+            df = self.get_SOPT_analysis()
+        df = df[df.E2 >= min_energy]
+        
         molecule = self._create_molecule(gbonds=gbonds)
         
         drawlines = lines[:]
-        for dtype, donors, atype, acceptors, energy in sopt_e:
-            d_coord = np.mean([molecule.r_array[d-1] for d in donors], axis=0)
-            a_coord = np.mean([molecule.r_array[a-1] for a in acceptors], axis=0)
+        for i, rw in df.iterrows():
+            d_coord = np.mean([molecule.r_array[d-1] for d in rw.Donors], axis=0)
+            a_coord = np.mean([molecule.r_array[a-1] for a in rw.Acceptors], axis=0)
             drawlines.append([d_coord, a_coord, 'blue', 'red', 5, False])
         
         colorlist = self._get_charge_colors(relative, minval, maxval, alpha=alpha)
@@ -1010,7 +1040,43 @@ class Molecule(object):
                                   rotations=rotations, zoom=zoom,
                                   colorlist=colorlist,
                                   lines=drawlines, axis_length=axis_length,
-                                  width=width, height=height, linestyle='lines') 
+                                  width=width, height=height, linestyle='lines', 
+                                  transparent=transparent,
+                                  ipyimg=ipyimg) 
+
+    #TODO lines connect to H, select only inter-molecular and work out total energies
+    #calc angle of bonds?
+    def show_HBond_analysis(self, min_energy=0., gbonds=True, active=False,
+                        ball_stick=True, rotations=[[0., 0., 0.]], zoom=1.,
+                        width=300, height=300, axis_length=0,
+                        relative=False, minval=-1, maxval=1,
+                        alpha=0.5, transparent=True, ipyimg=True):
+        """EXPERIMENTAL! hydrogen bond analysis DH---A
+        
+        For a hydrogen bond to occur there must be both a hydrogen donor and an 
+        acceptor present. The donor in a hydrogen bond is the atom to which the 
+        hydrogen atom participating in the hydrogen bond is covalently bonded, 
+        and is usually a strongly electronegative atom such as N, O, or F. The 
+        hydrogen acceptor is the neighboring electronegative ion or molecule, 
+        and must posses a lone electron pair in order to form a hydrogen bond.
+        
+        Since the hydrogen donor is strongly electronegative, it pulls the 
+        covalently bonded electron pair closer to its nucleus, and away from 
+        the hydrogen atom. The hydrogen atom is then left with a partial 
+        positive charge, creating a dipole-dipole attraction between the 
+        hydrogen atom bonded to the donor, and the lone electron pair on the acceptor.
+        """
+        df = self.get_SOPT_analysis()
+        df = df[df.A_Symbols.apply(lambda x: 'H' in x) & 
+                df.Dtype.str.contains('LP') & 
+                df.Atype.str.contains('BD*')].drop(['Dtype', 'Atype'], 1)
+        
+        return self.show_SOPT_bonds(min_energy=min_energy, gbonds=gbonds, 
+                    active=active, ball_stick=ball_stick, rotations=rotations, 
+                    zoom=zoom, width=width, height=height, axis_length=axis_length,
+                    relative=relative, minval=minval, maxval=maxval,
+                    alpha=alpha, transparent=transparent, 
+                    ipyimg=ipyimg, sopt_df=df)
 
     def _img_to_plot(self, x, y, image, ax=None, zoom=1):
         """add image to matplotlib axes at (x,y) """

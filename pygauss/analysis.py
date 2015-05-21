@@ -319,14 +319,15 @@ class Analysis(object):
     
     ## TODO will active work?
     def yield_mol_images(self, rows=[], filters={}, mtype='optimised',
-                       align_to=[],
-                        gbonds=True, ball_stick=True, rotations=[[0., 0., 0.]], 
-                       zoom=1., width=300, height=300, axis_length=0,
-                       relative=False, minval=-1, maxval=1,
-                       highlight=[], active=False, ipyimg=True):
+                         align_to=[], rotations=[[0., 0., 0.]],
+                         gbonds=True, ball_stick=True, 
+                         zoom=1., width=300, height=300, axis_length=0,
+                         relative=False, minval=-1, maxval=1,
+                         highlight=[], active=False, ipyimg=True, 
+                         min_sopt_energy=20., alpha=0.5, transparent=False):
         """show molecules
         
-        mtype = 'initial', 'optimised', 'nbo' or 'highlight'
+        mtype = 'initial', 'optimised', 'nbo', 'highlight' or 'sopt'
         """
         df = self.get_table(columns=['Molecule'], rows=rows, 
                        filters=filters, mol=True)
@@ -356,8 +357,17 @@ class Analysis(object):
                                        rotations=rotations, zoom=zoom, 
                                        width=width, height=height, 
                                        axis_length=axis_length, ipyimg=ipyimg)
+            elif mtype == 'sopt':
+                yield indx, mol.show_SOPT_bonds(min_energy=min_sopt_energy,
+                                    alpha=alpha, transparent=transparent,
+                                    gbonds=gbonds, ball_stick=ball_stick, 
+                                    rotations=rotations, zoom=zoom, 
+                                    width=width, height=height, 
+                                    axis_length=axis_length,
+                                    relative=relative, 
+                                    minval=minval, maxval=maxval, ipyimg=ipyimg)
             else:
-                raise ValueError('mtype must be initial, optimised, nbo or highlight')                
+                raise ValueError('mtype must be initial, optimised, nbo, highlight or sopt')                
                 
     def plot_mol_images(self, mtype='optimised', info_columns=[],
                         max_cols=1, label_size=20, start_letter='A', save_fpath=None,

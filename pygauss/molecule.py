@@ -30,7 +30,8 @@ from .chemlab_patch.io.handlers._cclib  import _create_cclib_handler
 
 from chemlab.graphics.qtviewer import QtViewer
 #have to add method to instances of chemlab.graphics.camera.Camera
-from chemlab.graphics.transformations import rotation_matrix
+#from chemlab.graphics.transformations import rotation_matrix
+from .transformations import rotation_matrix, translation_matrix
 def orbit_z(self, angle):
     # Subtract pivot point
     self.position -= self.pivot        
@@ -47,7 +48,7 @@ def orbit_z(self, angle):
 from .chemlab_patch.graphics.renderers.atom import AtomRenderer
 from .chemlab_patch.graphics.renderers.ballandstick import BallAndStickRenderer
 from .chemlab_patch.graphics.renderers.line import LineRenderer
-from chemlab.graphics.postprocessing import SSAOEffect # Screen Space Ambient Occlusion
+#from chemlab.graphics.postprocessing import SSAOEffect # Screen Space Ambient Occlusion
 from chemlab.utils import cartesian
 from cclib.parser.utils import convertor
 
@@ -335,7 +336,7 @@ class Molecule(object):
         return new_array
 
     def _create_molecule(self, optimised=True, opt_step=False, scan_step=False, 
-                         gbonds=True, data=None):
+                         gbonds=True, data=None, alignment_atoms=None):
         if not optimised:
             molecule = self._init_data.read('molecule')            
         else:
@@ -348,8 +349,12 @@ class Molecule(object):
                 molecule = indata.read('molecule') 
             
         if gbonds: molecule.guess_bonds()
-            
-        if self._alignment_atom_indxs:
+        
+        if alignment_atoms:
+            a, b, c = alignment_atoms
+            molecule.r_array = self._realign_geometry(molecule.r_array, 
+                                                      [a-1, b-1, c-1])
+        elif self._alignment_atom_indxs:
             a, b, c = self._alignment_atom_indxs
             molecule.r_array = self._realign_geometry(molecule.r_array, 
                                                       [a-1, b-1, c-1])
@@ -610,15 +615,39 @@ class Molecule(object):
                 f.write('\n')
         
         return True
+
+    def _array_transformation(self, array, rotations, transpose=[0,0,0]):
+        """ 3D rotation around x-axis, then y-axis, then z-axis,
+            then transposition """
+        if rotations == [0,0,0]: 
+            new = array
+        else:            
+            x, y, z = rotations
+            rot_x = rotation_matrix(x*np.pi/180., [1, 0, 0])[:3,:3]
+            rot_y = rotation_matrix(y*np.pi/180., [0, 1, 0])[:3,:3]
+            rot_z = rotation_matrix(z*np.pi/180., [0, 0, 1])[:3,:3]
+            
+            rot = np.dot(rot_z, np.dot(rot_y, rot_x))
+            
+            new = np.array([np.dot(rot, coord) for coord in array])   
         
-    def combine_molecules(self, other_mol, self_atoms=False, other_atoms=False, 
+        new[:,0] += transpose[0]
+        new[:,1] += transpose[1]
+        new[:,2] += transpose[2]
+        
+        return new
+        
+    def combine_molecules(self, other_mol, self_atoms=False, other_atoms=False,
+                          self_rotation=[0,0,0], other_rotation=[0,0,0],
+                          self_transpose=[0,0,0], other_transpose=[0,0,0],
                           self_opt=True, other_opt=True,
                           charge=None, multiplicity=None,
                           out_name=False, descript='', overwrite=False,
                           active=False,
                           ball_stick=True, rotations=[[0., 0., 0.]], zoom=1.,
-                          width=300, height=300, axis_length=0, ipyimg=True):
-        """ """                      
+                          width=300, height=300, axis_length=0, ipyimg=True,
+                          folder_obj=None):
+        """ transpose in nanometers """                      
         mol = self._create_molecule(optimised=self_opt)
         if self_atoms:
             if type(self_atoms) is str:
@@ -626,6 +655,8 @@ class Molecule(object):
             self_indxs = np.array(self_atoms) - 1
             mol.r_array = mol.r_array[self_indxs]
             mol.type_array = mol.type_array[self_indxs]
+        mol.r_array = self._array_transformation(mol.r_array, 
+                                                 self_rotation, self_transpose)
         
         mol_atoms = [i+1 for i in range(len(mol.type_array))]
         
@@ -636,6 +667,8 @@ class Molecule(object):
             other_indxs = np.array(other_atoms) - 1
             other.r_array = other.r_array[other_indxs]
             other.type_array = other.type_array[other_indxs]
+        other.r_array = self._array_transformation(other.r_array, 
+                                                   other_rotation, other_transpose)
 
         other_atoms = [i+1+len(mol.type_array) for i in range(len(other.type_array))]        
         
@@ -645,7 +678,8 @@ class Molecule(object):
         
         if out_name:
             self._write_init_file(mol, out_name, descript, overwrite,
-                                  charge=charge, multiplicity=multiplicity)
+                                  charge=charge, multiplicity=multiplicity,
+                                  folder_obj=folder_obj)
             
         colorlist = self._get_highlight_colors(len(mol.type_array), 
                                                [mol_atoms, other_atoms], active)
@@ -655,7 +689,8 @@ class Molecule(object):
                                   rotations=rotations, zoom=zoom,
                                   colorlist=colorlist,
                                   axis_length=axis_length,
-                                  width=width, height=height, ipyimg=ipyimg) 
+                                  width=width, height=height, ipyimg=ipyimg,
+                                  ) 
         
     def _get_charge_colors(self, relative=False, minval=-1, maxval=1, alpha=None):
         
@@ -909,7 +944,6 @@ class Molecule(object):
         
         return np.sum(subcharges)
         
-    # TODO alignment atoms resetting on error / calculate without creating molecule
     def calc_nbo_charge_center(self, p1, p2, p3, positive=True, units='nm', 
                                atoms=[]):
         """ returns the distance r amd angles theta, phi of the positive/negative
@@ -925,10 +959,7 @@ class Molecule(object):
         the z-axis
         """
 
-        alignto = self._alignment_atom_indxs[:]
-        self._alignment_atom_indxs = (p1, p2, p3)
-
-        molecule = self._create_molecule()
+        molecule = self._create_molecule(alignment_atoms=(p1, p2, p3))
         charges = self._nbo_data.read('atomcharges')['natural']
         coords = molecule.r_array   
         
@@ -947,8 +978,6 @@ class Molecule(object):
         r = self._converter(sqrt(x*x+y*y+z*z), 'nm', units)
         theta = degrees(atan2(y, x))
         phi = degrees(atan2(z, x))
-
-        self._alignment_atom_indxs = alignto
         
         return r, theta, phi                     
 

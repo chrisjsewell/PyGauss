@@ -29,5 +29,5 @@ from . import test_data
 def get_test_folder():
     return os.path.dirname(os.path.abspath(inspect.getfile(test_data)))
 
-from .utils import df_to_img, ipy_img_tofile, set_imagik_exe
+from .utils import df_to_img, set_imagik_exe
 

@@ -235,7 +235,10 @@ class Analysis(object):
     def get_basic_property(self, prop):
         """returns a series of a basic run property or nan if it is not available
 
-        prop = 'basis', 'nbasis', 'optimised', 'opt_error' or 'conformer'        
+        Parameters
+        ----------
+        prop : str
+            can be 'basis', 'nbasis', 'optimised', 'opt_error' or 'conformer'        
         """
         if prop not in self._basic_properties.keys():
             raise ValueError('{0} not a molecule property'.format(prop))
@@ -327,9 +330,72 @@ class Analysis(object):
                          sopt_min_energy=20., sopt_cutoff_energy=0.,
                          atom_groups=[], alpha=0.5, transparent=False,
                          hbondwidth=5):
-        """show molecules
+        """yields molecules
+
+        Parameters
+        ----------
+        mtype :
+            'initial', 'optimised', 'nbo', 'highlight', 'sopt' or 'hbond'
+        info_columns : list of str
+            columns to use as info in caption
+        max_cols : int
+            maximum columns in plot
+        label_size : int
+            subplot label size (pts)
+        start_letter : str
+            starting (capital) letter for labelling subplots
+        save_fname : str
+            name of file, if you wish to save the plot to file
+        rows : int or list
+            index for the row of each molecule to plot (all plotted if empty)
+        filters : dict
+            {columns:values} to filter by
+        align_to : [int, int, int]
+            align geometries to the plane containing these atoms
+        rotations : list of [float, float, float]
+            for each rotation set [x,y,z] an image will be produced 
+        gbonds : bool
+            guess bonds between atoms (via distance)
+        ball_stick : bool
+            ball and stick images, otherwise wireframe
+        zoom : float
+            zoom level of images
+        width : int
+            width of original images
+        height : int
+            height of original images (although width takes precedent)
+        axis_length : float
+            length of x,y,z axes in negative and positive directions
+        relative : bool
+            coloring of nbo atoms scaled to min/max values in atom set (for nbo mtype)
+        minval : float
+            coloring of nbo atoms scaled to absolute min (for nbo mtype)
+        maxval : float
+            coloring of nbo atoms scaled to absolute max (for nbo mtype)
+        highlight : list of lists
+            atom indxes to highlight (for highlight mtype)
+        sopt_min_energy : float
+            minimum energy in kJmol-1 to show (for sopt/hbond mtype)
+        sopt_cutoff_energy : float
+            energy in kJmol-1 below which bonds will be dashed (for sopt mtype)
+        atom_groups : [list, list] 
+            if not none only show bonds between these groups of atom indexes (for sopt/hbond mtypes)
+        alpha : float
+            alpha color value of geometry (for sopt/hbond mtypes)
+        transparent : bool
+            whether atoms should be transparent (for sopt/hbond mtypes)
+        hbondwidth : float   
+            width of lines depicting interaction (for hbond mtypes)  
+        ipyimg : bool
+            whether to return an IPython image, PIL image otherwise 
         
-        mtype = 'initial', 'optimised', 'nbo', 'highlight', 'sopt' or 'hbond'
+        Yields
+        -------
+        indx : int
+            the row index of the molecule
+        mol : IPython.display.Image or PIL.Image
+            an image of the molecule in the format specified by ipyimg            
+        
         """
         df = self.get_table(columns=['Molecule'], rows=rows, 
                        filters=filters, mol=True)
@@ -384,18 +450,84 @@ class Analysis(object):
             else:
                 raise ValueError(
                 'mtype must be initial, optimised, nbo, highlight, sopt or hbond')                
-                
+    
+    #TODO finish parameters description            
     def plot_mol_images(self, mtype='optimised', info_columns=[],
-                        max_cols=1, label_size=20, start_letter='A', save_fpath=None,
+                        max_cols=1, label_size=20, start_letter='A', save_fname=None,
                         rows=[], filters={}, align_to=[], rotations=[[0., 0., 0.]],
                         gbonds=True, ball_stick=True,
                         zoom=1., width=500, height=500, axis_length=0,
                         relative=False, minval=-1, maxval=1,
-                        highlight=[], frame_on=False):
+                        highlight=[], frame_on=False,
+                        sopt_min_energy=20., sopt_cutoff_energy=0.,
+                        atom_groups=[], alpha=0.5, transparent=False,
+                        hbondwidth=5):
         """show molecules in matplotlib table of axes
+
+        Parameters
+        ----------
+        mtype :
+            'initial', 'optimised', 'nbo', 'highlight', 'sopt' or 'hbond'
+        info_columns : list of str
+            columns to use as info in caption
+        max_cols : int
+            maximum columns in plot
+        label_size : int
+            subplot label size (pts)
+        start_letter : str
+            starting (capital) letter for labelling subplots
+        save_fname : str
+            name of file, if you wish to save the plot to file
+        rows : int or list
+            index for the row of each molecule to plot (all plotted if empty)
+        filters : dict
+            {columns:values} to filter by
+        align_to : [int, int, int]
+            align geometries to the plane containing these atoms
+        rotations : list of [float, float, float]
+            for each rotation set [x,y,z] an image will be produced 
+        gbonds : bool
+            guess bonds between atoms (via distance)
+        ball_stick : bool
+            ball and stick images, otherwise wireframe
+        zoom : float
+            zoom level of images
+        width : int
+            width of original images
+        height : int
+            height of original images (although width takes precedent)
+        axis_length : float
+            length of x,y,z axes in negative and positive directions
+        relative : bool
+            coloring of nbo atoms scaled to min/max values in atom set (for nbo mtype)
+        minval : float
+            coloring of nbo atoms scaled to absolute min (for nbo mtype)
+        maxval : float
+            coloring of nbo atoms scaled to absolute max (for nbo mtype)
+        highlight : list of lists
+            atom indxes to highlight (for highlight mtype)
+        sopt_min_energy : float
+            minimum energy in kJmol-1 to show (for sopt/hbond mtype)
+        sopt_cutoff_energy : float
+            energy in kJmol-1 below which bonds will be dashed (for sopt mtype)
+        atom_groups : [list, list] 
+            if not none only show bonds between these groups of atom indexes (for sopt/hbond mtypes)
+        alpha : float
+            alpha color value of geometry (for sopt/hbond mtypes)
+        transparent : bool
+            whether atoms should be transparent (for sopt/hbond mtypes)
+        hbondwidth : float   
+            width of lines depicting interaction (for hbond mtypes)     
+        frame_on : bool
+            whether to show frame around each image 
+
+        Returns
+        -------
+        fig : matplotlib.figure.Figure
+            A figure containing subplots for each molecule image
+        caption : str
+            A caption describing each subplot, given info_columns
         
-        mtype = 'initial', 'optimised', 'nbo' or 'highlight'
-        max_width takes precedent over max_height
         """
         letter_offset = string.ascii_uppercase.find(start_letter)
         if letter_offset == -1:
@@ -409,14 +541,19 @@ class Analysis(object):
                         rotations=rotations, zoom=zoom, 
                         width=width, height=height, axis_length=axis_length,
                         relative=relative, minval=minval, maxval=maxval,
-                        highlight=highlight, active=False, ipyimg=False)
+                        highlight=highlight, active=False, ipyimg=False,
+                        sopt_min_energy=sopt_min_energy, 
+                        sopt_cutoff_energy=sopt_cutoff_energy,
+                        atom_groups=atom_groups, alpha=alpha, 
+                        transparent=transparent,
+                        hbondwidth=hbondwidth)
         
         num_rows = int(math.ceil(num_mols/float(max_cols)))
         num_cols = min([max_cols, num_mols])
-        #TODO ensure all plots have same dimensions
+
         fig, axes = plt.subplots(num_rows, num_cols, squeeze=False,
-                                 gridspec_kw={'width_ratios':[1]*num_cols})#, 'height_ratios':[1]*num_rows})
-                                 #, sharex=True, sharey=True)
+                                 gridspec_kw={'width_ratios':[1]*num_cols})
+                                 
         for ax in fig.get_axes():
             ax.axes.get_xaxis().set_visible(False)
             ax.axes.get_yaxis().set_visible(False)
@@ -451,8 +588,8 @@ class Analysis(object):
 
         fig.tight_layout(h_pad=2.0)
         
-        if save_fpath:
-            self._folder.save_mplfig(fig, save_fpath)
+        if save_fname:
+            self._folder.save_mplfig(fig, save_fname)
         
         return fig, 'Figure: ' + ', '.join(caption)                                       
     

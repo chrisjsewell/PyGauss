@@ -73,9 +73,10 @@ class Molecule(object):
                  atom_groups={}, alignto=[],
                  server=None, username=None, passwrd=None,
                  folder_obj=None):
-        """a class to contain gaussian input/output 
-        for a single molecular geometry 
+        """a class to analyse gaussian input/output of a single molecular geometry 
         
+        Parameters
+        ----------
         folderpath : str
             the folder path
         init_fname : str
@@ -135,9 +136,11 @@ class Molecule(object):
                     method(fname)
     
     def get_folder(self):
+        """ return the Folder instance """
         return self._folder
         
     def get_init_read_errors(self):
+        """ get read errors, recorded if fail_silently was set to True on initialise """
         return self._init_read_errors[:]
                      
     def __repr__(self):
@@ -206,14 +209,28 @@ class Molecule(object):
         return self._opt_data.read('nbasis')
         
     def get_run_error(self, rtype='opt'):
-        
+        """True if there were errors in the computation, else False """
         return getattr(self, '_{0}_data'.format(rtype)).read('run_error')
         
     def is_optimised(self):
-        
+        """ was the geometry optimised """
         return self._opt_data.read('optdone')
 
     def get_optimisation_E(self, units='eV', final=True):
+        """ return the SCF optimisation energy 
+        
+        Parameters
+        ----------
+        units : str
+            the unit type of the energy
+        final : bool
+            return only the final optimised energy if True, else for all steps            
+        
+        Returns
+        -------
+        out : float or list of floats
+            dependant on final
+        """
         
         if not self._opt_data:
             return np.nan
@@ -246,7 +263,7 @@ class Molecule(object):
         return ax
 
     def is_conformer(self, cutoff=0.):
-        
+        """False if any frequencies in the frequency analysis were negative"""
         imgaginary_freqs = self._freq_data.read('vibfreqs') < cutoff 
         return not imgaginary_freqs.any()
         

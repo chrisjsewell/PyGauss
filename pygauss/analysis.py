@@ -17,17 +17,30 @@ from .utils import df_to_img
 from .file_io import Folder
 
 class Analysis(object):
-    def __init__(self, folderpath='', 
-                 headers=[], server=None, username=None, passwrd=None):
-        """analysis class 
+    """a class to analyse multiple computations """
+    
+    def __init__(self, folderpath='', server=None, username=None, passwrd=None, 
+                 folder_obj=None, headers=[]):
+        """a class to analyse multiple computations
 
+        Parameters
+        ----------
         folderpath : str
-            the folder directory storing the file to be analysed
+            the folder directory storing the files to be analysed
+        server : str
+            the name of the server storing the files to be analysed
+        username : str
+            the username to connect to the server
+        passwrd : str
+            server password, if not present it will be asked for during initialisation
         headers : list
             the variable categories for each computation
+            
         """  
-        self._folder = None                                             
-        if folderpath or server: 
+        self._folder = None  
+        if folder_obj:
+            self._folder = folder_obj                              
+        elif folderpath or server: 
             self.set_folder(folderpath, server, username, passwrd)
             
         heads = headers[:]+['Molecule']
@@ -215,7 +228,12 @@ class Analysis(object):
         return df
         
     def remove_rows(self, rows):
+        """remove one or more rows of molecules
+
+        rows : int or list of ints:
+            the rows to remove
         
+        """
         self._df.drop(rows, inplace=True)
 
         return self.get_table()
@@ -279,7 +297,20 @@ class Analysis(object):
         return non_conformers
 
     def add_mol_property(self, name, method, *args, **kwargs):
-        """compute molecule property for all rows and create data column """
+        """compute molecule property for all rows and create a data column 
+        
+        Parameters
+        ----------
+        name : str
+            what to name the data column
+        method : str
+            what molecule method to call 
+        *args : various
+            arguments to pass to the molecule method
+        **kwargs : various
+            keyword arguments to pass to the molecule method
+
+        """
                 
         if type(name) is tuple or type(name) is list:
             for idx, n in enumerate(name):
@@ -293,31 +324,61 @@ class Analysis(object):
 
     def add_mol_property_subset(self, name, method, 
                                      rows=[], filters={}, 
-                                     args=[], kwargs={}):
-        """compute molecule property for a subset of rows and create/add-to data column """
+                                     args=[], kwargs={},
+                                     relative_to_row=None):
+        """compute molecule property for a subset of rows and create/add-to data column 
+
+        Parameters
+        ----------
+        name : str or list of strings
+            name for output column (multiple if method outputs more than one value)
+        method : str
+            what molecule method to call 
+        rows : list
+            what molecule rows to calculate the property for
+        filters : dict
+            filter for selecting molecules to calculate the property for
+        args : list
+            the arguments to pass to the molecule method
+        kwargs : dict
+            the keyword arguments to pass to the molecule method
+        relative_to_row: int
+            compute values relative to the value of a particular molecule at row i
+        
+        """
+        if type(relative_to_row) is int:
+            if rows and relative_to_row not in rows:
+                rows.append(relative_to_row)
         
         df = self.get_table(rows=rows, filters=filters, mol=True)
 
         if type(name) is tuple or type(name) is list:
+            
             for idx, n in enumerate(name):
                 func = lambda m: getattr(m, method)(*args, **kwargs)[idx]
                 vals = df.Molecule.map(func)
+                if type(relative_to_row) is int:
+                    vals = vals - vals.loc[relative_to_row]
                 if n in self._df.columns:
                     self._df[n] = vals.combine_first(self._df[n])
                 else:                
                     self._df[n] = vals
+            
     
         else:
             func = lambda m: getattr(m, method)(*args, **kwargs)
             vals = df.Molecule.map(func)
+            if type(relative_to_row) is int:
+                vals = vals - vals.loc[relative_to_row]
             if name in self._df.columns:
                 self._df[name] = vals.combine_first(self._df[name])
             else:                
                 self._df[name] = vals
-        
+
         return self.get_table()
             
     def get_molecule(self, row):
+        """ get molecule object coresponding to particular row """
         return copy.deepcopy(self._df.Molecule.loc[row])
     
     ## TODO will active work?
@@ -381,9 +442,9 @@ class Analysis(object):
         atom_groups : [list, list] 
             if not none only show bonds between these groups of atom indexes (for sopt/hbond mtypes)
         alpha : float
-            alpha color value of geometry (for sopt/hbond mtypes)
+            alpha color value of geometry (for highlight/sopt/hbond mtypes)
         transparent : bool
-            whether atoms should be transparent (for sopt/hbond mtypes)
+            whether atoms should be transparent (for highlight/sopt/hbond mtypes)
         hbondwidth : float   
             width of lines depicting interaction (for hbond mtypes)  
         ipyimg : bool
@@ -420,8 +481,11 @@ class Analysis(object):
                                        relative=relative, 
                                        minval=minval, maxval=maxval, ipyimg=ipyimg)
             elif mtype == 'highlight':
-                yield indx, mol.show_highlight_atoms(highlight, gbonds=gbonds, 
-                                               ball_stick=ball_stick, 
+                yield indx, mol.show_highlight_atoms(highlight, 
+                                       alpha=alpha,
+                                       transparent=transparent,
+                                       gbonds=gbonds, 
+                                       ball_stick=ball_stick, 
                                        rotations=rotations, zoom=zoom, 
                                        width=width, height=height, 
                                        axis_length=axis_length, ipyimg=ipyimg)
@@ -437,7 +501,7 @@ class Analysis(object):
                                     relative=relative, 
                                     minval=minval, maxval=maxval, ipyimg=ipyimg)
             elif mtype == 'hbond':
-                yield indx, mol.show_SOPT_bonds(min_energy=sopt_min_energy,
+                yield indx, mol.show_hbond_analysis(min_energy=sopt_min_energy,
                                     cutoff_energy=sopt_cutoff_energy,
                                     atom_groups=atom_groups, bondwidth=hbondwidth,
                                     alpha=alpha, transparent=transparent,
@@ -451,8 +515,7 @@ class Analysis(object):
                 raise ValueError(
                 'mtype must be initial, optimised, nbo, highlight, sopt or hbond')                
     
-    #TODO finish parameters description            
-    def plot_mol_images(self, mtype='optimised', info_columns=[],
+    def plot_mol_images(self, mtype='optimised', info_columns=[], info_incl_id=False,
                         max_cols=1, label_size=20, start_letter='A', save_fname=None,
                         rows=[], filters={}, align_to=[], rotations=[[0., 0., 0.]],
                         gbonds=True, ball_stick=True,
@@ -470,6 +533,8 @@ class Analysis(object):
             'initial', 'optimised', 'nbo', 'highlight', 'sopt' or 'hbond'
         info_columns : list of str
             columns to use as info in caption
+        info_incl_id : bool
+            include molecule id number in caption
         max_cols : int
             maximum columns in plot
         label_size : int
@@ -573,13 +638,19 @@ class Analysis(object):
                         size=label_size, weight="bold")
             
             info=[]
+            if info_incl_id:
+                info.append(str(indx))
             for col in info_columns:
                 try:
                     isnan = pd.np.isnan(df[col].loc[indx])
                 except TypeError:
                     isnan = False
-                if not isnan:
-                    info.append(str(df[col].loc[indx]))
+                if isnan:
+                    value = '-'
+                else:
+                    value = df[col].loc[indx]
+                    
+                info.append(str(value))
                                 
             caption.append(
                 '(' + string.ascii_uppercase[mol_num+letter_offset] + ') ' + ', '.join(info))
@@ -594,7 +665,8 @@ class Analysis(object):
         return fig, 'Figure: ' + ', '.join(caption)                                       
     
     def plot_radviz_comparison(self, category_column, 
-                               columns=[], rows=[], filters={}, point_size=30):
+                               columns=[], rows=[], filters={}, point_size=30,
+                                **kwargs):
         """return plot axis of radviz graph
         
         RadViz is a way of visualizing multi-variate data. 
@@ -621,9 +693,10 @@ class Analysis(object):
                 columns.append(category_column) 
             
         df = self.get_table(rows, columns, filters)
+        df = df.sort(category_column)
 
         f, ax = plt.subplots()
-        ax = radviz(df, category_column, ax=ax, s=point_size)
+        ax = radviz(df, category_column, ax=ax, s=point_size, **kwargs)
         ax.axes.get_xaxis().set_visible(False)
         ax.axes.get_yaxis().set_visible(False)
         ax.set_frame_on(False)

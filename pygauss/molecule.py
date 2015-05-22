@@ -566,13 +566,13 @@ class Molecule(object):
         
         return int('0x%02x%02x%02x' % rgb[:3], 16)
        
-    def _get_highlight_colors(self, natoms, atomlists, active=False):
+    def _get_highlight_colors(self, natoms, atomlists, active=False, alpha=0.7):
 
         norm = mpl.colors.Normalize(vmin=1, vmax=len(atomlists))
         cmap = cm.jet_r
         m = cm.ScalarMappable(norm=norm, cmap=cmap)
         
-        colorlist = [(211, 211, 211, 150) for n in range(natoms)]
+        colorlist = [(211, 211, 211, int(255*alpha)) for n in range(natoms)]
         
         for n in range(natoms):
             for group, atomlist in enumerate(atomlists):
@@ -585,8 +585,8 @@ class Molecule(object):
         
         return colorlist
 
-    def show_highlight_atoms(self, atomlists, gbonds=True, active=False, 
-                             optimised=True,
+    def show_highlight_atoms(self, atomlists, transparent=False, alpha=0.7,
+                             gbonds=True, active=False, optimised=True,
                         ball_stick=False, rotations=[[0., 0., 0.]], zoom=1.,
                         width=300, height=300, axis_length=0, lines=[], ipyimg=True):
                
@@ -597,14 +597,21 @@ class Molecule(object):
         
         atomlists=[self._atom_groups[grp] if type(grp) is str else grp for grp in atomlists]
 
-        colorlist = self._get_highlight_colors(natoms, atomlists, active)
+        colorlist = self._get_highlight_colors(natoms, atomlists, active,
+                                               alpha=alpha)
         
         molecule = self._create_molecule(optimised=optimised, gbonds=gbonds)
 
+        if transparent:
+            linestyle='lines'
+        else:
+            linestyle='impostors'
+            
         return self._show_molecule(molecule, active=active, 
+                                   transparent=transparent,
                                   ball_stick=ball_stick, 
                                   rotations=rotations, zoom=zoom,
-                                  colorlist=colorlist,
+                                  colorlist=colorlist, linestyle=linestyle,
                                   lines=lines, axis_length=axis_length,
                                   width=width, height=height, ipyimg=ipyimg) 
                                   
@@ -955,7 +962,11 @@ class Molecule(object):
     def calc_nbo_charge(self, atoms=[]):
         """ returns total charge of the atoms """
         charges = self._nbo_data.read('atomcharges')['natural']
-        if atoms==[]: return np.sum(charges)
+        if atoms==[]: 
+            return np.sum(charges)
+            
+        if type(atoms) is str:
+            atoms = self._atom_groups[atoms]
             
         atoms = np.array(atoms) -1 # 1->0 base        
         try:
@@ -984,6 +995,9 @@ class Molecule(object):
         charges = self._nbo_data.read('atomcharges')['natural']
         coords = molecule.r_array   
         
+        if type(atoms) is str:
+            atoms = self._atom_groups[atoms]
+
         if atoms:
             atoms = np.array(atoms) -1 # 1->0 base
             charges = charges[atoms]
@@ -1002,7 +1016,7 @@ class Molecule(object):
         
         return r, theta, phi                     
 
-    def get_SOPT_analysis(self, eunits='kJmol-1', atom_groups=[]):
+    def get_sopt_analysis(self, eunits='kJmol-1', atom_groups=[]):
         """Second Order Perturbation Theory analysis
         
         """
@@ -1045,7 +1059,7 @@ class Molecule(object):
                    'Atype', 'Acceptors', 'A_Symbols', 'A_Charges', 
                    'E2']] 
         
-    def show_SOPT_bonds(self, min_energy=20., cutoff_energy=0., atom_groups=[],
+    def show_sopt_bonds(self, min_energy=20., cutoff_energy=0., atom_groups=[],
                         bondwidth=5, gbonds=True, active=False,
                         ball_stick=True, rotations=[[0., 0., 0.]], zoom=1.,
                         width=300, height=300, axis_length=0, lines=[],
@@ -1055,7 +1069,7 @@ class Molecule(object):
         """Second Order Perturbation Theory analysis
         energy in kJmol-1        
         """
-        df = self.get_SOPT_analysis(atom_groups=atom_groups)
+        df = self.get_sopt_analysis(atom_groups=atom_groups)
         df = df[df.E2 >= min_energy]
         
         molecule = self._create_molecule(gbonds=gbonds)
@@ -1080,10 +1094,10 @@ class Molecule(object):
                                   transparent=transparent,
                                   ipyimg=ipyimg) 
 
-    def get_hbond_analysis(self, min_energy=0., atom_groups=[]):
+    def get_hbond_analysis(self, min_energy=0., atom_groups=[], eunits='kJmol-1'):
         """EXPERIMENTAL! hydrogen bond analysis DH---A """
 
-        df = self.get_SOPT_analysis(atom_groups=atom_groups)
+        df = self.get_sopt_analysis(atom_groups=atom_groups, eunits=eunits)
         df = df[df.E2 >= min_energy]
         df = df[df.A_Symbols.apply(lambda x: 'H' in x) & 
                 df.Dtype.str.contains('LP') & 
@@ -1091,9 +1105,9 @@ class Molecule(object):
         
         return df
     
-    def calc_hbond_energy(self, atom_groups):
+    def calc_hbond_energy(self, atom_groups, eunits='kJmol-1'):
         
-        df = self.get_hbond_analysis(atom_groups=atom_groups)
+        df = self.get_hbond_analysis(atom_groups=atom_groups, eunits=eunits)
         
         return df.E2.sum()
     

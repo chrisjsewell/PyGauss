@@ -8,6 +8,7 @@ import os, glob
 import socket
 import errno
 import re
+import getpass
 
 import paramiko
 
@@ -21,8 +22,10 @@ class Folder:
     """
     def __init__(self, path, 
                  server=None, username=None, passwrd=None):
-        """
+        """an object intended to act as an entry point to a folder path
         
+        Parameters
+        ----------
         path : str
             the path to the folder (absolute or relative)
         server : str
@@ -30,7 +33,7 @@ class Folder:
         username : str
             the username to connect to the server
         passwrd : str
-            the password to connect to the server
+            server password, if not present it will be asked for during initialisation
         
         """
         assert type(path) is str
@@ -58,12 +61,11 @@ class Folder:
                 ssh_failed = True
             
             if ssh_failed:
-                if not type(self._passwrd) is str:
-                    self._passwrd = raw_input('Please enter server password:')
-                    try:
-                        clear_output()    
-                    except:
-                        pass
+                if not type(self._username) is str:                   
+                    self._passwrd = getpass.getuser()
+                if not type(self._passwrd) is str:                   
+                    self._passwrd = getpass.getpass('Please enter server password: ')
+
                 ssh = self._connect_ssh(server, username, self._passwrd)
 
             sftp = ssh.open_sftp()

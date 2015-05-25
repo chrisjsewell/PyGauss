@@ -4,9 +4,11 @@ import copy
 import math
 import string
 
+import numpy as np
 import pandas as pd
 from pandas.tools.plotting import radviz
 import matplotlib.pyplot as plt
+import matplotlib.cm as cm
 
 from sklearn.cluster import KMeans
 
@@ -197,12 +199,16 @@ class Analysis(object):
         if rows:
             df = df.loc[rows] 
         if columns:
+            cols = columns[:]
             if type(row_index) is list:
-                columns += row_index
+                cols += row_index
             else:
-                columns.append(row_index)
-            columns = list(set(columns))
-            df = df.ix[:,columns]            
+                cols.append(row_index)
+            if mol:
+                cols.append('Molecule')
+            unique_cols = []
+            [unique_cols.append(x) for x in cols if x not in unique_cols]
+            df = df.ix[:,unique_cols]            
             
         if row_index: df = df.set_index(row_index) 
 
@@ -250,7 +256,7 @@ class Analysis(object):
                        'opt_error': 'get_run_error',
                        'conformer': 'is_conformer'}
                        
-    def get_basic_property(self, prop):
+    def get_basic_property(self, prop, *args, **kwargs):
         """returns a series of a basic run property or nan if it is not available
 
         Parameters
@@ -264,7 +270,7 @@ class Analysis(object):
         def get_prop(m):
             method = getattr(m, self._basic_properties[prop])
             try: 
-                out = method()
+                out = method(*args, **kwargs)
             except:
                 out = pd.np.nan
             return out
@@ -290,10 +296,10 @@ class Analysis(object):
         self._df = self._df[self.get_basic_property('optimised')==True]
         return non_optimised
         
-    def remove_non_conformers(self):
+    def remove_non_conformers(self, cutoff=0.):
         """removes runs with negative frequencies """
-        non_conformers = self._df[self.get_basic_property('conformer')!=True].copy()
-        self._df = self._df[self.get_basic_property('conformer')==True]
+        non_conformers = self._df[self.get_basic_property('conformer', cutoff=cutoff)!=True].copy()
+        self._df = self._df[self.get_basic_property('conformer', cutoff=cutoff)==True]
         return non_conformers
 
     def add_mol_property(self, name, method, *args, **kwargs):
@@ -387,10 +393,11 @@ class Analysis(object):
                          gbonds=True, ball_stick=True, 
                          zoom=1., width=300, height=300, axis_length=0,
                          relative=False, minval=-1, maxval=1,
-                         highlight=[], active=False, ipyimg=True, 
+                         highlight=[], active=False, 
                          sopt_min_energy=20., sopt_cutoff_energy=0.,
                          atom_groups=[], alpha=0.5, transparent=False,
-                         hbondwidth=5):
+                         hbondwidth=5, eunits='kJmol-1', no_hbonds=False, 
+                         ipyimg=True):
         """yields molecules
 
         Parameters
@@ -435,18 +442,22 @@ class Analysis(object):
             coloring of nbo atoms scaled to absolute max (for nbo mtype)
         highlight : list of lists
             atom indxes to highlight (for highlight mtype)
+        eunits : str
+            the units of energy to return (for sopt/hbond mtype)
         sopt_min_energy : float
-            minimum energy in kJmol-1 to show (for sopt/hbond mtype)
+            minimum energy to show (for sopt/hbond mtype)
         sopt_cutoff_energy : float
-            energy in kJmol-1 below which bonds will be dashed (for sopt mtype)
-        atom_groups : [list, list] 
-            if not none only show bonds between these groups of atom indexes (for sopt/hbond mtypes)
+            energy below which bonds will be dashed (for sopt mtype)
         alpha : float
             alpha color value of geometry (for highlight/sopt/hbond mtypes)
         transparent : bool
             whether atoms should be transparent (for highlight/sopt/hbond mtypes)
         hbondwidth : float   
             width of lines depicting interaction (for hbond mtypes)  
+        atom_groups : [list or str, list or str]
+            restrict interactions to between two lists (or identifiers) of atom indexes (for sopt/hbond mtypes)
+        no_hbonds : bool
+            whether to ignore H-Bonds in the calculation
         ipyimg : bool
             whether to return an IPython image, PIL image otherwise 
         
@@ -490,9 +501,9 @@ class Analysis(object):
                                        width=width, height=height, 
                                        axis_length=axis_length, ipyimg=ipyimg)
             elif mtype == 'sopt':
-                yield indx, mol.show_SOPT_bonds(min_energy=sopt_min_energy,
-                                    cutoff_energy=sopt_cutoff_energy,
-                                    atom_groups=atom_groups,
+                yield indx, mol.show_sopt_bonds(min_energy=sopt_min_energy,
+                                    cutoff_energy=sopt_cutoff_energy, no_hbonds=no_hbonds, 
+                                    eunits=eunits, atom_groups=atom_groups,
                                     alpha=alpha, transparent=transparent,
                                     gbonds=gbonds, ball_stick=ball_stick, 
                                     rotations=rotations, zoom=zoom, 
@@ -502,7 +513,7 @@ class Analysis(object):
                                     minval=minval, maxval=maxval, ipyimg=ipyimg)
             elif mtype == 'hbond':
                 yield indx, mol.show_hbond_analysis(min_energy=sopt_min_energy,
-                                    cutoff_energy=sopt_cutoff_energy,
+                                    cutoff_energy=sopt_cutoff_energy, eunits=eunits,
                                     atom_groups=atom_groups, bondwidth=hbondwidth,
                                     alpha=alpha, transparent=transparent,
                                     gbonds=gbonds, ball_stick=ball_stick, 
@@ -521,10 +532,10 @@ class Analysis(object):
                         gbonds=True, ball_stick=True,
                         zoom=1., width=500, height=500, axis_length=0,
                         relative=False, minval=-1, maxval=1,
-                        highlight=[], frame_on=False,
+                        highlight=[], frame_on=False, eunits='kJmol-1',
                         sopt_min_energy=20., sopt_cutoff_energy=0.,
                         atom_groups=[], alpha=0.5, transparent=False,
-                        hbondwidth=5):
+                        hbondwidth=5, no_hbonds=False):
         """show molecules in matplotlib table of axes
 
         Parameters
@@ -571,18 +582,22 @@ class Analysis(object):
             coloring of nbo atoms scaled to absolute max (for nbo mtype)
         highlight : list of lists
             atom indxes to highlight (for highlight mtype)
+        eunits : str
+            the units of energy to return (for sopt/hbond mtype)
         sopt_min_energy : float
-            minimum energy in kJmol-1 to show (for sopt/hbond mtype)
+            minimum energy to show (for sopt/hbond mtype)
         sopt_cutoff_energy : float
-            energy in kJmol-1 below which bonds will be dashed (for sopt mtype)
-        atom_groups : [list, list] 
-            if not none only show bonds between these groups of atom indexes (for sopt/hbond mtypes)
+            energy below which bonds will be dashed (for sopt mtype)
         alpha : float
             alpha color value of geometry (for sopt/hbond mtypes)
         transparent : bool
             whether atoms should be transparent (for sopt/hbond mtypes)
         hbondwidth : float   
             width of lines depicting interaction (for hbond mtypes)     
+        atom_groups : [list or str, list or str]
+            restrict interactions to between two lists (or identifiers) of atom indexes (for sopt/hbond mtypes)
+        no_hbonds : bool
+            whether to ignore H-Bonds in the calculation (for sopt only)
         frame_on : bool
             whether to show frame around each image 
 
@@ -607,11 +622,11 @@ class Analysis(object):
                         width=width, height=height, axis_length=axis_length,
                         relative=relative, minval=minval, maxval=maxval,
                         highlight=highlight, active=False, ipyimg=False,
-                        sopt_min_energy=sopt_min_energy, 
+                        eunits=eunits, sopt_min_energy=sopt_min_energy, 
                         sopt_cutoff_energy=sopt_cutoff_energy,
                         atom_groups=atom_groups, alpha=alpha, 
                         transparent=transparent,
-                        hbondwidth=hbondwidth)
+                        hbondwidth=hbondwidth, no_hbonds=no_hbonds)
         
         num_rows = int(math.ceil(num_mols/float(max_cols)))
         num_cols = min([max_cols, num_mols])
@@ -662,8 +677,116 @@ class Analysis(object):
         if save_fname:
             self._folder.save_mplfig(fig, save_fname)
         
-        return fig, 'Figure: ' + ', '.join(caption)                                       
-    
+        return fig, 'Figure: ' + ', '.join(caption)
+        
+    def get_freq_analysis(self, info_columns=[], rows=[], filters={}):
+        """return frequency analysis 
+
+        Parameters
+        ----------
+        info_columns : list of str
+            columns to use as info in caption
+        rows : int or list
+            index for the row of each molecule to plot (all plotted if empty)
+        filters : dict
+            {columns:values} to filter by
+        
+        Returns
+        -------
+        data : pd.DataFrame
+            frequency data
+        """
+        
+        df = self.get_table(columns=info_columns, rows=rows, 
+                            filters=filters, mol=True)
+        
+        main = pd.DataFrame()
+        for indx, row in df.iterrows():
+            df = row.Molecule.get_freq_analysis()
+            
+            df['row']=indx
+            for col in info_columns:
+                df[col] = row[col]
+            main = main.append(df)
+        
+        return main
+        
+    def plot_freq_analysis(self, info_columns=[], rows=[], filters={}, 
+                           share_plot=True, include_row=False):
+        """plot frequency analysis 
+
+        Parameters
+        ----------
+        info_columns : list of str
+            columns to use as info in caption
+        rows : int or list
+            index for the row of each molecule to plot (all plotted if empty)
+        filters : dict
+            {columns:values} to filter by
+        share_plot : bool
+            whether to share a single plot or have multiple ones
+        include_row : bool
+            include row number in legend labels
+        
+        Returns
+        -------
+        data : matplotlib.figure.Figure
+            plotted frequency data
+        """
+
+        df = self.get_freq_analysis(info_columns=info_columns, rows=rows, 
+                                    filters=filters)
+        
+        if share_plot:
+            fig, ax = plt.subplots()
+        
+            colors = cm.rainbow(np.linspace(0, 1, df.row.unique().shape[0]))
+            alphas = np.linspace(1, 0.5, df.row.unique().shape[0])
+            m_sizes = np.linspace(25, 15, df.row.unique().shape[0])
+            
+            for data, c, a, s in zip(df.groupby('row'), colors, alphas, m_sizes):
+                row, group = data
+                label = ', '.join([str(group[col].iloc[0]) for col in info_columns])
+                if include_row:
+                    label += ' ({0})'.format(row)
+                ax.bar(group['Frequency ($cm^{-1}$)'], group['IR Intensity ($km/mol$)'], 
+                         align='center', width=30, linewidth=0,  alpha=a,color=c, label=label)
+                ax.scatter(group['Frequency ($cm^{-1}$)'], group['IR Intensity ($km/mol$)'], 
+                                 marker='o', alpha=a, color=c, s=s)
+
+            ax.grid()
+            ax.legend(bbox_to_anchor=(1.05, 1), loc=2, borderaxespad=0.)
+            ax.set_ybound(-10)
+            ax.set_xlabel('Frequency ($cm^{-1}$)')
+            ax.set_ylabel('IR Intensity ($km/mol$)')       
+        else:
+            fig, axes = plt.subplots(df.row.unique().shape[0], sharex=True, sharey=True)            
+            for data, ax in zip(df.groupby('row'), axes):
+                row, group = data
+                label = ', '.join([str(group[col].iloc[0]) for col in info_columns])
+                if include_row:
+                    label += ' ({0})'.format(row)
+                ax.bar(group['Frequency ($cm^{-1}$)'], group['IR Intensity ($km/mol$)'], 
+                         align='center', width=30, linewidth=0)
+                ax.scatter(group['Frequency ($cm^{-1}$)'], group['IR Intensity ($km/mol$)'], 
+                                 marker='o')
+                ax.set_title(label)
+                ax.grid()
+                ax.set_ybound(-10)
+
+            ax = fig.add_subplot(111)    # The big subplot
+            ax.tick_params(top='off', bottom='off', left='off', right='off',
+                           labelbottom='on', labelleft='on', pad=25)
+            
+            ax.set_xticklabels([])
+            ax.set_yticklabels([])           
+            ax.set_frame_on(False)
+            ax.set_ylabel('IR Intensity ($km/mol$)')  
+            ax.set_xlabel('Frequency ($cm^{-1}$)')
+            
+        fig.tight_layout()
+        return fig
+        
     def plot_radviz_comparison(self, category_column, 
                                columns=[], rows=[], filters={}, point_size=30,
                                 **kwargs):

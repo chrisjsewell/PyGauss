@@ -267,16 +267,43 @@ class Molecule(object):
         imgaginary_freqs = self._freq_data.read('vibfreqs') < cutoff 
         return not imgaginary_freqs.any()
         
-    def plot_IRfreqs(self):
+    def get_freq_analysis(self):
+        """return frequency analysis
         
+        Returns
+        -------
+        data : pd.DataFrame
+            frequency data
+        """
         frequencies = self._freq_data.read('vibfreqs')
         irs = self._freq_data.read('vibirs')
+       
+        return pd.DataFrame(zip(frequencies, irs), 
+                             columns=['Frequency ($cm^{-1}$)', 
+                             'IR Intensity ($km/mol$)'])
 
-        f, ax = plt.subplots()        
-        ax.scatter(frequencies, irs)   
+    def plot_freq_analysis(self):
+        """plot frequency analysis 
+
+        Returns
+        -------
+        data : matplotlib.axes._subplots.AxesSubplot
+            plotted frequency data
+        
+        """
+
+        df = self.get_freq_analysis()
+        
+        fig, ax = plt.subplots()
+                
+        ax.bar(df['Frequency ($cm^{-1}$)'], df['IR Intensity ($km/mol$)'], 
+                 align='center', width=30, linewidth=0)
+        ax.scatter(df['Frequency ($cm^{-1}$)'], df['IR Intensity ($km/mol$)'] , 
+                      marker='o',alpha=0.7)
+        ax.grid()
+        ax.set_ybound(-10)
         ax.set_xlabel('Frequency ($cm^{-1}$)')
-        ax.set_ylabel('IR Intensities ($km/mol$)')
-        ax.grid(True)
+        ax.set_ylabel('IR Intensity ($km/mol$)')    
         
         return ax
 
@@ -1017,8 +1044,20 @@ class Molecule(object):
         return r, theta, phi                     
 
     def get_sopt_analysis(self, eunits='kJmol-1', atom_groups=[]):
-        """Second Order Perturbation Theory analysis
+        """interactions between "filled" (donor) Lewis-type 
+        Natural Bonding Orbitals (NBOs) and "empty" (acceptor) non-Lewis NBOs,
+        using Second Order Perturbation Theory (SOPT)
         
+        Parameters
+        ----------
+        eunits : str
+            the units of energy to return
+        atom_groups : [list or str, list or str]
+            restrict interactions to between two lists (or identifiers) of atom indexes
+        Returns
+        -------
+        analysis : pandas.DataFrame
+            a table of interactions
         """
         
         sopt = copy.deepcopy(self._nbo_data.read('sopt'))
@@ -1059,18 +1098,83 @@ class Molecule(object):
                    'Atype', 'Acceptors', 'A_Symbols', 'A_Charges', 
                    'E2']] 
         
+    def get_hbond_analysis(self, min_energy=0., atom_groups=[], eunits='kJmol-1'):
+        """EXPERIMENTAL! hydrogen bond analysis (DH---A), 
+        using Second Order Bond Perturbation Theiry
+
+        Parameters
+        ----------
+        min_energy : float
+            the minimum interaction energy to report
+        eunits : str
+            the units of energy to return
+        atom_groups : [list or str, list or str]
+            restrict interactions to between two lists (or identifiers) of atom indexes
+        Returns
+        -------
+        analysis : pandas.DataFrame
+            a table of interactions
+
+        uses a strict definition of a hydrogen bond as:
+        interactions between "filled" (donor) Lewis-type Lone Pair (LP) NBOs 
+        and "empty" (acceptor) non-Lewis Bonding (BD) NBOs
+        """
+
+        df = self.get_sopt_analysis(atom_groups=atom_groups, eunits=eunits)
+        df = df[df.E2 >= min_energy]
+        df = df[df.A_Symbols.apply(lambda x: 'H' in x) & 
+                df.Dtype.str.contains('LP') & 
+                df.Atype.str.contains('BD*')]
+        
+        return df
+
+    def calc_sopt_energy(self, atom_groups=[], eunits='kJmol-1', no_hbonds=False):
+        """calculate total energy of interactions between "filled" (donor) Lewis-type 
+        Natural Bonding Orbitals (NBOs) and "empty" (acceptor) non-Lewis NBOs,
+        using Second Order Perturbation Theory 
+
+        Parameters
+        ----------
+        eunits : str
+            the units of energy to return
+        atom_groups : [list or str, list or str]
+            restrict interactions to between two lists (or identifiers) of atom indexes
+        no_hbonds : bool
+            whether to ignore H-Bonds in the calculation
+        Returns
+        -------
+        analysis : pandas.DataFrame
+            a table of interactions
+        """
+        df = self.get_sopt_analysis(atom_groups=atom_groups, eunits=eunits)
+        
+        if no_hbonds:
+            dfh = self.get_hbond_analysis(eunits=eunits,
+                                          atom_groups=atom_groups)
+            df = df.loc[set(df.index).difference(dfh.index)]          
+        
+        return df.E2.sum()
+
     def show_sopt_bonds(self, min_energy=20., cutoff_energy=0., atom_groups=[],
-                        bondwidth=5, gbonds=True, active=False,
+                        bondwidth=5, eunits='kJmol-1', no_hbonds=False,
+                        gbonds=True, active=False,
                         ball_stick=True, rotations=[[0., 0., 0.]], zoom=1.,
                         width=300, height=300, axis_length=0, lines=[],
                         relative=False, minval=-1, maxval=1,
                         alpha=0.5, transparent=True,
                         ipyimg=True):
-        """Second Order Perturbation Theory analysis
-        energy in kJmol-1        
+        """visualisation of interactions between "filled" (donor) Lewis-type 
+        Natural Bonding Orbitals (NBOs) and "empty" (acceptor) non-Lewis NBOs,
+        using Second Order Perturbation Theory
+                
         """
-        df = self.get_sopt_analysis(atom_groups=atom_groups)
+        df = self.get_sopt_analysis(atom_groups=atom_groups, eunits=eunits)
         df = df[df.E2 >= min_energy]
+        
+        if no_hbonds:
+            dfh = self.get_hbond_analysis(min_energy=min_energy, eunits=eunits,
+                                          atom_groups=atom_groups)
+            df = df.loc[set(df.index).difference(dfh.index)]  
         
         molecule = self._create_molecule(gbonds=gbonds)
         
@@ -1093,26 +1197,15 @@ class Molecule(object):
                                   width=width, height=height, linestyle='lines', 
                                   transparent=transparent,
                                   ipyimg=ipyimg) 
-
-    def get_hbond_analysis(self, min_energy=0., atom_groups=[], eunits='kJmol-1'):
-        """EXPERIMENTAL! hydrogen bond analysis DH---A """
-
-        df = self.get_sopt_analysis(atom_groups=atom_groups, eunits=eunits)
-        df = df[df.E2 >= min_energy]
-        df = df[df.A_Symbols.apply(lambda x: 'H' in x) & 
-                df.Dtype.str.contains('LP') & 
-                df.Atype.str.contains('BD*')].drop(['Dtype', 'Atype'], 1)
-        
-        return df
     
-    def calc_hbond_energy(self, atom_groups, eunits='kJmol-1'):
+    def calc_hbond_energy(self, atom_groups=[], eunits='kJmol-1'):
         
         df = self.get_hbond_analysis(atom_groups=atom_groups, eunits=eunits)
         
         return df.E2.sum()
     
     def show_hbond_analysis(self, min_energy=0., atom_groups=[], 
-                        cutoff_energy=0., bondwidth=5, 
+                        cutoff_energy=0., eunits='kJmol-1', bondwidth=5, 
                         gbonds=True, active=False,
                         ball_stick=True, rotations=[[0., 0., 0.]], zoom=1.,
                         width=300, height=300, axis_length=0, lines=[],
@@ -1133,7 +1226,8 @@ class Molecule(object):
         positive charge, creating a dipole-dipole attraction between the 
         hydrogen atom bonded to the donor, and the lone electron pair on the acceptor.
         """
-        df = self.get_hbond_analysis(min_energy, atom_groups)
+        df = self.get_hbond_analysis(min_energy=min_energy, eunits=eunits, 
+                                     atom_groups=atom_groups)
         
         molecule = self._create_molecule(gbonds=gbonds)
         

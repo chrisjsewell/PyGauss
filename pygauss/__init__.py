@@ -27,7 +27,8 @@ from .file_io import Folder
 import os, inspect
 from . import test_data
 def get_test_folder():
-    return os.path.dirname(os.path.abspath(inspect.getfile(test_data)))
+    """return a folder obj of test data """
+    return Folder(os.path.dirname(os.path.abspath(inspect.getfile(test_data))))
 
 from .utils import df_to_img, set_imagik_exe
 

@@ -9,12 +9,11 @@ import socket
 import errno
 import re
 import getpass
+from io import BytesIO
 
 import paramiko
 
-from IPython.core.display import clear_output
-
-class Folder:
+class Folder(object):
     """ an object intended to act as an entry point to a folder path 
     
     it will act identical whether the folder is local or on a server
@@ -297,6 +296,21 @@ class Folder:
     def save_pilimg(self, img, img_name):
         raise NotImplementedError
 
+class NoOutputFolder(Folder):
+    """ a folder object which will not output any data """
+    def __init__(self, *args, **kwargs):
+        super(NoOutputFolder, self).__init__(*args, **kwargs)
+        
+    def write_file(self, *arg, **kwargs):
+        return BytesIO()
+    def save_ipyimg(self, *arg, **kwargs):
+        return ''
+    def save_mplfig(self, *arg, **kwargs):
+        return ''
+    def save_pilimg(self, *arg, **kwargs):
+        return ''
+    
+    
         
             
 

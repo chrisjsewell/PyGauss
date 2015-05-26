@@ -790,13 +790,51 @@ class Molecule(object):
                                   colorlist=colorlist,
                                   lines=lines, axis_length=axis_length,
                                   width=width, height=height, ipyimg=ipyimg) 
+    
+    def _find_nearest_above(self, my_array, target):
+        diff = my_array - target
+        mask = np.ma.less_equal(diff, 0)
+        # We need to mask the negative differences and zero
+        # since we are looking for values above
+        if np.all(mask):
+            return None # returns None if target is greater than any value
+        masked_diff = np.ma.masked_array(diff, mask)
+        return masked_diff.argmin()
+    
+    def _find_nearest_below(self, my_array, target):
+        diff = my_array - target
+        mask = np.ma.greater_equal(diff, 0)
+        # We need to mask the positive differences and zero
+        # since we are looking for values above
+        if np.all(mask):
+            return None # returns None if target is lower than any value
+        masked_diff = np.ma.masked_array(diff, mask)
+        return masked_diff.argmax()
+
+    def get_homo_lumo_orbitals(self):
+        """get orbital number of homo and lumo """
+        moenergies = self._nbo_data.read("moenergies")[0]
+        homo = self._find_nearest_below(moenergies, 0.) + 1
+        lumo = self._find_nearest_above(moenergies, 0.) + 1
+        
+        return homo, lumo
+                
+    def get_orbital_energy(self, orbital, eunits='eV'):
+        """the energy of an orbital (starting at 1) """
+        assert orbital > 0 and type(orbital) is int
+        moenergies = self._nbo_data.read("moenergies")[0]
+        if not eunits=='eV':
+            moenergies = convertor(moenergies, 'eV', eunits)
+        return moenergies[orbital-1]
+        
     #TODO add active, getting warnings from numba (currently supressed)
     def show_orbital(self, orbital, iso_value=0.3, transparent=True, alpha=0.5,
-                     bond_color=(0, 0, 255), antibond_color=(255, 0, 0),
+                     bond_color=(255, 0, 0), antibond_color=(0, 255, 0),
                      resolution=32, active=False,
                      gbonds=True, ball_stick=True, rotations=[[0., 0., 0.]], zoom=1.,
                      width=300, height=300, axis_length=0, lines=[], ipyimg=True):
         """given nbo data and iso level """
+        assert orbital > 0 and type(orbital) is int
         r, g, b = bond_color
         bond_rgba = (r, g, b, int(255*alpha))
         r, g, b = antibond_color
@@ -806,7 +844,7 @@ class Molecule(object):
         mocoeffs = self._nbo_data.read("mocoeffs")
         gbasis = self._nbo_data.read("gbasis")
 
-        coefficients = mocoeffs[0][orbital]
+        coefficients = mocoeffs[0][orbital-1]
         f = molecular_orbital(molecule.r_array.astype('float32'), 
                               coefficients.astype('float32'), 
                               gbasis)

@@ -48,11 +48,14 @@ def orbit_z(self, angle):
 from .chemlab_patch.graphics.renderers.atom import AtomRenderer
 from .chemlab_patch.graphics.renderers.ballandstick import BallAndStickRenderer
 from .chemlab_patch.graphics.renderers.line import LineRenderer
+from .chemlab_patch.graphics.renderers.triangles import TriangleRenderer
+from chemlab.graphics.renderers.wireframe import WireframeRenderer
 #from chemlab.graphics.postprocessing import SSAOEffect # Screen Space Ambient Occlusion
 from chemlab.utils import cartesian
 from cclib.parser.utils import convertor
 
 from chemlab.graphics.colors import get as str_to_colour
+from chemlab.qc import molecular_orbital
 
 #instead of chemview MolecularViewer to add defined colouring
 #also ignore; 'FutureWarning: IPython widgets are experimental and may change in the future.'
@@ -62,6 +65,7 @@ with warnings.catch_warnings():
 
 from .utils import circumcenter
 from .file_io import Folder
+from .isosurface import get_isosurface
 
 class Molecule(object):
     
@@ -443,9 +447,11 @@ class Molecule(object):
         if bbox:
             return im.crop(bbox)
 
+    ##TODO change all ball_stick to representation='wireframe'/'ball_stick'/'vdw'
     def _image_molecule(self, molecule, ball_stick=False, colorlist=[],
                          rotation=[0., 0., 0.], width=300, height=300, zoom=1.,
-                        lines=[], linestyle='impostors', transparent=False):
+                        lines=[], linestyle='impostors', transparent=False,
+                        surfaces=[]):
 
         v = QtViewer()
         w = v.widget
@@ -453,7 +459,12 @@ class Molecule(object):
         
         w.initializeGL()
 
-        if ball_stick:
+        if surfaces:
+            r = v.add_renderer(WireframeRenderer,
+                                molecule.r_array,
+                                molecule.type_array,
+                                molecule.bonds)
+        elif ball_stick:
             r = v.add_renderer(BallAndStickRenderer,
                                 molecule.r_array,
                                 molecule.type_array,
@@ -474,6 +485,11 @@ class Molecule(object):
             v.add_renderer(LineRenderer, [line[0], line[1]], 
                            [[str_to_colour(line[2]), str_to_colour(line[3])]], 
                              width=line[4], dashed=line[5])
+        
+        for surface in surfaces:
+            vertices, normals, colors, transparent = surface
+            v.add_renderer(TriangleRenderer, vertices.flatten(), normals.flatten(), 
+                                             colors, transparent=transparent)
 
         #v.add_post_processing(SSAOEffect)
         w.camera.autozoom(molecule.r_array*1./zoom)
@@ -527,6 +543,7 @@ class Molecule(object):
                        rotations=[[0., 0., 0.]],
                        colorlist=[], lines=[], axis_length=0,
                        linestyle='impostors', transparent=False,
+                       surfaces=[],
                        ipyimg=True):
                 
         if active:
@@ -553,7 +570,7 @@ class Molecule(object):
                                     rotation=rotation, zoom=zoom,
                                     width=width, height=width,
                                     lines=drawlines, linestyle=linestyle,
-                                    transparent=transparent))  
+                                    transparent=transparent, surfaces=surfaces))  
             image = self._concat_images_horizontal(images)
             del images
             
@@ -771,6 +788,55 @@ class Molecule(object):
                                   ball_stick=ball_stick, 
                                   rotations=rotations, zoom=zoom,
                                   colorlist=colorlist,
+                                  lines=lines, axis_length=axis_length,
+                                  width=width, height=height, ipyimg=ipyimg) 
+    #TODO add active, getting warnings from numba (currently supressed)
+    def show_orbital(self, orbital, iso_value=0.3, transparent=True, alpha=0.5,
+                     bond_color=(0, 0, 255), antibond_color=(255, 0, 0),
+                     resolution=32, active=False,
+                     gbonds=True, ball_stick=True, rotations=[[0., 0., 0.]], zoom=1.,
+                     width=300, height=300, axis_length=0, lines=[], ipyimg=True):
+        """given nbo data and iso level """
+        r, g, b = bond_color
+        bond_rgba = (r, g, b, int(255*alpha))
+        r, g, b = antibond_color
+        antibond_rgba = (r, g, b, int(255*alpha))
+
+        molecule = self._create_molecule(optimised=True, gbonds=gbonds)
+        mocoeffs = self._nbo_data.read("mocoeffs")
+        gbasis = self._nbo_data.read("gbasis")
+
+        coefficients = mocoeffs[0][orbital]
+        f = molecular_orbital(molecule.r_array.astype('float32'), 
+                              coefficients.astype('float32'), 
+                              gbasis)
+
+        if active:
+            mv = MolecularViewer(molecule.r_array, { 'atom_types': molecule.type_array,
+                                                     'bonds': molecule.bonds })
+            mv.wireframe()
+            mv.add_isosurface(f, isolevel=iso_value, color=self._rgb_to_hex(bond_rgba))
+            mv.add_isosurface(f, isolevel=-iso_value, color=self._rgb_to_hex(antibond_rgba))
+            return mv
+            
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            surfaces = []
+            b_iso = get_isosurface(molecule.r_array, f, iso_value, bond_rgba,
+                                   resolution=resolution)
+            if b_iso:
+                verts, normals, colors = b_iso
+                surfaces.append([verts, normals, colors, transparent])                                        
+            a_iso = get_isosurface(molecule.r_array, f, -iso_value, antibond_rgba,
+                                   resolution=resolution)
+            if a_iso:
+                averts, anormals, acolors = a_iso
+                surfaces.append([averts, anormals, acolors, transparent])                                        
+        
+        return self._show_molecule(molecule, 
+                                  ball_stick=ball_stick, 
+                                  rotations=rotations, zoom=zoom,
+                                  surfaces=surfaces, transparent=True,
                                   lines=lines, axis_length=axis_length,
                                   width=width, height=height, ipyimg=ipyimg) 
 

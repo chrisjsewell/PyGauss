@@ -33,8 +33,9 @@ requirements:
     - pandas >=0.15
     - ipython >=3
     - scikit-learn >=0.15
-    - pil
     - paramiko
+	- scikit-image
+    - pil
     - cclib
     - chemview
     - chemlab

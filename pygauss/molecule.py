@@ -203,14 +203,21 @@ class Molecule(object):
         if type(file_names) is str:
             file_names = [file_names]
         self._pes_data = [self._get_data(fname) for fname in file_names]
+    
+    def _read_data(self, ftype, dtype):
+        """ read data """
+        if not getattr(self, ftype):
+            raise ValueError(
+                '{0} has not been set for this molecule'.format(ftype))
+        return getattr(self, ftype).read(dtype)
 
     def get_basis_descript(self):
         
-        return self._opt_data.read('basis_descript')
+        return self._read_data('_opt_data', 'basis_descript')
 
     def get_basis_funcs(self):
         
-        return self._opt_data.read('nbasis')
+        return self._read_data('_opt_data', 'nbasis')
         
     def get_run_error(self, rtype='opt'):
         """True if there were errors in the computation, else False """
@@ -218,7 +225,7 @@ class Molecule(object):
         
     def is_optimised(self):
         """ was the geometry optimised """
-        return self._opt_data.read('optdone')
+        return self._read_data('_opt_data', 'optdone')
 
     def get_optimisation_E(self, units='eV', final=True):
         """ return the SCF optimisation energy 
@@ -239,7 +246,7 @@ class Molecule(object):
         if not self._opt_data:
             return np.nan
         
-        energies = self._opt_data.read('scfenergies')
+        energies = self._read_data('_opt_data', 'scfenergies')
         
         if energies.shape[0] == 0:
             return np.nan if final else energies
@@ -251,7 +258,7 @@ class Molecule(object):
             
     def plot_optimisation_E(self, units='eV'):
         
-        energies = self._opt_data.read('scfenergies')
+        energies = self._read_data('_opt_data', 'scfenergies')
         for data in reversed(self._prev_opt_data):
             energies = np.concatenate([data.read('scfenergies'), energies])
             
@@ -268,7 +275,7 @@ class Molecule(object):
 
     def is_conformer(self, cutoff=0.):
         """False if any frequencies in the frequency analysis were negative"""
-        imgaginary_freqs = self._freq_data.read('vibfreqs') < cutoff 
+        imgaginary_freqs = self._read_data('_freq_data', 'vibfreqs') < cutoff 
         return not imgaginary_freqs.any()
         
     def get_freq_analysis(self):
@@ -279,8 +286,8 @@ class Molecule(object):
         data : pd.DataFrame
             frequency data
         """
-        frequencies = self._freq_data.read('vibfreqs')
-        irs = self._freq_data.read('vibirs')
+        frequencies = self._read_data('_freq_data', 'vibfreqs')
+        irs = self._read_data('_freq_data', 'vibirs')
        
         return pd.DataFrame(zip(frequencies, irs), 
                              columns=['Frequency ($cm^{-1}$)', 
@@ -386,7 +393,7 @@ class Molecule(object):
     def _create_molecule(self, optimised=True, opt_step=False, scan_step=False, 
                          gbonds=True, data=None, alignment_atoms=None):
         if not optimised:
-            molecule = self._init_data.read('molecule')            
+            molecule = self._read_data('_init_data', 'molecule')            
         else:
             indata = data if data else self._opt_data
             if not type(opt_step) is bool:
@@ -452,14 +459,14 @@ class Molecule(object):
                          rotation=[0., 0., 0.], width=300, height=300, zoom=1.,
                         lines=[], linestyle='impostors', transparent=False,
                         surfaces=[]):
-
+        """create image of molecule """
         v = QtViewer()
         w = v.widget
         w.camera.orbit_z = MethodType(orbit_z, w.camera)
         
         w.initializeGL()
 
-#        if surfaces:
+#        if wireframe:
 #            r = v.add_renderer(WireframeRenderer,
 #                                molecule.r_array,
 #                                molecule.type_array,
@@ -487,9 +494,10 @@ class Molecule(object):
                              width=line[4], dashed=line[5])
         
         for surface in surfaces:
-            vertices, normals, colors, transparent = surface
-            v.add_renderer(TriangleRenderer, vertices, normals, 
-                                             colors, transparent=transparent)
+            vertices, normals, colors, transparent, wireframe = surface
+            v.add_renderer(TriangleRenderer, vertices, normals, colors, 
+                           transparent=transparent,
+                           wireframe=wireframe)
 
         #v.add_post_processing(SSAOEffect)
         w.camera.autozoom(molecule.r_array*1./zoom)
@@ -508,7 +516,15 @@ class Molecule(object):
         return self._trim_image(image)
 
     def _concat_images_horizontal(self, images, gap=10):
-        
+        """ concatentate one or more PIL images horizontally 
+
+        Parameters
+        ----------
+        images : list of pil.Image
+            the images to concatenate
+        gap : int
+            the pixel gap between images
+        """
         if len(images) == 1: return images[0]
         
         total_width = sum([img.size[0] for img in images]) + len(images)*gap
@@ -523,14 +539,22 @@ class Molecule(object):
         
         return final_img
 
-    def _color_to_transparent(self, image, colour=(255, 255, 255)):
-        """ makes colour (default: white) in the image transparent """
+    def _color_to_transparent(self, image, color=(255, 255, 255)):
+        """ sets alpha to 0 for specific colour in PIL image 
+        
+        Parameters
+        ----------
+        image : pil.Image
+            the images to process
+        color : (int, int, int)
+            the RGB (0 to 255) color to set alpha to 0
+        """
         datas = image.getdata()
     
         newData = []
         for item in datas:
-            if item[0] == colour[0] and item[1] == colour[1] and item[2] == colour[2]:
-                newData.append((colour[0], colour[1], colour[2], 0))
+            if item[0] == color[0] and item[1] == color[1] and item[2] == color[2]:
+                newData.append((color[0], color[1], color[2], 0))
             else:
                 newData.append(item)
     
@@ -584,7 +608,7 @@ class Molecule(object):
     def show_initial(self, gbonds=True, active=False, ball_stick=False, 
                      rotations=[[0., 0., 0.]], zoom=1., width=300, height=300,
                      axis_length=0, lines=[], ipyimg=True):
-        
+        """show initial geometry (before optimisation) of molecule """
         molecule = self._create_molecule(optimised=False, gbonds=gbonds)
         
         return self._show_molecule(molecule, active=active, 
@@ -596,7 +620,7 @@ class Molecule(object):
                           ball_stick=False, rotations=[[0., 0., 0.]], zoom=1.,
                           width=300, height=300, axis_length=0, lines=[], 
                           ipyimg=True):
-        
+        """show optimised geometry of molecule """       
         molecule = self._create_molecule(optimised=True, opt_step=opt_step, 
                                          gbonds=gbonds)
 
@@ -607,7 +631,7 @@ class Molecule(object):
                                   width=width, height=height, ipyimg=ipyimg)             
 
     def _rgb_to_hex(self, rgb):
-        
+        """convert RGB color to hex format"""        
         return int('0x%02x%02x%02x' % rgb[:3], 16)
        
     def _get_highlight_colors(self, natoms, atomlists, active=False, alpha=0.7):
@@ -635,9 +659,9 @@ class Molecule(object):
                         width=300, height=300, axis_length=0, lines=[], ipyimg=True):
                
         if optimised:
-            natoms = self._opt_data.read('natom')        
+            natoms = self._read_data('_opt_data', 'natom')        
         else:
-            natoms = self._init_data.read('natom')
+            natoms = self._read_data('_init_data', 'natom')
         
         atomlists=[self._atom_groups[grp] if type(grp) is str else grp for grp in atomlists]
 
@@ -766,7 +790,7 @@ class Molecule(object):
         
     def _get_charge_colors(self, relative=False, minval=-1, maxval=1, alpha=None):
         
-        charges = self._nbo_data.read('atomcharges')['natural']
+        charges = self._read_data('_nbo_data', 'atomcharges')['natural']
         if relative: minval, maxval = (min(charges), max(charges))
         norm = mpl.colors.Normalize(vmin=minval, vmax=maxval)
         cmap = cm.bwr
@@ -791,6 +815,12 @@ class Molecule(object):
                                   lines=lines, axis_length=axis_length,
                                   width=width, height=height, ipyimg=ipyimg) 
     
+    def get_orbital_count(self):
+        """return number of orbitals """
+        moenergies = self._read_data('_nbo_data', "moenergies")[0]
+        return int(moenergies.shape[0])
+
+        
     def _find_nearest_above(self, my_array, target):
         diff = my_array - target
         mask = np.ma.less_equal(diff, 0)
@@ -811,39 +841,104 @@ class Molecule(object):
         masked_diff = np.ma.masked_array(diff, mask)
         return masked_diff.argmax()
 
-    def get_homo_lumo_orbitals(self):
-        """get orbital number of homo and lumo """
-        moenergies = self._nbo_data.read("moenergies")[0]
+    def get_orbital_homo_lumo(self):
+        """return orbital numbers of homo and lumo """
+        moenergies = self._read_data('_nbo_data', "moenergies")[0]
         homo = self._find_nearest_below(moenergies, 0.) + 1
         lumo = self._find_nearest_above(moenergies, 0.) + 1
         
         return homo, lumo
                 
-    def get_orbital_energy(self, orbital, eunits='eV'):
-        """the energy of an orbital (starting at 1) """
-        assert orbital > 0 and type(orbital) is int
-        moenergies = self._nbo_data.read("moenergies")[0]
+    def get_orbital_energies(self, orbitals, eunits='eV'):
+        """the orbital energies for listed orbitals
+        
+        Parameters
+        ----------
+        orbitals : int or iterable of ints
+            the orbital(s) to return energies for (starting at 1) 
+        eunits : str
+            the units of energy
+        Returns
+        -------
+        moenergies : np.array
+            energy for each orbital
+        """
+        orbitals = np.array(orbitals, ndmin=1, dtype=int)
+        assert np.all(orbitals>0) and np.all(orbitals<=self.get_orbital_count()), (
+            'orbitals must be in range 1 to number of orbitals')
+        moenergies = self._read_data('_nbo_data', "moenergies")[0]
         if not eunits=='eV':
             moenergies = convertor(moenergies, 'eV', eunits)
-        return moenergies[orbital-1]
+        return moenergies[orbitals-1]
         
-    #TODO add active, getting warnings from numba (currently supressed)
+    #TODO multiple orbitals
     def show_orbital(self, orbital, iso_value=0.03, extents=(5,5,5),
-                     transparent=True, alpha=0.5,
+                     transparent=True, alpha=0.5, wireframe=True,
                      bond_color=(255, 0, 0), antibond_color=(0, 255, 0),
                      resolution=100, active=False,
                      gbonds=True, ball_stick=True, rotations=[[0., 0., 0.]], zoom=1.,
                      width=300, height=300, axis_length=0, lines=[], ipyimg=True):
-        """given nbo data and iso level """
-        assert orbital > 0 and type(orbital) is int
+        """show orbital image
+
+        Parameters
+        ----------
+        orbital : int
+            the orbital to show (in range 1 to number of orbitals)
+        iso_value : float
+            The value for which the function should be constant.
+        extents : (float, float, float)
+            +/- x,y,z to extend the molecule geometrty when constructing the surface
+        transparent=True : 
+            whether iso-surface should be transparent (based on alpha value) 
+        alpha : 
+            alpha value of iso-surface
+        wireframe : 
+            whether iso-surface should be wireframe (or solid)
+        bond_color : 
+            color of bonding orbital surface in RGB format
+        antibond_color : 
+            color of anti-bonding orbital surface in RGB format
+        resolution : int
+            The number of grid point to use for the surface. An high value will 
+            give better quality but lower performance.
+        active=False : 
+            return an active geometry
+        gbonds : bool
+            guess bonds between atoms (via distance)
+        ball_stick : bool
+            ball and stick images, otherwise wireframe
+        zoom : float
+            zoom level of images
+        width : int
+            width of original images
+        height : int
+            height of original images (although width takes precedent)
+        axis_length : float
+            length of x,y,z axes in negative and positive directions
+        lines : [start_coord, end_coord, start_color, end_color, width, dashed]
+            lines to add to image
+        ipyimg : bool
+            whether to return an IPython image, PIL image otherwise 
+
+        Returns
+        -------
+        mol : IPython.display.Image or PIL.Image
+            an image of the molecule in the format specified by ipyimg 
+            
+        """
+        orbitals = np.array(orbital, ndmin=1, dtype=int)
+        assert np.all(orbitals>0) and np.all(orbitals<=self.get_orbital_count()), (
+            'orbitals must be in range 1 to number of orbitals')
+        orbital = orbitals[0]
+        
         r, g, b = bond_color
         bond_rgba = (r, g, b, int(255*alpha))
         r, g, b = antibond_color
         antibond_rgba = (r, g, b, int(255*alpha))
 
         molecule = self._create_molecule(optimised=True, gbonds=gbonds)
-        mocoeffs = self._nbo_data.read("mocoeffs")
-        gbasis = self._nbo_data.read("gbasis")
+        mocoeffs = self._read_data('_nbo_data', "mocoeffs")
+        gbasis = self._read_data('_nbo_data', "gbasis")
 
         coefficients = mocoeffs[0][orbital-1]
         f = molecular_orbital(molecule.r_array.astype('float32'), 
@@ -863,12 +958,12 @@ class Molecule(object):
                                resolution=resolution)
         if b_iso:
             verts, normals, colors = b_iso
-            surfaces.append([verts, normals, colors, transparent])                                        
+            surfaces.append([verts, normals, colors, transparent, wireframe])                                        
         a_iso = get_isosurface(molecule.r_array, f, -iso_value, antibond_rgba,
                                resolution=resolution)
         if a_iso:
             averts, anormals, acolors = a_iso
-            surfaces.append([averts, anormals, acolors, transparent])                                        
+            surfaces.append([averts, anormals, acolors, transparent,wireframe])                                        
         
         return self._show_molecule(molecule, 
                                   ball_stick=ball_stick, 
@@ -889,9 +984,9 @@ class Molecule(object):
         """ indexes start at 1 """
 
         if optimisation:
-            molecule = self._opt_data.read('molecule')  
+            molecule = self._read_data('_opt_data', 'molecule')  
         else:
-            molecule = self._init_data.read('molecule')
+            molecule = self._read_data('_init_data', 'molecule')
             
         if type(idx_list1) is str:
             idx_list1 = self._atom_groups[idx_list1]
@@ -920,9 +1015,9 @@ class Molecule(object):
         if mol:
             molecule = mol
         elif optimisation:
-            molecule = self._opt_data.read('molecule')  
+            molecule = self._read_data('_opt_data', 'molecule')  
         else:
-            molecule = self._init_data.read('molecule')
+            molecule = self._read_data('_init_data', 'molecule')
 
         v1 = molecule.r_array[indxs[0]-1] - molecule.r_array[indxs[1]-1]
         v2 = molecule.r_array[indxs[2]-1] - molecule.r_array[indxs[1]-1]
@@ -937,9 +1032,9 @@ class Molecule(object):
         if mol:
             molecule = mol
         elif optimisation:
-            molecule = self._opt_data.read('molecule')  
+            molecule = self._read_data('_opt_data', 'molecule')  
         else:
-            molecule = self._init_data.read('molecule')
+            molecule = self._read_data('_init_data', 'molecule')
 
         p = np.array([molecule.r_array[indxs[0]-1], molecule.r_array[indxs[1]-1], 
                       molecule.r_array[indxs[2]-1], molecule.r_array[indxs[3]-1]])
@@ -999,9 +1094,9 @@ class Molecule(object):
         b1, b2, b3 = p2        
         
         if optimisation:
-            molecule = self._opt_data.read('molecule')  
+            molecule = self._read_data('_opt_data', 'molecule')  
         else:
-            molecule = self._init_data.read('molecule')
+            molecule = self._read_data('_init_data', 'molecule')
 
         v1a = molecule.r_array[a2-1] - molecule.r_array[a1-1]
         v2a = molecule.r_array[a3-1] - molecule.r_array[a1-1]
@@ -1091,7 +1186,7 @@ class Molecule(object):
         
     def calc_nbo_charge(self, atoms=[]):
         """ returns total charge of the atoms """
-        charges = self._nbo_data.read('atomcharges')['natural']
+        charges = self._read_data('_nbo_data', 'atomcharges')['natural']
         if atoms==[]: 
             return np.sum(charges)
             
@@ -1122,7 +1217,7 @@ class Molecule(object):
         """
 
         molecule = self._create_molecule(alignment_atoms=(p1, p2, p3))
-        charges = self._nbo_data.read('atomcharges')['natural']
+        charges = self._read_data('_nbo_data', 'atomcharges')['natural']
         coords = molecule.r_array   
         
         if type(atoms) is str:
@@ -1163,7 +1258,7 @@ class Molecule(object):
             a table of interactions
         """
         
-        sopt = copy.deepcopy(self._nbo_data.read('sopt'))
+        sopt = copy.deepcopy(self._read_data('_nbo_data', 'sopt'))
         
         df = pd.DataFrame(sopt, 
                           columns=['Dtype', 'Donors', 'Atype', 'Acceptors', 'E2'])
@@ -1171,11 +1266,11 @@ class Molecule(object):
         if not eunits=='kcal': 
             df.E2 = convertor(df.E2, 'kcal', eunits)
 
-        typ = self._nbo_data.read('molecule').type_array        
+        typ = self._read_data('_nbo_data', 'molecule').type_array        
         df['D_Symbols'] = df.Donors.apply(lambda x: [typ[i-1] for i in x])
         df['A_Symbols'] = df.Acceptors.apply(lambda x: [typ[i-1] for i in x])
         
-        chrg= self._nbo_data.read('atomcharges')['natural']
+        chrg= self._read_data('_nbo_data', 'atomcharges')['natural']
         df['D_Charges'] = df.Donors.apply(lambda x: [chrg[i-1] for i in x])
         df['A_Charges'] = df.Acceptors.apply(lambda x: [chrg[i-1] for i in x])
         

@@ -3,13 +3,12 @@
 Created on Mon May 25 15:23:49 2015
 
 @author: chris
-taken liberally from chemview!
+based on add_isosurface function from chemview
 """
 import numpy as np
 
 from skimage.measure import marching_cubes, correct_mesh_orientation
 
-##TODO not setting normals correctly (some are negative)
 def get_isosurface(coordinates, function, isolevel=0.03, color=(255, 0, 0, 255),
                    extents=(5,5,5), resolution=100):
     '''Add an isosurface to the current scene.
@@ -59,15 +58,44 @@ def get_isosurface(coordinates, function, isolevel=0.03, color=(255, 0, 0, 255),
         
     volume = sign*function(xv, yv, zv)
     if volume.flatten().min() <= sign*isolevel and volume.flatten().max() >= sign*isolevel: 
-        verts, faces = marching_cubes(volume, sign*isolevel)                        
-        faces = correct_mesh_orientation(volume, verts, faces, gradient_direction='ascent')
+        verts, faces = marching_cubes(volume, sign*isolevel) 
+        #don't know if i need this                       
+        faces = correct_mesh_orientation(volume, verts, faces, 
+                                         gradient_direction='descent')
+        verts = area_min + spacing/2 + verts*spacing
+
+        # TODO for some reason need to invert, but no one knows what the problem is
+        verts[:,[0,1]] = verts[:,[1,0]]                                
+        # TODO and its messing up the normals so using double facing 
+        #(kind of works if transparent)
+        opposite_faces = faces.copy()
+        opposite_faces[:,[0,1]] = opposite_faces[:,[1,0]]     
+        faces = np.concatenate([faces,opposite_faces])                           
+        
     else:
         return
 
-    ##TODO normals calc not working
+    normals = calc_normals(verts, faces) 
 
-    ##try five    
-    #https://sites.google.com/site/dlampetest/python/calculating-normals-of-a-triangle-mesh-using-numpy
+    verts = verts[faces.flatten()]
+    normals = normals[faces.flatten()]
+    
+    colors = np.array([color for _ in range(verts.shape[0])]) 
+    
+    return verts.astype('float32'), normals.astype('float32'), colors
+
+def normalize_v3(arr):
+    ''' Normalize a numpy array of 3 component vectors shape=(n,3) '''
+    lens = np.sqrt( arr[:,0]**2 + arr[:,1]**2 + arr[:,2]**2 )
+    arr[:,0] /= lens
+    arr[:,1] /= lens
+    arr[:,2] /= lens                
+    return arr
+
+def calc_normals(verts, faces):
+    """from; 
+    https://sites.google.com/site/dlampetest/python/calculating-normals-of-a-triangle-mesh-using-numpy
+    """
     #Create a zeroed array with the same type and shape as our vertices i.e., per vertex normal
     norm = np.zeros( verts.shape, dtype=verts.dtype )
     #Create an indexed view into the vertex array using the array of three indices for triangles
@@ -84,51 +112,32 @@ def get_isosurface(coordinates, function, isolevel=0.03, color=(255, 0, 0, 255),
     norm[ faces[:,0] ] += n
     norm[ faces[:,1] ] += n
     norm[ faces[:,2] ] += n
-    normals = normalize_v3(norm)
-
-    ##my try (didn't work)
-#    normals=[]
-#    #for each vertex
-#    for i in range(verts.shape[0]):
-#        #find all triangles with vertex in
-#        mask = faces==i
-#        tris = faces[mask.any(axis=1)]
-#        # find the normal of each triangle
-#        vs = tris[tris!=i].reshape((tris.shape[0],2))
-#        v0 = verts[i]
-#        v1s = verts[vs[:,0]]
-#        v2s = verts[vs[:,1]]
-#        vi = v1s - v0
-#        vj = v2s - v0
-#        norms = np.cross(vi, vj)        
-#        scalar = 1/np.linalg.norm(norms, axis=1)
-#        norms = norms * scalar.reshape((scalar.shape[0],1))
-#        #sum all the normals and normalise        
-#        norm = np.sum(norms, axis=0)
-#        normals.append(norm / np.linalg.norm(norm))
-#    normals = np.array(normals) # Numpyize  
-
-    # TODO for some reason need to invert, but no one knows what the problem is
-    verts[:,[0,1]] = verts[:,[1,0]]            
-    verts = area_min + spacing/2 + verts*spacing
-    normals[:,[0,1]] = normals[:,[1,0]]            
-    normals = area_min + spacing/2 + normals*spacing
-    normalize_v3(normals)
-
-    verts = verts[faces.flatten()]
-    normals = normals[faces.flatten()]
-
-    colors = np.array([color for _ in range(verts.shape[0])]) 
+    normalize_v3(norm)
     
-    return verts.astype('float32'), normals.astype('float32'), colors
+    return norm
 
-def normalize_v3(arr):
-    ''' Normalize a numpy array of 3 component vectors shape=(n,3) '''
-    lens = np.sqrt( arr[:,0]**2 + arr[:,1]**2 + arr[:,2]**2 )
-    arr[:,0] /= lens
-    arr[:,1] /= lens
-    arr[:,2] /= lens                
-    return arr
+def my_calc_normals(verts, faces):
+    """ doesn't work """
+    normals=[]
+    #for each vertex
+    for i in range(verts.shape[0]):
+        #find all triangles with vertex in
+        mask = faces==i
+        tris = faces[mask.any(axis=1)]
+        # find the normal of each triangle
+        vs = tris[tris!=i].reshape((tris.shape[0],2))
+        v0 = verts[i]
+        v1s = verts[vs[:,0]]
+        v2s = verts[vs[:,1]]
+        vi = v1s - v0
+        vj = v2s - v0
+        norms = np.cross(vi, vj)        
+        scalar = 1/np.linalg.norm(norms, axis=1)
+        norms = norms * scalar.reshape((scalar.shape[0],1))
+        #sum all the normals and normalise        
+        norm = np.sum(norms, axis=0)
+        normals.append(norm / np.linalg.norm(norm))
+    return np.array(normals) # Numpyize  
     
 if __name__ == '__main__':
 

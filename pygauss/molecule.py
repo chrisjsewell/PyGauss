@@ -459,12 +459,12 @@ class Molecule(object):
         
         w.initializeGL()
 
-        if surfaces:
-            r = v.add_renderer(WireframeRenderer,
-                                molecule.r_array,
-                                molecule.type_array,
-                                molecule.bonds)
-        elif ball_stick:
+#        if surfaces:
+#            r = v.add_renderer(WireframeRenderer,
+#                                molecule.r_array,
+#                                molecule.type_array,
+#                                molecule.bonds)
+        if ball_stick:
             r = v.add_renderer(BallAndStickRenderer,
                                 molecule.r_array,
                                 molecule.type_array,
@@ -488,7 +488,7 @@ class Molecule(object):
         
         for surface in surfaces:
             vertices, normals, colors, transparent = surface
-            v.add_renderer(TriangleRenderer, vertices.flatten(), normals.flatten(), 
+            v.add_renderer(TriangleRenderer, vertices, normals, 
                                              colors, transparent=transparent)
 
         #v.add_post_processing(SSAOEffect)
@@ -828,9 +828,10 @@ class Molecule(object):
         return moenergies[orbital-1]
         
     #TODO add active, getting warnings from numba (currently supressed)
-    def show_orbital(self, orbital, iso_value=0.3, transparent=True, alpha=0.5,
+    def show_orbital(self, orbital, iso_value=0.03, extents=(5,5,5),
+                     transparent=True, alpha=0.5,
                      bond_color=(255, 0, 0), antibond_color=(0, 255, 0),
-                     resolution=32, active=False,
+                     resolution=100, active=False,
                      gbonds=True, ball_stick=True, rotations=[[0., 0., 0.]], zoom=1.,
                      width=300, height=300, axis_length=0, lines=[], ipyimg=True):
         """given nbo data and iso level """
@@ -856,25 +857,23 @@ class Molecule(object):
             mv.add_isosurface(f, isolevel=iso_value, color=self._rgb_to_hex(bond_rgba))
             mv.add_isosurface(f, isolevel=-iso_value, color=self._rgb_to_hex(antibond_rgba))
             return mv
-            
-        with warnings.catch_warnings():
-            warnings.simplefilter("ignore")
-            surfaces = []
-            b_iso = get_isosurface(molecule.r_array, f, iso_value, bond_rgba,
-                                   resolution=resolution)
-            if b_iso:
-                verts, normals, colors = b_iso
-                surfaces.append([verts, normals, colors, transparent])                                        
-            a_iso = get_isosurface(molecule.r_array, f, -iso_value, antibond_rgba,
-                                   resolution=resolution)
-            if a_iso:
-                averts, anormals, acolors = a_iso
-                surfaces.append([averts, anormals, acolors, transparent])                                        
+        
+        surfaces = []
+        b_iso = get_isosurface(molecule.r_array, f, iso_value, bond_rgba,
+                               resolution=resolution)
+        if b_iso:
+            verts, normals, colors = b_iso
+            surfaces.append([verts, normals, colors, transparent])                                        
+        a_iso = get_isosurface(molecule.r_array, f, -iso_value, antibond_rgba,
+                               resolution=resolution)
+        if a_iso:
+            averts, anormals, acolors = a_iso
+            surfaces.append([averts, anormals, acolors, transparent])                                        
         
         return self._show_molecule(molecule, 
                                   ball_stick=ball_stick, 
                                   rotations=rotations, zoom=zoom,
-                                  surfaces=surfaces, transparent=True,
+                                  surfaces=surfaces, transparent=False,
                                   lines=lines, axis_length=axis_length,
                                   width=width, height=height, ipyimg=ipyimg) 
 

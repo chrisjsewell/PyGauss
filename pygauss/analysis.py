@@ -390,7 +390,7 @@ class Analysis(object):
     ## TODO will active work?
     def yield_mol_images(self, rows=[], filters={}, mtype='optimised',
                          align_to=[], rotations=[[0., 0., 0.]],
-                         gbonds=True, ball_stick=True, 
+                         gbonds=True, represent='ball_stick', 
                          zoom=1., width=300, height=300, axis_length=0,
                          relative=False, minval=-1, maxval=1,
                          highlight=[], active=False, 
@@ -424,8 +424,8 @@ class Analysis(object):
             for each rotation set [x,y,z] an image will be produced 
         gbonds : bool
             guess bonds between atoms (via distance)
-        ball_stick : bool
-            ball and stick images, otherwise wireframe
+        represent : str
+            representation of molecule ('none', 'wire', 'vdw' or 'ball_stick')
         zoom : float
             zoom level of images
         width : int
@@ -475,17 +475,17 @@ class Analysis(object):
         for indx, mol in zip(df.index, df.Molecule):
             if align_to: mol.set_alignment_atoms(*align_to)
             if mtype == 'initial':
-                yield indx, mol.show_initial(gbonds=gbonds, ball_stick=ball_stick, 
+                yield indx, mol.show_initial(gbonds=gbonds, represent=represent, 
                                        rotations=rotations, zoom=zoom, 
                                        width=width, height=height, 
                                        axis_length=axis_length, ipyimg=ipyimg)
             elif mtype == 'optimised':
-                yield indx, mol.show_optimisation(gbonds=gbonds, ball_stick=ball_stick, 
+                yield indx, mol.show_optimisation(gbonds=gbonds, represent=represent, 
                                        rotations=rotations, zoom=zoom, 
                                        width=width, height=height, 
                                        axis_length=axis_length, ipyimg=ipyimg)
             elif mtype == 'nbo':
-                yield indx, mol.show_nbo_charges(gbonds=gbonds, ball_stick=ball_stick, 
+                yield indx, mol.show_nbo_charges(gbonds=gbonds, represent=represent, 
                                        rotations=rotations, zoom=zoom, 
                                        width=width, height=height, 
                                        axis_length=axis_length,
@@ -496,7 +496,7 @@ class Analysis(object):
                                        alpha=alpha,
                                        transparent=transparent,
                                        gbonds=gbonds, 
-                                       ball_stick=ball_stick, 
+                                       represent=represent, 
                                        rotations=rotations, zoom=zoom, 
                                        width=width, height=height, 
                                        axis_length=axis_length, ipyimg=ipyimg)
@@ -505,7 +505,7 @@ class Analysis(object):
                                     cutoff_energy=sopt_cutoff_energy, no_hbonds=no_hbonds, 
                                     eunits=eunits, atom_groups=atom_groups,
                                     alpha=alpha, transparent=transparent,
-                                    gbonds=gbonds, ball_stick=ball_stick, 
+                                    gbonds=gbonds, represent=represent, 
                                     rotations=rotations, zoom=zoom, 
                                     width=width, height=height, 
                                     axis_length=axis_length,
@@ -516,7 +516,7 @@ class Analysis(object):
                                     cutoff_energy=sopt_cutoff_energy, eunits=eunits,
                                     atom_groups=atom_groups, bondwidth=hbondwidth,
                                     alpha=alpha, transparent=transparent,
-                                    gbonds=gbonds, ball_stick=ball_stick, 
+                                    gbonds=gbonds, represent=represent, 
                                     rotations=rotations, zoom=zoom, 
                                     width=width, height=height, 
                                     axis_length=axis_length,
@@ -529,7 +529,7 @@ class Analysis(object):
     def plot_mol_images(self, mtype='optimised', info_columns=[], info_incl_id=False,
                         max_cols=1, label_size=20, start_letter='A', save_fname=None,
                         rows=[], filters={}, align_to=[], rotations=[[0., 0., 0.]],
-                        gbonds=True, ball_stick=True,
+                        gbonds=True, represent='ball_stick',
                         zoom=1., width=500, height=500, axis_length=0,
                         relative=False, minval=-1, maxval=1,
                         highlight=[], frame_on=False, eunits='kJmol-1',
@@ -564,8 +564,8 @@ class Analysis(object):
             for each rotation set [x,y,z] an image will be produced 
         gbonds : bool
             guess bonds between atoms (via distance)
-        ball_stick : bool
-            ball and stick images, otherwise wireframe
+        represent : str
+            representation of molecule ('none', 'wire', 'vdw' or 'ball_stick')
         zoom : float
             zoom level of images
         width : int
@@ -617,7 +617,7 @@ class Analysis(object):
         num_mols = len(df)
         
         imgs = self.yield_mol_images(rows=rows, filters=filters, mtype=mtype,
-                        align_to=align_to, gbonds=gbonds, ball_stick=ball_stick, 
+                        align_to=align_to, gbonds=gbonds, represent=represent, 
                         rotations=rotations, zoom=zoom, 
                         width=width, height=height, axis_length=axis_length,
                         relative=relative, minval=minval, maxval=maxval,

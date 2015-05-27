@@ -60,6 +60,7 @@ setup(name='pygauss',
                           "paramiko",
 						  "scikit-image",
                           "pil",
+						  "numexpr",
                           "cclib",
                           "chemview",
                           "chemlab"

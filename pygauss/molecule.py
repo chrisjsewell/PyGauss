@@ -44,6 +44,8 @@ def orbit_z(self, angle):
     self.a = np.dot(rot, self.a)
     self.b = np.dot(rot, self.b)
     self.c = np.dot(rot, self.c)     
+from chemlab.graphics.camera import Camera
+Camera.orbit_z = orbit_z
 
 from .chemlab_patch.graphics.renderers.atom import AtomRenderer
 from .chemlab_patch.graphics.renderers.ballandstick import BallAndStickRenderer
@@ -56,6 +58,18 @@ from cclib.parser.utils import convertor
 
 from chemlab.graphics.colors import get as str_to_colour
 from chemlab.qc import molecular_orbital
+#imporovement to function
+from chemlab.qc.pgbf import pgbf
+import numexpr as ne
+def __call__(self,x,y,z):
+    "Compute the amplitude of the PGBF at point x,y,z"
+    I,J,K = self.powers
+    dx,dy,dz = x-self.origin[0],y-self.origin[1],z-self.origin[2]
+    n = self.norm
+    e = self.exponent
+    return ne.evaluate(
+            'n*(dx**I)*(dy**J)*(dz**K) * exp(-e*(dx*dx + dy*dy + dz*dz))')
+pgbf.__call__ = __call__
 
 #instead of chemview MolecularViewer to add defined colouring
 #also ignore; 'FutureWarning: IPython widgets are experimental and may change in the future.'
@@ -119,6 +133,7 @@ class Molecule(object):
         self._nbo_data = None
         self._pes_data = []
         self._alignment_atom_indxs = ()
+        self.t_matrix = None
         if alignto: 
             self.set_alignment_atoms(*alignto)
         self._atom_groups = atom_groups
@@ -257,7 +272,7 @@ class Molecule(object):
         return energies[-1] if final else energies  
             
     def plot_optimisation_E(self, units='eV'):
-        
+        """ plot SCF optimisation energy """
         energies = self._read_data('_opt_data', 'scfenergies')
         for data in reversed(self._prev_opt_data):
             energies = np.concatenate([data.read('scfenergies'), energies])
@@ -376,20 +391,15 @@ class Molecule(object):
         return transform_matrix
     
     def _apply_transfom_matrix(self, transform_matrix, coords):
-        for coord in coords:
-            yield np.dot(transform_matrix, 
-                    np.array(np.append(coord, 1))[np.newaxis].T)[:-1].flatten()
-    
-    def _realign_geometry(self, r_array, align_indxs):
-        """inputs coordinate array, index 1, index 2, index 3 """
         
-        a1, a2, a3 = align_indxs
-        t_matrix = self._create_transform_matrix(r_array[a1], r_array[a2], 
-                                                 r_array[a3])
-        new_array=np.array(
-            [r for r in self._apply_transfom_matrix(t_matrix, r_array)])
-        return new_array
-
+        if transform_matrix is None:
+            return coords
+            
+        t_coords = [np.dot(transform_matrix, 
+                    np.array(np.append(coord, 1))[np.newaxis].T)[:-1].flatten()
+                    for coord in coords]
+        return np.array(t_coords)
+    
     def _create_molecule(self, optimised=True, opt_step=False, scan_step=False, 
                          gbonds=True, data=None, alignment_atoms=None):
         if not optimised:
@@ -405,19 +415,32 @@ class Molecule(object):
             
         if gbonds: molecule.guess_bonds()
         
+        t_matrix = None
         if alignment_atoms:
             a, b, c = alignment_atoms
-            molecule.r_array = self._realign_geometry(molecule.r_array, 
-                                                      [a-1, b-1, c-1])
+            a0, b0, c0 = molecule.r_array[[a-1,b-1,c-1]]
+            t_matrix = self._create_transform_matrix(a0,b0,c0)
         elif self._alignment_atom_indxs:
             a, b, c = self._alignment_atom_indxs
-            molecule.r_array = self._realign_geometry(molecule.r_array, 
-                                                      [a-1, b-1, c-1])
+            a0, b0, c0 = molecule.r_array[[a-1,b-1,c-1]]
+            t_matrix = self._create_transform_matrix(a0,b0,c0)
+            
+        molecule.r_array = self._apply_transfom_matrix(t_matrix, molecule.r_array)
+        
+        self.t_matrix = t_matrix
 
         return molecule
     
     #instead of from chemlab.notebook import display_molecule to add ball_stick
-    def _view_molecule(self, molecule, ball_stick=False, colorlist=[]):
+    def _view_molecule(self, molecule, represent='vdw', colorlist=[]):
+        """active representationion of molecule using chemview 
+        
+        """
+        allowed_rep = ['none', 'wire', 'vdw', 'ball_stick']
+        if represent not in allowed_rep:
+            raise ValueError(
+            'unknown molecule representation: {0}, must be in {1}'.format(
+            represent, allowed_rep))
         
         topology = {
             'atom_types': molecule.type_array,
@@ -427,11 +450,13 @@ class Molecule(object):
         mv = MolecularViewer(molecule.r_array, topology)
         
         if molecule.n_bonds != 0:
-            if ball_stick:
+            if represent=='ball_stick':
                 mv.ball_and_sticks(colorlist=colorlist)
-            else:
+            elif represent=='wire':
                 mv.points(size=0.15, colorlist=colorlist)
                 mv.lines(colorlist=colorlist)
+            else:
+                raise NotImplementedError('none and vdw not implemented in active view')
         else:
             mv.points()
     
@@ -454,24 +479,53 @@ class Molecule(object):
         if bbox:
             return im.crop(bbox)
 
-    ##TODO change all ball_stick to representation='wireframe'/'ball_stick'/'vdw'
-    def _image_molecule(self, molecule, ball_stick=False, colorlist=[],
+    def _image_molecule(self, molecule, represent='vdw', 
+                        colorlist=[], transparent=False,
                          rotation=[0., 0., 0.], width=300, height=300, zoom=1.,
-                        lines=[], linestyle='impostors', transparent=False,
+                        lines=[], linestyle='impostors',
                         surfaces=[]):
-        """create image of molecule """
-        v = QtViewer()
-        w = v.widget
-        w.camera.orbit_z = MethodType(orbit_z, w.camera)
+        """create image of molecule 
+
+        Parameters
+        ----------
+        molecule : chemlab.core.molecule.Molecule
+            the molecule to image
+        represent : str
+            representation of molecule ('none', 'wire', 'vdw' or 'ball_stick')
+        colorlist : list
+            color override for each of the atoms (if empty colored by atom type)
+        transparent=True : 
+            whether atoms should be transparent (based on alpha value) 
+        zoom : float
+            zoom level of images
+        width : int
+            width of original images
+        height : int
+            height of original images (although width takes precedent)
+        lines : list
+            lines to add to the image in the form; 
+            [start_coord, end_coord, start_color, end_color, width, dashed]
+        surfaces : list
+            surfaces to add to the image in the format;
+            [vertices, normals, colors, transparent, wireframe]
+
+        Returns
+        -------
+        image : PIL.Image
+            an image of the system
         
+        """
+        allowed_rep = ['none', 'wire', 'vdw', 'ball_stick']
+        if represent not in allowed_rep:
+            raise ValueError(
+            'unknown molecule representation: {0}, must be in {1}'.format(
+            represent, allowed_rep))
+            
+        v = QtViewer()
+        w = v.widget        
         w.initializeGL()
 
-#        if wireframe:
-#            r = v.add_renderer(WireframeRenderer,
-#                                molecule.r_array,
-#                                molecule.type_array,
-#                                molecule.bonds)
-        if ball_stick:
+        if represent=='ball_stick':
             r = v.add_renderer(BallAndStickRenderer,
                                 molecule.r_array,
                                 molecule.type_array,
@@ -479,12 +533,19 @@ class Molecule(object):
                                 rgba_array=colorlist,
                                 linestyle=linestyle,
                                 transparent=transparent)
-        else:
+        elif represent=='vdw':
             r = v.add_renderer(AtomRenderer, 
                                 molecule.r_array, 
                                 molecule.type_array, 
                                 rgba_array=colorlist,
                                 transparent=transparent)
+        elif represent=='wire':
+            r = v.add_renderer(WireframeRenderer,
+                                molecule.r_array,
+                                molecule.type_array,
+                                molecule.bonds)
+        elif represent=='none':
+            r = None
         
         for line in lines:
             #line = [start_coord, end_coord, start_color, end_color, width, dashed]
@@ -539,6 +600,30 @@ class Molecule(object):
         
         return final_img
 
+    def _concat_images_vertical(self, images, gap=10):
+        """ concatentate one or more PIL images vertically 
+
+        Parameters
+        ----------
+        images : list of pil.Image
+            the images to concatenate
+        gap : int
+            the pixel gap between images
+        """
+        if len(images) == 1: return images[0]
+        
+        total_width = sum([img.size[0] for img in images]) 
+        max_height = max([img.size[1] for img in images]) + len(images)*gap
+        
+        final_img = PIL.Image.new("RGBA", (total_width, max_height), color='white')
+        
+        vertical_position = 0
+        for img in images:
+            final_img.paste(img, (0, vertical_position))
+            vertical_position += img.size[1] + gap
+        
+        return final_img
+
     def _color_to_transparent(self, image, color=(255, 255, 255)):
         """ sets alpha to 0 for specific colour in PIL image 
         
@@ -563,15 +648,52 @@ class Molecule(object):
         return image
 
     def _show_molecule(self, molecule, active=False, 
-                       ball_stick=False, zoom=1., width=300, height=300,
-                       rotations=[[0., 0., 0.]],
-                       colorlist=[], lines=[], axis_length=0,
-                       linestyle='impostors', transparent=False,
+                       represent='vdw', rotations=[[0., 0., 0.]],
+                       colorlist=[], transparent=False, 
+                       axis_length=0, lines=[], linestyle='impostors',
                        surfaces=[],
-                       ipyimg=True):
-                
+                       zoom=1., width=300, height=300, ipyimg=True):
+        """show the molecule
+        
+        Parameters
+        ----------
+        molecule : chemlab.core.molecule.Molecule
+            the molecule to image
+        active : bool
+            whether the molecule representation should be interactive 
+            (ipython notebook only)
+        represent : str
+            representation of molecule ('none', 'wire', 'vdw' or 'ball_stick')
+        colorlist : list
+            color override for each of the atoms (if empty colored by atom type)
+        transparent=True : 
+            whether atoms should be transparent (based on alpha value) 
+        axis_length :float
+            if non-zero lines will be drawn along each axis to +/- axis_length
+        lines : list
+            lines to add to the image in the form; 
+            [start_coord, end_coord, start_color, end_color, width, dashed]
+        surfaces : list
+            surfaces to add to the image in the format;
+            [vertices, normals, colors, transparent, wireframe]
+        zoom : float
+            zoom level of images
+        width : int
+            width of original images
+        height : int
+            height of original images (although width takes precedent)
+        ipyimg : bool
+            whether to return an IPython image, PIL image otherwise 
+
+        Returns
+        -------
+        mol : IPython.display.Image or PIL.Image
+            an image of the molecule in the format specified by ipyimg 
+            or an active representation
+        
+        """                
         if active:
-            return self._view_molecule(molecule, ball_stick=ball_stick, 
+            return self._view_molecule(molecule, represent=represent, 
                                           colorlist=colorlist)
         else:
             drawlines=lines[:]
@@ -590,7 +712,7 @@ class Molecule(object):
             images = []
             for rotation in rotations:
                 images.append(self._image_molecule(molecule, 
-                                    ball_stick=ball_stick, colorlist=colorlist, 
+                                    represent=represent, colorlist=colorlist, 
                                     rotation=rotation, zoom=zoom,
                                     width=width, height=width,
                                     lines=drawlines, linestyle=linestyle,
@@ -605,19 +727,19 @@ class Molecule(object):
             else:
                 return image
                                 
-    def show_initial(self, gbonds=True, active=False, ball_stick=False, 
+    def show_initial(self, gbonds=True, active=False, represent='vdw', 
                      rotations=[[0., 0., 0.]], zoom=1., width=300, height=300,
                      axis_length=0, lines=[], ipyimg=True):
         """show initial geometry (before optimisation) of molecule """
         molecule = self._create_molecule(optimised=False, gbonds=gbonds)
         
         return self._show_molecule(molecule, active=active, 
-                                   ball_stick=ball_stick, 
+                                   represent=represent, 
                                    rotations=rotations, zoom=zoom, 
                                    lines=lines, axis_length=axis_length, ipyimg=ipyimg)      
        
     def show_optimisation(self, opt_step=False, gbonds=True, active=False,
-                          ball_stick=False, rotations=[[0., 0., 0.]], zoom=1.,
+                          represent='vdw', rotations=[[0., 0., 0.]], zoom=1.,
                           width=300, height=300, axis_length=0, lines=[], 
                           ipyimg=True):
         """show optimised geometry of molecule """       
@@ -625,7 +747,7 @@ class Molecule(object):
                                          gbonds=gbonds)
 
         return self._show_molecule(molecule, active=active, 
-                                  ball_stick=ball_stick, 
+                                  represent=represent, 
                                   rotations=rotations, zoom=zoom,
                                   lines=lines, axis_length=axis_length,
                                   width=width, height=height, ipyimg=ipyimg)             
@@ -655,7 +777,7 @@ class Molecule(object):
 
     def show_highlight_atoms(self, atomlists, transparent=False, alpha=0.7,
                              gbonds=True, active=False, optimised=True,
-                        ball_stick=False, rotations=[[0., 0., 0.]], zoom=1.,
+                        represent='vdw', rotations=[[0., 0., 0.]], zoom=1.,
                         width=300, height=300, axis_length=0, lines=[], ipyimg=True):
                
         if optimised:
@@ -677,7 +799,7 @@ class Molecule(object):
             
         return self._show_molecule(molecule, active=active, 
                                    transparent=transparent,
-                                  ball_stick=ball_stick, 
+                                  represent=represent, 
                                   rotations=rotations, zoom=zoom,
                                   colorlist=colorlist, linestyle=linestyle,
                                   lines=lines, axis_length=axis_length,
@@ -740,7 +862,7 @@ class Molecule(object):
                           charge=None, multiplicity=None,
                           out_name=False, descript='', overwrite=False,
                           active=False,
-                          ball_stick=True, rotations=[[0., 0., 0.]], zoom=1.,
+                          represent='ball_stick', rotations=[[0., 0., 0.]], zoom=1.,
                           width=300, height=300, axis_length=0, ipyimg=True,
                           folder_obj=None):
         """ transpose in nanometers """                      
@@ -781,7 +903,7 @@ class Molecule(object):
                                                [mol_atoms, other_atoms], active)
             
         return self._show_molecule(mol, active=active, 
-                                  ball_stick=ball_stick, 
+                                  represent=represent, 
                                   rotations=rotations, zoom=zoom,
                                   colorlist=colorlist,
                                   axis_length=axis_length,
@@ -801,7 +923,7 @@ class Molecule(object):
 
     def show_nbo_charges(self, gbonds=True, active=False, 
                          relative=False, minval=-1, maxval=1,
-                         ball_stick=False, rotations=[[0., 0., 0.]], zoom=1.,
+                         represent='vdw', rotations=[[0., 0., 0.]], zoom=1.,
                          width=300, height=300, axis_length=0, lines=[], ipyimg=True):
         
         colorlist = self._get_charge_colors(relative, minval, maxval)
@@ -809,7 +931,7 @@ class Molecule(object):
         molecule = self._create_molecule(optimised=True, gbonds=gbonds)
 
         return self._show_molecule(molecule, active=active, 
-                                  ball_stick=ball_stick, 
+                                  represent=represent, 
                                   rotations=rotations, zoom=zoom,
                                   colorlist=colorlist,
                                   lines=lines, axis_length=axis_length,
@@ -871,19 +993,18 @@ class Molecule(object):
             moenergies = convertor(moenergies, 'eV', eunits)
         return moenergies[orbitals-1]
         
-    #TODO multiple orbitals
-    def show_orbital(self, orbital, iso_value=0.03, extents=(5,5,5),
+    def yield_orbital_images(self, orbitals, iso_value=0.02, extents=(2,2,2),
                      transparent=True, alpha=0.5, wireframe=True,
                      bond_color=(255, 0, 0), antibond_color=(0, 255, 0),
-                     resolution=100, active=False,
-                     gbonds=True, ball_stick=True, rotations=[[0., 0., 0.]], zoom=1.,
+                     resolution=100, gbonds=True, represent='ball_stick', 
+                     rotations=[[0., 0., 0.]], zoom=1.,
                      width=300, height=300, axis_length=0, lines=[], ipyimg=True):
-        """show orbital image
+        """yield orbital images
 
         Parameters
         ----------
-        orbital : int
-            the orbital to show (in range 1 to number of orbitals)
+        orbitals : int or list of ints
+            the orbitals to show (in range 1 to number of orbitals)
         iso_value : float
             The value for which the function should be constant.
         extents : (float, float, float)
@@ -901,12 +1022,10 @@ class Molecule(object):
         resolution : int
             The number of grid point to use for the surface. An high value will 
             give better quality but lower performance.
-        active=False : 
-            return an active geometry
         gbonds : bool
             guess bonds between atoms (via distance)
-        ball_stick : bool
-            ball and stick images, otherwise wireframe
+        represent : str
+            representation of molecule ('none', 'wire', 'vdw' or 'ball_stick')
         zoom : float
             zoom level of images
         width : int
@@ -926,11 +1045,72 @@ class Molecule(object):
             an image of the molecule in the format specified by ipyimg 
             
         """
-        orbitals = np.array(orbital, ndmin=1, dtype=int)
+        orbitals = np.array(orbitals, ndmin=1, dtype=int)
         assert np.all(orbitals>0) and np.all(orbitals<=self.get_orbital_count()), (
             'orbitals must be in range 1 to number of orbitals')
-        orbital = orbitals[0]
         
+        r, g, b = bond_color
+        bond_rgba = (r, g, b, int(255*alpha))
+        r, g, b = antibond_color
+        antibond_rgba = (r, g, b, int(255*alpha))
+
+        molecule = self._create_molecule(optimised=True, gbonds=gbonds)
+        mocoeffs = self._read_data('_nbo_data', "mocoeffs")
+        gbasis = self._read_data('_nbo_data', "gbasis")
+
+        for orbital in orbitals:
+            coefficients = mocoeffs[0][orbital-1]
+            f = molecular_orbital(molecule.r_array.astype('float32'), 
+                                  coefficients.astype('float32'), 
+                                  gbasis)
+                
+            surfaces = []
+            b_iso = get_isosurface(molecule.r_array, f, iso_value, bond_rgba,
+                                   resolution=resolution)
+            if b_iso:
+                verts, normals, colors = b_iso
+                verts = self._apply_transfom_matrix(self.t_matrix, verts)
+                normals = self._apply_transfom_matrix(self.t_matrix, normals)
+                surfaces.append([verts, normals, colors, transparent, wireframe])                                        
+            a_iso = get_isosurface(molecule.r_array, f, -iso_value, antibond_rgba,
+                                   resolution=resolution)
+            if a_iso:
+                averts, anormals, acolors = a_iso
+                averts = self._apply_transfom_matrix(self.t_matrix, averts)
+                anormals = self._apply_transfom_matrix(self.t_matrix, anormals)
+                surfaces.append([averts, anormals, acolors, transparent,wireframe])                                        
+            
+            yield self._show_molecule(molecule, 
+                                      represent=represent, 
+                                      rotations=rotations, zoom=zoom,
+                                      surfaces=surfaces, transparent=False,
+                                      lines=lines, axis_length=axis_length,
+                                      width=width, height=height, ipyimg=ipyimg) 
+
+    def show_active_orbital(self, orbital, iso_value=0.03, alpha=0.5,
+                            bond_color=(255, 0, 0), antibond_color=(0, 255, 0),
+                            gbonds=True):
+        """get interactive representation of orbital
+        
+        Parameters
+        ----------
+        orbital : int
+            the orbital to show (in range 1 to number of orbitals)
+        iso_value : float
+            The value for which the function should be constant.
+        alpha : 
+            alpha value of iso-surface
+        bond_color : 
+            color of bonding orbital surface in RGB format
+        antibond_color : 
+            color of anti-bonding orbital surface in RGB format
+        gbonds : bool
+            guess bonds between atoms (via distance)
+        """
+        orbital = np.array(orbital, ndmin=1, dtype=int)
+        assert np.all(orbital>0) and np.all(orbital<=self.get_orbital_count()), (
+            'orbital must be in range 1 to number of orbitals')
+        orbital = orbital[0]
         r, g, b = bond_color
         bond_rgba = (r, g, b, int(255*alpha))
         r, g, b = antibond_color
@@ -945,32 +1125,12 @@ class Molecule(object):
                               coefficients.astype('float32'), 
                               gbasis)
 
-        if active:
-            mv = MolecularViewer(molecule.r_array, { 'atom_types': molecule.type_array,
-                                                     'bonds': molecule.bonds })
-            mv.wireframe()
-            mv.add_isosurface(f, isolevel=iso_value, color=self._rgb_to_hex(bond_rgba))
-            mv.add_isosurface(f, isolevel=-iso_value, color=self._rgb_to_hex(antibond_rgba))
-            return mv
-        
-        surfaces = []
-        b_iso = get_isosurface(molecule.r_array, f, iso_value, bond_rgba,
-                               resolution=resolution)
-        if b_iso:
-            verts, normals, colors = b_iso
-            surfaces.append([verts, normals, colors, transparent, wireframe])                                        
-        a_iso = get_isosurface(molecule.r_array, f, -iso_value, antibond_rgba,
-                               resolution=resolution)
-        if a_iso:
-            averts, anormals, acolors = a_iso
-            surfaces.append([averts, anormals, acolors, transparent,wireframe])                                        
-        
-        return self._show_molecule(molecule, 
-                                  ball_stick=ball_stick, 
-                                  rotations=rotations, zoom=zoom,
-                                  surfaces=surfaces, transparent=False,
-                                  lines=lines, axis_length=axis_length,
-                                  width=width, height=height, ipyimg=ipyimg) 
+        mv = MolecularViewer(molecule.r_array, { 'atom_types': molecule.type_array,
+                                                 'bonds': molecule.bonds })
+        mv.wireframe()
+        mv.add_isosurface(f, isolevel=iso_value, color=self._rgb_to_hex(bond_rgba))
+        mv.add_isosurface(f, isolevel=-iso_value, color=self._rgb_to_hex(antibond_rgba))
+        return mv
 
     def _converter(self, val, unit1, unit2):
         
@@ -1356,7 +1516,7 @@ class Molecule(object):
     def show_sopt_bonds(self, min_energy=20., cutoff_energy=0., atom_groups=[],
                         bondwidth=5, eunits='kJmol-1', no_hbonds=False,
                         gbonds=True, active=False,
-                        ball_stick=True, rotations=[[0., 0., 0.]], zoom=1.,
+                        represent='ball_stick', rotations=[[0., 0., 0.]], zoom=1.,
                         width=300, height=300, axis_length=0, lines=[],
                         relative=False, minval=-1, maxval=1,
                         alpha=0.5, transparent=True,
@@ -1388,7 +1548,7 @@ class Molecule(object):
         colorlist = self._get_charge_colors(relative, minval, maxval, alpha=alpha)
         
         return self._show_molecule(molecule, active=active, 
-                                  ball_stick=ball_stick, 
+                                  represent=represent, 
                                   rotations=rotations, zoom=zoom,
                                   colorlist=colorlist,
                                   lines=drawlines, axis_length=axis_length,
@@ -1405,7 +1565,7 @@ class Molecule(object):
     def show_hbond_analysis(self, min_energy=0., atom_groups=[], 
                         cutoff_energy=0., eunits='kJmol-1', bondwidth=5, 
                         gbonds=True, active=False,
-                        ball_stick=True, rotations=[[0., 0., 0.]], zoom=1.,
+                        represent='ball_stick', rotations=[[0., 0., 0.]], zoom=1.,
                         width=300, height=300, axis_length=0, lines=[],
                         relative=False, minval=-1, maxval=1,
                         alpha=0.5, transparent=True, ipyimg=True):
@@ -1443,7 +1603,7 @@ class Molecule(object):
         colorlist = self._get_charge_colors(relative, minval, maxval, alpha=alpha)
         
         return self._show_molecule(molecule, active=active, 
-                                  ball_stick=ball_stick, 
+                                  represent=represent, 
                                   rotations=rotations, zoom=zoom,
                                   colorlist=colorlist,
                                   lines=drawlines, axis_length=axis_length,
@@ -1520,7 +1680,8 @@ class Molecule(object):
             for scan in scan_datas:
                 if indx < scan.read('nscans') + pscans:
                     mol = self._create_molecule(data=scan, scan_step=indx-pscans)
-                    img = self._image_molecule(mol, rotation=rotation, ball_stick=True)
+                    img = self._image_molecule(mol, rotation=rotation, 
+                                               represent='ball_stick')
                     break
                 else:
                     pscans += scan.read('nscans') 

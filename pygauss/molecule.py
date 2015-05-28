@@ -133,7 +133,7 @@ class Molecule(object):
         self._nbo_data = None
         self._pes_data = []
         self._alignment_atom_indxs = ()
-        self.t_matrix = None
+        self._t_matrix = None
         if alignto: 
             self.set_alignment_atoms(*alignto)
         self._atom_groups = atom_groups
@@ -427,7 +427,7 @@ class Molecule(object):
             
         molecule.r_array = self._apply_transfom_matrix(t_matrix, molecule.r_array)
         
-        self.t_matrix = t_matrix
+        self._t_matrix = t_matrix
 
         return molecule
     
@@ -1054,30 +1054,37 @@ class Molecule(object):
         r, g, b = antibond_color
         antibond_rgba = (r, g, b, int(255*alpha))
 
+        #To fix issue with rotations
+        #TODO could probably do this better (no self._t_matrix)
+        alignto = self._alignment_atom_indxs[:]
+        self._alignment_atom_indxs = None                
+        r_array = self._create_molecule(optimised=True).r_array
+        self._alignment_atom_indxs = alignto
+
         molecule = self._create_molecule(optimised=True, gbonds=gbonds)
         mocoeffs = self._read_data('_nbo_data', "mocoeffs")
         gbasis = self._read_data('_nbo_data', "gbasis")
 
         for orbital in orbitals:
             coefficients = mocoeffs[0][orbital-1]
-            f = molecular_orbital(molecule.r_array.astype('float32'), 
+            f = molecular_orbital(r_array.astype('float32'), 
                                   coefficients.astype('float32'), 
                                   gbasis)
                 
             surfaces = []
-            b_iso = get_isosurface(molecule.r_array, f, iso_value, bond_rgba,
+            b_iso = get_isosurface(r_array, f, iso_value, bond_rgba,
                                    resolution=resolution)
             if b_iso:
                 verts, normals, colors = b_iso
-                verts = self._apply_transfom_matrix(self.t_matrix, verts)
-                normals = self._apply_transfom_matrix(self.t_matrix, normals)
+                verts = self._apply_transfom_matrix(self._t_matrix, verts)
+                normals = self._apply_transfom_matrix(self._t_matrix, normals)
                 surfaces.append([verts, normals, colors, transparent, wireframe])                                        
             a_iso = get_isosurface(molecule.r_array, f, -iso_value, antibond_rgba,
                                    resolution=resolution)
             if a_iso:
                 averts, anormals, acolors = a_iso
-                averts = self._apply_transfom_matrix(self.t_matrix, averts)
-                anormals = self._apply_transfom_matrix(self.t_matrix, anormals)
+                averts = self._apply_transfom_matrix(self._t_matrix, averts)
+                anormals = self._apply_transfom_matrix(self._t_matrix, anormals)
                 surfaces.append([averts, anormals, acolors, transparent,wireframe])                                        
             
             yield self._show_molecule(molecule, 

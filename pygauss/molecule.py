@@ -7,7 +7,6 @@ Created on Fri May 01 21:24:31 2015
 from io import BytesIO
 import PIL
 from PIL import Image, ImageChops
-from types import MethodType
 import copy 
 import warnings
 

@@ -13,7 +13,8 @@ from OpenGL.GL import (GL_DYNAMIC_DRAW, GL_VERTEX_ARRAY, GL_NORMAL_ARRAY,
                        glEnableClientState, glDrawArrays, 
                        glEnable, glDisable, GL_BLEND, glBlendFunc, 
                        GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, glDepthMask, 
-                       GL_TRUE, GL_FALSE)
+                       GL_TRUE, GL_FALSE,
+                       glPolygonMode, GL_FRONT_AND_BACK, GL_FILL, GL_LINE)
 
 class TriangleRenderer(DefaultRenderer):
     '''Renders an array of triangles.
@@ -42,7 +43,7 @@ class TriangleRenderer(DefaultRenderer):
     
     '''
     def __init__(self, widget, vertices, normals, colors, shading='phong', 
-                 transparent=False):
+                 transparent=False, wireframe=False):
         super(TriangleRenderer, self).__init__(widget)
         
         n_triangles = len(vertices)
@@ -54,6 +55,7 @@ class TriangleRenderer(DefaultRenderer):
         
         self.shading = shading
         self.transparent = transparent
+        self.wireframe = wireframe
         
         # Store vertices, colors and normals in 3 different vertex
         # buffer objects
@@ -77,6 +79,8 @@ class TriangleRenderer(DefaultRenderer):
             glEnable(GL_BLEND)
             glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
             glDepthMask(GL_FALSE)
+        if self.wireframe:
+            glPolygonMode(GL_FRONT_AND_BACK, GL_LINE)
 
         glEnableClientState(GL_VERTEX_ARRAY)
         self._vbo_v.bind_vertexes(3, GL_FLOAT)
@@ -97,7 +101,9 @@ class TriangleRenderer(DefaultRenderer):
             glDisable(GL_BLEND)
             #glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
             glDepthMask(GL_TRUE)
-    
+        if self.wireframe:
+            glPolygonMode(GL_FRONT_AND_BACK, GL_FILL)
+
     def update_vertices(self, vertices):
         """
         Update the triangle vertices.

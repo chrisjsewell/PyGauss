@@ -1414,6 +1414,8 @@ class Gaussian(logfileparser.Logfile):
             while line.find("Natural Bond Orbitals") < 0:
                 if len(line.split('/')) == 2:
                     donor, acceptor_energy =  line.split('/')
+                    #there are instances where E2=******** appears to mean nan/0
+                    acceptor_energy = acceptor_energy.replace('********', '0.00')
                     if p.search(donor) and p.search(acceptor_energy):
                         dgroups = p.search(donor).groups()
                         agroups = p.search(acceptor_energy).groups()

@@ -1407,7 +1407,8 @@ class Molecule(object):
         
         return r, theta, phi                     
 
-    def get_sopt_analysis(self, eunits='kJmol-1', atom_groups=[]):
+    def get_sopt_analysis(self, eunits='kJmol-1', atom_groups=[], 
+                          charge_info=False):
         """interactions between "filled" (donor) Lewis-type 
         Natural Bonding Orbitals (NBOs) and "empty" (acceptor) non-Lewis NBOs,
         using Second Order Perturbation Theory (SOPT)
@@ -1418,28 +1419,22 @@ class Molecule(object):
             the units of energy to return
         atom_groups : [list or str, list or str]
             restrict interactions to between two lists (or identifiers) of atom indexes
+        charge_info : bool
+            include charge info for atoms 
+            (under headings 'A_Charges' and 'D_Charges')
         Returns
         -------
         analysis : pandas.DataFrame
             a table of interactions
         """
         
-        sopt = copy.deepcopy(self._read_data('_nbo_data', 'sopt'))
+        #sopt = copy.deepcopy(self._read_data('_nbo_data', 'sopt'))
+        sopt = self._read_data('_nbo_data', 'sopt')
+        
         
         df = pd.DataFrame(sopt, 
                           columns=['Dtype', 'Donors', 'Atype', 'Acceptors', 'E2'])
-                
-        if not eunits=='kcal': 
-            df.E2 = convertor(df.E2, 'kcal', eunits)
-
-        typ = self._read_data('_nbo_data', 'molecule').type_array        
-        df['D_Symbols'] = df.Donors.apply(lambda x: [typ[i-1] for i in x])
-        df['A_Symbols'] = df.Acceptors.apply(lambda x: [typ[i-1] for i in x])
-        
-        chrg= self._read_data('_nbo_data', 'atomcharges')['natural']
-        df['D_Charges'] = df.Donors.apply(lambda x: [chrg[i-1] for i in x])
-        df['A_Charges'] = df.Acceptors.apply(lambda x: [chrg[i-1] for i in x])
-        
+                        
         if atom_groups:
             
             group1, group2 = atom_groups
@@ -1458,9 +1453,26 @@ class Molecule(object):
             
             df = pd.DataFrame(match_rows)
                     
-        return df[['Dtype', 'Donors', 'D_Symbols', 'D_Charges', 
-                   'Atype', 'Acceptors', 'A_Symbols', 'A_Charges', 
-                   'E2']] 
+        if not eunits=='kcal': 
+            df.E2 = convertor(df.E2, 'kcal', eunits)
+
+        typ = self._read_data('_nbo_data', 'molecule').type_array        
+        df['D_Symbols'] = df.Donors.apply(lambda x: [typ[i-1] for i in x])
+        df['A_Symbols'] = df.Acceptors.apply(lambda x: [typ[i-1] for i in x])
+
+        if charge_info:        
+            chrg= self._read_data('_nbo_data', 'atomcharges')['natural']
+            df['D_Charges'] = df.Donors.apply(lambda x: [chrg[i-1] for i in x])
+            df['A_Charges'] = df.Acceptors.apply(lambda x: [chrg[i-1] for i in x])
+
+            return df[['Dtype', 'Donors', 'D_Symbols', 'D_Charges', 
+                       'Atype', 'Acceptors', 'A_Symbols', 'A_Charges', 
+                       'E2']] 
+        else:
+            return df[['Dtype', 'Donors', 'D_Symbols', 
+                       'Atype', 'Acceptors', 'A_Symbols', 
+                       'E2']] 
+            
         
     def get_hbond_analysis(self, min_energy=0., atom_groups=[], eunits='kJmol-1'):
         """EXPERIMENTAL! hydrogen bond analysis (DH---A), 
@@ -1513,8 +1525,9 @@ class Molecule(object):
         df = self.get_sopt_analysis(atom_groups=atom_groups, eunits=eunits)
         
         if no_hbonds:
-            dfh = self.get_hbond_analysis(eunits=eunits,
-                                          atom_groups=atom_groups)
+            dfh = df[df.A_Symbols.apply(lambda x: 'H' in x) & 
+                    df.Dtype.str.contains('LP') & 
+                    df.Atype.str.contains('BD*')]
             df = df.loc[set(df.index).difference(dfh.index)]          
         
         return df.E2.sum()
@@ -1640,6 +1653,7 @@ class Molecule(object):
             rotation of molecule image(s)
         """
         scan_datas = self._pes_data
+        
         if len(fixed_atoms) == 4:
             xlabel = 'Dihedral Angle'
             func = self.calc_dihedral_angle
@@ -1651,20 +1665,22 @@ class Molecule(object):
             
         angles = []
         energies = []
+        mols = []
         for scan in scan_datas:
             for i in range(scan.read('nscans')):
                 mol = scan.read('molecule', scan=i)
+                mols.append(self._create_molecule(data=scan, scan_step=i))
                 angles.append(func(fixed_atoms, mol=mol))
             energies.extend(scan.read('scanenergies'))
         
         # remove duplicate angles and sort by angle 
         # so that the local max are found correctly
         df = pd.DataFrame({'energy':convertor(np.array(energies), 'eV', eunits), 
-                           'angle':angles})
+                           'angle':angles, 'mol':mols})
         df['rounded'] = df.angle.round(2) #rounding errors?
         df.drop_duplicates('rounded', inplace=True)
         df.sort('angle', inplace=True)
-        
+                
         angles = np.array(df.angle.tolist())
         energies = np.array(df.energy.tolist())
         
@@ -1673,26 +1689,17 @@ class Molecule(object):
         ax.scatter(angles, energies)
         ax.set_ylabel('Energy ({0})'.format(eunits))
         ax.set_xlabel(xlabel)
-    
+            
         feature_dict = {
         '':[],
-        'local_maxs' : argrelextrema(energies, np.greater, mode='wrap', order=order)[0],
-        'local_mins' : argrelextrema(energies, np.less, mode='wrap', order=order)[0],
-        'global_min' : [np.argmin(energies)],
-        'global_max' : [np.argmax(energies)]}
+        'local_maxs' : df.index[argrelextrema(energies, np.greater, mode='wrap', order=order)[0]],
+        'local_mins' : df.index[argrelextrema(energies, np.less, mode='wrap', order=order)[0]],
+        'global_min' : [df.energy.idxmin()],
+        'global_max' : [df.energy.idxmax()]}
          
         for indx in feature_dict[img_pos]:
-            pscans = 0
-            for scan in scan_datas:
-                if indx < scan.read('nscans') + pscans:
-                    mol = self._create_molecule(data=scan, scan_step=indx-pscans)
-                    img = self._image_molecule(mol, rotation=rotation, 
-                                               represent='ball_stick')
-                    break
-                else:
-                    pscans += scan.read('nscans') 
-                
+            img = self._image_molecule(df.mol.loc[indx], rotation=rotation, represent='ball_stick')                        
             img = self._color_to_transparent(img)
-            self._img_to_plot(angles[indx], energies[indx], img, zoom=zoom, ax=ax)
+            self._img_to_plot(df.angle.loc[indx], df.energy.loc[indx], img, zoom=zoom, ax=ax)
             
         return ax

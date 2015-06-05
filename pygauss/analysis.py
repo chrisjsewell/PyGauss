@@ -3,6 +3,7 @@ from itertools import product
 import copy
 import math
 import string
+import re
 
 import numpy as np
 import pandas as pd
@@ -331,7 +332,7 @@ class Analysis(object):
     def add_mol_property_subset(self, name, method, 
                                      rows=[], filters={}, 
                                      args=[], kwargs={},
-                                     relative_to_row=None):
+                                     relative_to_rows=[]):
         """compute molecule property for a subset of rows and create/add-to data column 
 
         Parameters
@@ -348,23 +349,26 @@ class Analysis(object):
             the arguments to pass to the molecule method
         kwargs : dict
             the keyword arguments to pass to the molecule method
-        relative_to_row: int
-            compute values relative to the value of a particular molecule at row i
+        relative_to_rows: list of ints
+            compute values relative to the summated value(s) of molecule at the 
+            rows listed
         
         """
-        if type(relative_to_row) is int:
-            if rows and relative_to_row not in rows:
-                rows.append(relative_to_row)
-        
         df = self.get_table(rows=rows, filters=filters, mol=True)
+
+        if relative_to_rows:
+            rel_df = self.get_table(rows=relative_to_rows, mol=True)
 
         if type(name) is tuple or type(name) is list:
             
             for idx, n in enumerate(name):
                 func = lambda m: getattr(m, method)(*args, **kwargs)[idx]
                 vals = df.Molecule.map(func)
-                if type(relative_to_row) is int:
-                    vals = vals - vals.loc[relative_to_row]
+                
+                if relative_to_rows:
+                    rel_val = rel_df.Molecule.map(func).sum()
+                    vals = vals - rel_val
+                    
                 if n in self._df.columns:
                     self._df[n] = vals.combine_first(self._df[n])
                 else:                
@@ -374,8 +378,11 @@ class Analysis(object):
         else:
             func = lambda m: getattr(m, method)(*args, **kwargs)
             vals = df.Molecule.map(func)
-            if type(relative_to_row) is int:
-                vals = vals - vals.loc[relative_to_row]
+                
+            if relative_to_rows:
+                rel_val = rel_df.Molecule.map(func).sum()
+                vals = vals - rel_val
+                    
             if name in self._df.columns:
                 self._df[name] = vals.combine_first(self._df[name])
             else:                
@@ -677,7 +684,11 @@ class Analysis(object):
         if save_fname:
             self._folder.save_mplfig(fig, save_fname)
         
-        return fig, 'Figure: ' + ', '.join(caption)
+        caption = 'Figure: ' + ', '.join(caption)
+        #insert newline character every 80 charaters
+        caption = re.sub("(.{80})", "\\1\n", caption, 0, re.DOTALL)
+        
+        return fig, caption
         
     def get_freq_analysis(self, info_columns=[], rows=[], filters={}):
         """return frequency analysis 

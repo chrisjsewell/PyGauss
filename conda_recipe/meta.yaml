@@ -37,7 +37,7 @@ requirements:
     - pil
     - cclib
     - chemview
-    - pyopengl ==3.02
+    - pyopengl ==3.0.2
     - chemlab
 
   run:
@@ -52,7 +52,7 @@ requirements:
     - pil
     - cclib
     - chemview
-    - pyopengl ==3.02
+    - pyopengl ==3.0.2
     - chemlab
 
 test:

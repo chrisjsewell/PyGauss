@@ -34,7 +34,7 @@ requirements:
     - ipython >=3
     - scikit-learn >=0.15
     - paramiko
-    - pillow
+    - pil
     - cclib
     - chemview
     - chemlab
@@ -48,7 +48,7 @@ requirements:
     - ipython >=3
     - scikit-learn >=0.15
     - paramiko
-    - pillow
+    - pil
     - cclib
     - chemview
     - chemlab

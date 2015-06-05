@@ -63,6 +63,7 @@ setup(name='pygauss',
                         #"numexpr",
                           "cclib",
                           "chemview",
+                          "pyopengl==3.0.2",
                           "chemlab"
                        ],               
      )

@@ -7,7 +7,11 @@ based on add_isosurface function from chemview
 """
 import numpy as np
 
-from skimage.measure import marching_cubes, correct_mesh_orientation
+#TODO not making this a depedency until it works
+try:
+    from skimage.measure import marching_cubes, correct_mesh_orientation
+except ImportError:
+    pass
 
 def get_isosurface(coordinates, function, isolevel=0.03, color=(255, 0, 0, 255),
                    extents=(5,5,5), resolution=100):

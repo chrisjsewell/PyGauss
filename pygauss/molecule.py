@@ -57,18 +57,23 @@ from cclib.parser.utils import convertor
 
 from chemlab.graphics.colors import get as str_to_colour
 from chemlab.qc import molecular_orbital
-#imporovement to function
+
+#improvement to function
+#TODO not making this a depedency until it works
 from chemlab.qc.pgbf import pgbf
-import numexpr as ne
-def __call__(self,x,y,z):
-    "Compute the amplitude of the PGBF at point x,y,z"
-    I,J,K = self.powers
-    dx,dy,dz = x-self.origin[0],y-self.origin[1],z-self.origin[2]
-    n = self.norm
-    e = self.exponent
-    return ne.evaluate(
-            'n*(dx**I)*(dy**J)*(dz**K) * exp(-e*(dx*dx + dy*dy + dz*dz))')
-pgbf.__call__ = __call__
+try:
+    import numexpr as ne
+    def __call__(self,x,y,z):
+        "Compute the amplitude of the PGBF at point x,y,z"
+        I,J,K = self.powers
+        dx,dy,dz = x-self.origin[0],y-self.origin[1],z-self.origin[2]
+        n = self.norm
+        e = self.exponent
+        return ne.evaluate(
+                'n*(dx**I)*(dy**J)*(dz**K) * exp(-e*(dx*dx + dy*dy + dz*dz))')
+    pgbf.__call__ = __call__
+except ImportError:
+    pass
 
 #instead of chemview MolecularViewer to add defined colouring
 #also ignore; 'FutureWarning: IPython widgets are experimental and may change in the future.'
@@ -1044,6 +1049,8 @@ class Molecule(object):
             an image of the molecule in the format specified by ipyimg 
             
         """
+        warnings.warn('Orbitals are currently an experimental feature')
+        
         orbitals = np.array(orbitals, ndmin=1, dtype=int)
         assert np.all(orbitals>0) and np.all(orbitals<=self.get_orbital_count()), (
             'orbitals must be in range 1 to number of orbitals')

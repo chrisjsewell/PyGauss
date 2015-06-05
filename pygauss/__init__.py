@@ -32,3 +32,17 @@ def get_test_folder():
 
 from .utils import df_to_img, set_imagik_exe
 
+def run_nose(verbose=False):
+    import pygauss, nose
+    nose_argv = sys.argv
+    nose_argv += ['--detailed-errors', '--exe']
+    if verbose:
+        nose_argv.append('-v')
+    initial_dir = os.getcwd()
+    my_package_file = os.path.abspath(pygauss.__file__)
+    my_package_dir = os.path.dirname(my_package_file)
+    os.chdir(my_package_dir)
+    try:
+        nose.run(argv=nose_argv)
+    finally:
+        os.chdir(initial_dir)

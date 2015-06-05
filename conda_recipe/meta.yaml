@@ -1,13 +1,13 @@
 source:
   git_url: https://github.com/chrisjsewell/PyGauss.git
-  git_tag: v0.3.0
+  git_tag: v0.4.0
 #  patches:
    # List any patch files here
    # - fix.patch
 
 package:
   name: pygauss
-  version: 0.3.0
+  version: 0.4.0
 
 # build:
   # preserve_egg_dir: True

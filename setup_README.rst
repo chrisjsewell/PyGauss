@@ -97,17 +97,39 @@ starting with the following:
     from IPython.display import display
     %matplotlib inline
     import pygauss as pg
+    print 'pygauss version: {}'.format(pg.__version__)
+
+
+.. parsed-literal::
+
+    pygauss version: 0.4.0
+
+
+and access the test folder with a number of example Gaussian outputs.
+
+.. code:: python
+
     folder = pg.get_test_folder()
-    pg.__version__
+    len(folder.list_files())
 
 
 
 
 .. parsed-literal::
 
-    '0.3.0'
+    33
 
 
+
+**Note:** the *folder* object will act identical whether using a local
+path or one on a server over ssh (using
+`paramiko <http://www.paramiko.org/>`__):
+
+::
+
+    folder = pg.Folder('/path/to/folder', 
+                    ssh_server='login.server.com',
+                    ssh_username='username')
 
 Single Molecule Analysis
 ~~~~~~~~~~~~~~~~~~~~~~~~
@@ -119,26 +141,27 @@ Firefox).
 
 .. code:: python
 
-    mol = pg.molecule.Molecule(folder,
+    mol = pg.molecule.Molecule(folder_obj=folder,
                     init_fname='CJS1_emim-cl_B_init.com', 
                     opt_fname=['CJS1_emim-cl_B_6-311+g-d-p-_gd3bj_opt-modredundant_difrz.log',
                                'CJS1_emim-cl_B_6-311+g-d-p-_gd3bj_opt-modredundant_difrz_err.log',
                                'CJS1_emim-cl_B_6-311+g-d-p-_gd3bj_opt-modredundant_unfrz.log'],
                     freq_fname='CJS1_emim-cl_B_6-311+g-d-p-_gd3bj_freq_unfrz.log',
                     nbo_fname='CJS1_emim-cl_B_6-311+g-d-p-_gd3bj_pop-nbo-full-_unfrz.log', 
+                    atom_groups={'emim':range(20), 'cl':[20]},
                     alignto=[3,2,1])
     
     #mol.show_initial(active=True)
-    display(mol.show_initial(zoom=0.5, rotations=[[0,0,90], [-90, 90, 0]]))
-    display(mol.show_optimisation(ball_stick=True, rotations=[[0,0,90], [-90, 90, 0]]))
+    display(mol.show_initial(represent='vdw', rotations=[[0,0,90], [-90, 90, 0]]))
+    display(mol.show_optimisation(represent='ball_stick', rotations=[[0,0,90], [-90, 90, 0]]))
 
 
 
-.. image:: output_8_0.png
+.. image:: output_11_0.png
 
 
 
-.. image:: output_8_1.png
+.. image:: output_11_1.png
 
 
 Basic analysis of optimisation...
@@ -146,18 +169,25 @@ Basic analysis of optimisation...
 .. code:: python
 
     print('Optimised? {0}, Conformer? {1}, Energy = {2} a.u.'.format(
-        mol.is_optimised(), mol.is_conformer(), round(mol.get_optimisation_E(units='hartree'),3)))
+        mol.is_optimised(), mol.is_conformer(), 
+        round(mol.get_optimisation_E(units='hartree'),3)))
     ax = mol.plot_optimisation_E(units='hartree')
     ax.get_figure().set_size_inches(3, 2)
+    ax = mol.plot_freq_analysis()
+    ax.get_figure().set_size_inches(4, 2)
 
 
 .. parsed-literal::
 
     Optimised? True, Conformer? True, Energy = -805.105 a.u.
-    
 
 
-.. image:: output_10_1.png
+
+.. image:: output_13_1.png
+
+
+
+.. image:: output_13_2.png
 
 
 Geometric analysis...
@@ -174,17 +204,17 @@ Geometric analysis...
 .. parsed-literal::
 
     Cl optimised polar coords from aromatic ring : (0.11, -116.42,-170.06)
-    
 
 
-.. image:: output_12_1.png
+
+.. image:: output_15_1.png
 
 
 Potential Energy Scan analysis of geometric conformers...
 
 .. code:: python
 
-    mol2 = pg.molecule.Molecule(folder, alignto=[3,2,1],
+    mol2 = pg.molecule.Molecule(folder_obj=folder, alignto=[3,2,1],
                 pes_fname=['CJS_emim_6311_plus_d3_scan.log', 
                            'CJS_emim_6311_plus_d3_scan_bck.log'])   
     ax = mol2.plot_pes_scans([1,4,9,10], rotation=[0,0,90], img_pos='local_maxs', zoom=0.5)
@@ -193,7 +223,7 @@ Potential Energy Scan analysis of geometric conformers...
 
 
 
-.. image:: output_14_0.png
+.. image:: output_17_0.png
 
 
 Natural Bond Orbital and Second Order Perturbation Theory analysis...
@@ -202,22 +232,46 @@ Natural Bond Orbital and Second Order Perturbation Theory analysis...
 
     print '+ve charge centre polar coords from aromatic ring: ({0} {1},{2})'.format(
         *[round(i, 2) for i in mol.calc_nbo_charge_center(3, 2, 1)])
-    display(mol.show_nbo_charges(ball_stick=True, axis_length=0.4, 
+    display(mol.show_nbo_charges(represent='ball_stick', axis_length=0.4, 
                                   rotations=[[0,0,90], [-90, 90, 0]]))
-    display(mol.show_SOPT_bonds(min_energy=15., rotations=[[0, 0, 90]]))
 
 
 .. parsed-literal::
 
     +ve charge centre polar coords from aromatic ring: (0.02 -51.77,-33.15)
-    
-
-
-.. image:: output_16_1.png
 
 
 
-.. image:: output_16_2.png
+.. image:: output_19_1.png
+
+
+.. code:: python
+
+    print 'H inter-bond energy = {} kJmol-1'.format(
+            mol.calc_hbond_energy(eunits='kJmol-1', atom_groups=['emim', 'cl']))
+    print 'Other inter-bond energy = {} kJmol-1'.format(
+        mol.calc_sopt_energy(eunits='kJmol-1', no_hbonds=True, atom_groups=['emim', 'cl']))
+    display(mol.show_sopt_bonds(min_energy=1, eunits='kJmol-1',
+                                atom_groups=['emim', 'cl'],
+                                no_hbonds=True,
+                                rotations=[[0, 0, 90]]))
+    display(mol.show_hbond_analysis(cutoff_energy=5.,alpha=0.6, 
+                                    atom_groups=['emim', 'cl'],
+                                    rotations=[[0, 0, 90], [90, 0, 0]]))
+
+
+.. parsed-literal::
+
+    H inter-bond energy = 111.7128 kJmol-1
+    Other inter-bond energy = 11.00392 kJmol-1
+
+
+
+.. image:: output_20_1.png
+
+
+
+.. image:: output_20_2.png
 
 
 Multiple Computations Analysis
@@ -228,43 +282,30 @@ can be grouped into an *Analysis* class.
 
 .. code:: python
 
-    analysis = pg.Analysis(folder)
+    analysis = pg.Analysis(folder_obj=folder)
     errors = analysis.add_runs(headers=['Cation', 'Anion', 'Initial'], 
                                    values=[['emim'], ['cl'],
-                                           ['B', 'BE', 'BM', 'F', 'FE', 'FM']],
+                                           ['B', 'BE', 'BM', 'F', 'FE']],
                 init_pattern='*{0}-{1}_{2}_init.com',
                 opt_pattern='*{0}-{1}_{2}_6-311+g-d-p-_gd3bj_opt*unfrz.log',
                 freq_pattern='*{0}-{1}_{2}_6-311+g-d-p-_gd3bj_freq*.log',
-                nbo_pattern='*{0}-{1}_{2}_6-311+g-d-p-_gd3bj_pop-nbo-full-*.log')
-    print 'Read Errors:'
-    errors.File
-
-
-.. parsed-literal::
-
-    Read Errors:
+                nbo_pattern='*{0}-{1}_{2}_6-311+g-d-p-_gd3bj_pop-nbo-full-*.log',
+                alignto=[3,2,1], atom_groups={'emim':range(20), 'cl':[20]})
     
-
+    fig, caption = analysis.plot_mol_images(mtype='initial', max_cols=3,
+                            info_columns=['Cation', 'Anion', 'Initial'],
+                            rotations=[[0,0,90]])
+    print caption
 
 
 .. parsed-literal::
 
-    0                                 *emim-cl_FM_init.com
-    1         *emim-cl_FM_6-311+g-d-p-_gd3bj_opt*unfrz.log
-    2             *emim-cl_FM_6-311+g-d-p-_gd3bj_freq*.log
-    3    *emim-cl_FM_6-311+g-d-p-_gd3bj_pop-nbo-full-*.log
-    Name: File, dtype: object
+    Figure: (A) emim, cl, B, (B) emim, cl, BE, (C) emim, cl, BM, (D) emim, cl, F, (E) emim, cl, FE
 
 
 
-**New Feature:** you can now access files on a server over ssh in the
-following manner:
+.. image:: output_23_1.png
 
-::
-
-    analysis = pg.Analysis( '/path/to/folder', 
-                    ssh_server='login.server.com',
-                    ssh_username='username')
 
 The methods mentioned for indivdiual molecules can then be applied to
 all or a subset of these computations.
@@ -274,27 +315,14 @@ all or a subset of these computations.
     analysis.add_mol_property_subset('Opt', 'is_optimised', rows=[2,3])
     analysis.add_mol_property('Energy (au)', 'get_optimisation_E', units='hartree')
     analysis.add_mol_property('Cation chain, $\\psi$', 'calc_dihedral_angle', [1, 4, 9, 10])
-    analysis.add_mol_property('Cation Charge', 'calc_nbo_charge', range(1, 20))
-    analysis.add_mol_property('Anion Charge', 'calc_nbo_charge', [20])
+    analysis.add_mol_property('Cation Charge', 'calc_nbo_charge', 'emim')
+    analysis.add_mol_property('Anion Charge', 'calc_nbo_charge', 'cl')
     analysis.add_mol_property(['Anion-Cation, $r$', 'Anion-Cation, $\\theta$', 'Anion-Cation, $\\phi$'], 
                                    'calc_polar_coords_from_plane', 3, 2, 1, 20)
-    analysis.get_table(row_index=['Anion', 'Cation', 'Initial'], 
+    analysis.add_mol_property('Anion-Cation h-bond', 'calc_hbond_energy', 
+                              eunits='kJmol-1', atom_groups=['emim', 'cl'])
+    tbl = analysis.get_table(row_index=['Anion', 'Cation', 'Initial'], 
                        column_index=['Cation', 'Anion', 'Anion-Cation'])
-    analysis
-
-
-
-
-.. parsed-literal::
-
-      Anion Cation Initial   Opt  Energy (au)  Cation chain, $\psi$  Cation Charge  Anion Charge  Anion-Cation, $r$  Anion-Cation, $\theta$  Anion-Cation, $\phi$
-    0    cl   emim       B   NaN     -805.105                80.794          0.888        -0.888              0.420                -123.392               172.515
-    1    cl   emim      BE   NaN     -805.105                80.622          0.887        -0.887              0.420                -123.449               172.806
-    2    cl   emim      BM  True     -805.104                73.103          0.874        -0.874              0.420                 124.121              -166.774
-    3    cl   emim       F  True     -805.118               147.026          0.840        -0.840              0.420                  10.393                 0.728
-    4    cl   emim      FE   NaN     -805.117                85.310          0.851        -0.851              0.417                 -13.254                -4.873
-
-
 
 **NEW FEATURE:** there is now an option (requiring
 `pdflatex <http://www.tug.org/applications/pdftex/>`__ and
@@ -310,7 +338,7 @@ to output the tables as a latex formatted image.
 
 
 
-.. image:: output_24_0.png
+.. image:: output_27_0.png
 
 
 
@@ -322,7 +350,7 @@ RadViz is a way of visualizing multi-variate data.
 
 
 
-.. image:: output_26_0.png
+.. image:: output_29_0.png
 
 
 The KMeans algorithm clusters data by trying to separate samples into n
@@ -330,69 +358,47 @@ groups of equal variance.
 
 .. code:: python
 
-    kwargs = {'mtype':'optimised', 'align_to':[3,2,1], 
-                'rotations':[[0, 0, 90], [-90, 90, 0]],
-                'axis_length':0.3}
-    pg.utils.iprint_kmean_groups(analysis, 'Anion', 'cl', 4, 
-                                 range(4, 10), output=['Initial'],
-                                 **kwargs)
+    pg.utils.imgplot_kmean_groups(
+        analysis, 'Anion', 'cl', 4, range(4, 10), 
+        output=['Initial'], mtype='optimised', 
+        rotations=[[0, 0, 90], [-90, 90, 0]],
+        axis_length=0.3)
+
+
+
+.. image:: output_31_0.png
 
 
 .. parsed-literal::
 
-    -------------
-    Category 0:
-    -------------
-    Initial: B
-    
+    Figure: (A) B, (B) BE
 
 
-.. image:: output_28_1.png
+
+.. image:: output_31_2.png
 
 
 .. parsed-literal::
 
-    Initial: BE
-    
+    Figure: (A) BM
 
 
-.. image:: output_28_3.png
 
-
-.. parsed-literal::
-
-    -------------
-    Category 1:
-    -------------
-    Initial: BM
-    
-
-
-.. image:: output_28_5.png
+.. image:: output_31_4.png
 
 
 .. parsed-literal::
 
-    -------------
-    Category 2:
-    -------------
-    Initial: FE
-    
+    Figure: (A) FE
 
 
-.. image:: output_28_7.png
+
+.. image:: output_31_6.png
 
 
 .. parsed-literal::
 
-    -------------
-    Category 3:
-    -------------
-    Initial: F
-    
-
-
-.. image:: output_28_9.png
+    Figure: (A) F
 
 
 MORE TO COME!!

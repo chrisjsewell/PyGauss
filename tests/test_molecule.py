@@ -190,7 +190,22 @@ File Extracts:
         hbond_e = sum([0.20, 0.10, 9.59, 9.49, 0.10, 0.20])
         that.assert_almost_equal(self.mol.calc_sopt_energy(eunits='kcal', no_hbonds=True), 
                                  total_e - hbond_e)
-        
+
+class Test_Images(object):
+    def setUp(self):
+        self.mol = pg.Molecule(folder_obj=pg.get_test_folder(),
+                init_fname='CJS1_emim-cl_B_init.com',
+                opt_fname='CJS1_emim-cl_B_6-311+g-d-p-_gd3bj_opt-modredundant_unfrz.log',
+                nbo_fname='CJS1_emim-cl_B_6-311+g-d-p-_gd3bj_pop-nbo-full-_unfrz.log') 
+
+    def test_returns_init_img(self):
+        self.mol.show_initial()
+    
+    def test_returns_opt_img(self):
+        self.mol.show_optimisation()
+
+    def test_returns_nbo_charges_img(self):
+        self.mol.show_nbo_charges()
     
 if __name__=='__main__':
     import nose

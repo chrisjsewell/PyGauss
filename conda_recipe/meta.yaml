@@ -68,6 +68,7 @@ test:
     - pygauss.chemlab_patch.io.handlers
     - pygauss.chemview_patch
     - pygauss.test_data
+    - pygauss.tests
 
   # commands:
     # You can put test commands to be run here.  Use this to test that the

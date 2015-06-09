@@ -15,23 +15,13 @@ It is built on top of the [cclib](http://cclib.github.io/)/[chemview](http://che
 - A PyPi distribution is available at; https://pypi.python.org/pypi/pygauss
 - A Conda distribution is available at; https://conda.binstar.org/cjs14
 
-###The Easy Way (OSX)
+###The Easy Way (OSX and Linux)
 
 The recommended was to use pygauss is to download the [Anaconda](http://continuum.io/downloads) Scientific Python Distribution (64-bit). Once downloaded a new environment can be created in terminal and pygauss installed:
 
     conda create -n pg_env python=2.7
     conda install -c https://conda.binstar.org/cjs14 -n pg_env pygauss
 
-###The Middle Road (Linux)
-
-There is currently no pygauss conda distributable for Linux, but there is for chemlab. So chemlab can be installed, then install a few dependancies that pip finds difficult / doesn't have, and finally install pygauss using pip (make sure to activate the required environment)   
-
-    conda create -n pg_env python=2.7
-	conda install -n pg_env -c https://conda.binstar.org/cjs14 chemlab	
-    conda install -n pg_env <pil, pandas, matplotlib, scikit-learn> 
-    activate pg_env
-    pip install pygauss
-    
 ###The Hard Way (Windows)
 
 There is currently no pygauss conda distributable for Windows or for chemlab, which has C-extensions that need to be built using a compiler. Therefore it will need to be cloned from GitHub. the extensions built, dependancies installed and finally installed.

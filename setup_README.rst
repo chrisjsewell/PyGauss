@@ -31,7 +31,7 @@ Instillation
 -  A Conda distribution is available at; https://conda.binstar.org/cjs14
 
 The Easy Way (OSX and Linux)
-~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The recommended was to use pygauss is to download the
 `Anaconda <http://continuum.io/downloads>`__ Scientific Python
@@ -40,7 +40,9 @@ in terminal and pygauss installed:
 
 ::
 
-    conda create -n pg_env -c https://conda.binstar.org/cjs14 pygauss
+    conda create -n pg_env python=2.7
+    conda install -c https://conda.binstar.org/cjs14 -n pg_env pygauss
+
 
 The Hard Way (Windows)
 ~~~~~~~~~~~~~~~~~~~~~~

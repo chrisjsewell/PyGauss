@@ -969,9 +969,11 @@ class Molecule(object):
 
     def get_orbital_homo_lumo(self):
         """return orbital numbers of homo and lumo """
-        moenergies = self._read_data('_nbo_data', "moenergies")[0]
-        homo = self._find_nearest_below(moenergies, 0.) + 1
-        lumo = self._find_nearest_above(moenergies, 0.) + 1
+        homo = self._read_data('_nbo_data', 'homos')[-1]+1
+        lumo = homo + 1
+        #moenergies = self._read_data('_nbo_data', "moenergies")[0]
+        #homo = self._find_nearest_below(moenergies, 0.) + 1
+        #lumo = self._find_nearest_above(moenergies, 0.) + 1
         
         return homo, lumo
                 

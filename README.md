@@ -19,8 +19,7 @@ It is built on top of the [cclib](http://cclib.github.io/)/[chemview](http://che
 
 The recommended was to use pygauss is to download the [Anaconda](http://continuum.io/downloads) Scientific Python Distribution (64-bit). Once downloaded a new environment can be created in terminal and pygauss installed:
 
-    conda create -n pg_env python=2.7
-    conda install -c https://conda.binstar.org/cjs14 -n pg_env pygauss
+    conda create -n pg_env -c https://conda.binstar.org/cjs14 pygauss
 
 ###The Hard Way (Windows)
 

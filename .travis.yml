@@ -24,4 +24,4 @@ install:
   - python setup.py install
 # Run test
 script:
-  - "nosetests -w /home/travis/miniconda/lib/python2.7/site-packages/pygauss/tests/ -v"
+  - "/home/travis/miniconda/bin/nosetests -w /home/travis/miniconda/lib/python2.7/site-packages/pygauss/tests/ -v"

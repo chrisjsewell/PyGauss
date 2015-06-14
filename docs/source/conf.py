@@ -21,7 +21,7 @@ MOCK_MODULES = ['cclib', 'cclib.parser', 'chemview', 'numpy',
 'chemlab.graphics.renderers.base','chemlab.graphics.renderers.sphere',
 'chemlab.graphics.renderers.sphere_imp','chemlab.graphics.renderers.point',
 'chemlab.graphics.colors', 'chemlab.graphics.buffers', 'chemlab.core',
-'chemlab.io', 'chemlab.io.handlers', 'chemlab.io.handlers.base',
+'chemlab.io', 'chemlab.io.handlers',
 'chemlab.graphics.buffers', 'chemlab.graphics.shaders',
 'OpenGL', 'OpenGL.GL',
 'matplotlib', 'matplotlib.pyplot', 'matplotlib.cm', 'matplotlib.offsetbox',
@@ -32,6 +32,11 @@ MOCK_MODULES = ['cclib', 'cclib.parser', 'chemview', 'numpy',
 'scipy', 'scipy.signal']
 for mod_name in MOCK_MODULES:
     sys.modules[mod_name] = mock.Mock()
+
+class cclibMock(mock.Mock):
+    def __name__(self):
+        return None
+sys.modules['chemlab.io.handlers.base'] = cclibMock()
     
 #import inspect
 

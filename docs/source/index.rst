@@ -43,19 +43,7 @@ Contents
    install
    history
    example
-
-Package Documentation
----------------------
-
-.. toctree::
-   :maxdepth: 1
-
-   api/pygauss.file_io
-   api/pygauss.molecule
-   api/pygauss.analysis
-   api/pygauss.isosurface
-   api/pygauss.utils
-
+   user_api
 
 License
 -------

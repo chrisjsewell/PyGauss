@@ -63,7 +63,7 @@ import json
 
 git_history = urllib2.urlopen('https://api.github.com/repos/chrisjsewell/Pygauss/releases')
 git_history_json = json.load(git_history)
-with open('history.rst', 'w') as f:
+with open('history2.rst', 'w') as f:
 	for r in git_history_json:
 		f.write(r['name'])
 

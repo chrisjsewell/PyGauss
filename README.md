@@ -2,6 +2,7 @@
 #Python Gaussian Analysis Tool (PyGauss)
 
 [![Documentation Status](https://readthedocs.org/projects/pygauss/badge/?version=latest)](https://readthedocs.org/projects/pygauss/)
+[![Documentation Status](https://readthedocs.org/projects/pygauss/badge/?version=stable)](https://readthedocs.org/projects/pygauss/)
 
 PyGauss is designed to be an API for parsing one or more input/output files from a [Gaussian](http://www.gaussian.com/) quantum chemical computation and provide functionality to assess  **molecular geometry** and **electronic distribution** both visually and quantitatively.
 

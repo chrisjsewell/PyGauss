@@ -16,7 +16,7 @@ import sys
 import os
 import mock
 
-MOCK_MODULES = ['cclib', 'chemview', 'numpy', 
+MOCK_MODULES = ['cclib', 'cclib.parser', 'chemview', 'numpy', 
 'chemlab', 'chemlab.graphics', 'chemlab.db', 'chemlab.graphics.renderers',
 'chemlab.graphics.renderers.base','chemlab.graphics.renderers.sphere',
 'chemlab.graphics.renderers.sphere_imp','chemlab.graphics.renderers.point',

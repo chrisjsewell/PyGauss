@@ -71,7 +71,8 @@ with open('history.rst', 'w') as f:
 		f.write(' '.join([r['tag_name'],'-',r['name'],'\n']))
 		f.write('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
 		f.write('\n')
-		f.write(' '.join([r['body'], '\n']))
+		for line in r['body'].split('\n'):
+			f.write(' '.join([line, '\n']))
 		f.write('\n')
 
 import inspect

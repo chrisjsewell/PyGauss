@@ -5,12 +5,7 @@ python:
   - 2.7
 notifications:
   email: false
- 
-# whitelist
-branches:
-  only:
-    - master
- 
+
 # Setup anaconda
 before_install:
   - if [ ${TRAVIS_PYTHON_VERSION:0:1} == "2" ]; then wget http://repo.continuum.io/miniconda/Miniconda-latest-Linux-x86_64.sh -O miniconda.sh; else wget http://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh; fi
@@ -27,7 +22,6 @@ install:
   - deps='numpy pandas scipy matplotlib ipython scikit-learn paramiko pil cclib chemview pyopengl==3.0.2 chemlab nose nose-parameterized'
   - conda install --yes -c https://conda.binstar.org/cjs14 python=$TRAVIS_PYTHON_VERSION $deps
   - python setup.py install
- 
 # Run test
 script:
-  - nosetests
+  - nosetests -v

@@ -23,21 +23,21 @@ before_install:
   - sudo ln -s /run/shm /dev/shm
 # Install conda packages
 install:
-  - conda install --yes -c https://conda.binstar.org/cjs14 python=$TRAVIS_PYTHON_VERSION     
-  - conda install --yes -c https://conda.binstar.org/cjs14 numpy >=1.9
-  - conda install --yes -c https://conda.binstar.org/cjs14 scipy >=0.15
-  - conda install --yes -c https://conda.binstar.org/cjs14 matplotlib >=1.4
-  - conda install --yes -c https://conda.binstar.org/cjs14 pandas >=0.15
-  - conda install --yes -c https://conda.binstar.org/cjs14 ipython >=3
-  - conda install --yes -c https://conda.binstar.org/cjs14 scikit-learn >=0.15
-  - conda install --yes -c https://conda.binstar.org/cjs14 paramiko
-  - conda install --yes -c https://conda.binstar.org/cjs14 pil
-  - conda install --yes -c https://conda.binstar.org/cjs14 cclib
-  - conda install --yes -c https://conda.binstar.org/cjs14 chemview
-  - conda install --yes -c https://conda.binstar.org/cjs14 pyopengl ==3.0.2
-  - conda install --yes -c https://conda.binstar.org/cjs14 chemlab
-  - conda install --yes -c https://conda.binstar.org/cjs14 nose
-  - conda install --yes -c https://conda.binstar.org/cjs14 nose-parameterized
+  - conda install -c https://conda.binstar.org/cjs14 python=$TRAVIS_PYTHON_VERSION     
+  - conda install -c https://conda.binstar.org/cjs14 numpy >=1.9
+  - conda install -c https://conda.binstar.org/cjs14 scipy >=0.15
+  - conda install -c https://conda.binstar.org/cjs14 matplotlib >=1.4
+  - conda install -c https://conda.binstar.org/cjs14 pandas >=0.15
+  - conda install -c https://conda.binstar.org/cjs14 ipython >=3
+  - conda install -c https://conda.binstar.org/cjs14 scikit-learn >=0.15
+  - conda install -c https://conda.binstar.org/cjs14 paramiko
+  - conda install -c https://conda.binstar.org/cjs14 pil
+  - conda install -c https://conda.binstar.org/cjs14 cclib
+  - conda install -c https://conda.binstar.org/cjs14 chemview
+  - conda install -c https://conda.binstar.org/cjs14 pyopengl ==3.0.2
+  - conda install -c https://conda.binstar.org/cjs14 chemlab
+  - conda install -c https://conda.binstar.org/cjs14 nose
+  - conda install -c https://conda.binstar.org/cjs14 nose-parameterized
   - python setup.py install
  
 # Run test

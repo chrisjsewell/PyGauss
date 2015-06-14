@@ -16,6 +16,7 @@ before_install:
   # are not specific to using Miniconda
   - sudo rm -rf /dev/shm
   - sudo ln -s /run/shm /dev/shm
+  - sudo apt-get install xvfb
   - conda update --yes conda
 # Install conda packages
 install:
@@ -24,4 +25,4 @@ install:
   - python setup.py install
 # Run test
 script:
-  - nosetests -v --nocapture
+  - xvfb-run nosetests -v --nocapture

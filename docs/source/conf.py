@@ -14,6 +14,12 @@
 
 import sys
 import os
+import mock
+
+MOCK_MODULES = ['cclib', 'chemlab', 'chemview']
+for mod_name in MOCK_MODULES:
+    sys.modules[mod_name] = mock.Mock()
+    
 #import inspect
 
 #import pygauss
@@ -40,7 +46,7 @@ extensions = [
     'sphinx.ext.mathjax',
     'sphinx.ext.ifconfig',
     'sphinx.ext.viewcode',
-	#'sphinx.ext.napoleon'
+    'sphinx.ext.napoleon'
 ]
 
 # Add any paths that contain templates here, relative to this directory.

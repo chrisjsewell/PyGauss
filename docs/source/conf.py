@@ -16,7 +16,7 @@ import sys
 import os
 import mock
 
-MOCK_MODULES = ['cclib', 'cclib.parser', 'chemview', 'numpy', 
+MOCK_MODULES = ['cclib', 'chemview', 'numpy', 
 'chemlab', 'chemlab.graphics', 'chemlab.db', 'chemlab.graphics.renderers',
 'chemlab.graphics.renderers.base','chemlab.graphics.renderers.sphere',
 'chemlab.graphics.renderers.sphere_imp','chemlab.graphics.renderers.point',
@@ -35,7 +35,10 @@ for mod_name in MOCK_MODULES:
 
 class cclibMock(mock.Mock):
     __name__ = None
+    def __call__(self, *args, **kwargs):
+        return cclibMock()
 sys.modules['chemlab.io.handlers.base'] = cclibMock()
+sys.modules['cclib.parser'] = cclibMock()
     
 #import inspect
 

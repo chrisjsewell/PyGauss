@@ -24,6 +24,8 @@ part of a group. The advantages of this package are then:
 Instillation
 ------------
 
+-  Documentation is hosted at;
+   https://pygauss.readthedocs.org
 -  The source code is hosted on GitHub;
    https://github.com/chrisjsewell/PyGauss
 -  A PyPi distribution is available at;

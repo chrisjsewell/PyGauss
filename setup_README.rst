@@ -1,8 +1,12 @@
 Python Gaussian Analysis Tool (PyGauss)
 =======================================
 
-.. image:: https://readthedocs.org/projects/pygauss/badge/?version=latest
+.. image:: https://img.shields.io/github/release/chrisjsewell/PyGauss.svg
+.. image:: https://img.shields.io/pypi/v/pygauss.svg
+.. image:: https://img.shields.io/pypi/dm/pygauss.svg
+|
 .. image:: https://readthedocs.org/projects/pygauss/badge/?version=stable
+.. image:: https://readthedocs.org/projects/pygauss/badge/?version=latest 
 
 
 PyGauss is designed to be an API for parsing one or more input/output

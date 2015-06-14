@@ -1,4 +1,4 @@
-Instillation
+Installation
 ---------------------------
 
 OSX and Linux

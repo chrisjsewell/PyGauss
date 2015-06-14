@@ -3,23 +3,23 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-.. image:: https://img.shields.io/github/release/chrisjsewell/PyGauss.svg
-.. image:: https://img.shields.io/pypi/v/pygauss.svg
-.. image:: https://readthedocs.org/projects/pygauss/badge/?version=stable
-.. image:: https://img.shields.io/pypi/dm/pygauss.svg
-
 Welcome to PyGauss's documentation!
 ===================================
 
-+--------------------------+-----------------------------------------+
-|**Author**                | Chris Sewell                            |
-+--------------------------+-----------------------------------------+
-|**Project Page**          | https://github.com/chrisjsewell/PyGauss |
-+--------------------------+-----------------------------------------+
-|**Conda Distro**          | https://conda.binstar.org/cjs14         |
-+--------------------------+-----------------------------------------+
-|**PyPi Distro**           | https://pypi.python.org/pypi/pygauss    |
-+--------------------------+-----------------------------------------+
++--------------------------+-----------------------------------------------+
+|**Author**                | Chris Sewell                                  |
++--------------------------+-----------------------------------------------+
+|**Project Page**          | https://github.com/chrisjsewell/PyGauss       |
++--------------------------+-----------------------------------------------+
+|**Conda Distro**          | https://conda.binstar.org/cjs14               |
++--------------------------+-----------------------------------------------+
+|**PyPi Distro**           | https://pypi.python.org/pypi/pygauss          |
++--------------------------+-----------------------------------------------+
+|.. image:: https://img.shields.io/github/release/chrisjsewell/PyGauss.svg |
+|.. image:: https://img.shields.io/pypi/v/pygauss.svg                      |
+|.. image:: https://readthedocs.org/projects/pygauss/badge/?version=stable |
+|.. image:: https://img.shields.io/pypi/dm/pygauss.svg                     |
++--------------------------+-----------------------------------------------+
 
 
 PyGauss is designed to be an API for examining one or more input/output

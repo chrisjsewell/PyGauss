@@ -2,10 +2,9 @@
 
 [![Git](https://img.shields.io/github/release/chrisjsewell/PyGauss.svg)](https://github.com/chrisjsewell/PyGauss/)
 [![PyPi](https://img.shields.io/pypi/v/pygauss.svg)](https://pypi.python.org/pypi/pygauss/)
+[![Documentation Status](https://readthedocs.org/projects/pygauss/badge/?version=stable)](https://readthedocs.org/projects/pygauss/)
 [![Downloads](https://img.shields.io/pypi/dm/pygauss.svg)](https://pypi.python.org/pypi/pygauss/)
 
-[![Documentation Status](https://readthedocs.org/projects/pygauss/badge/?version=latest)](https://readthedocs.org/projects/pygauss/)
-[![Documentation Status](https://readthedocs.org/projects/pygauss/badge/?version=stable)](https://readthedocs.org/projects/pygauss/)
 
 PyGauss is designed to be an API for parsing one or more input/output files from a [Gaussian](http://www.gaussian.com/) quantum chemical computation and provide functionality to assess  **molecular geometry** and **electronic distribution** both visually and quantitatively.
 

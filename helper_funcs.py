@@ -2,7 +2,7 @@
 """
 Created on Tue May 19 03:08:21 2015
 
-@author: chris
+@author: chris sewell
 """
 import numpy as np
 import pygauss as pg

@@ -86,7 +86,7 @@ with open('enhancements.rst', 'w') as f:
 			continue
 		labels = r['labels']
 		for l in labels:
-			if l['name == 'enhancement':
+			if l['name'] == 'enhancement':
 				f.write(' '.join([r['title'],'\n']))
 				f.write('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
 				f.write('\n')

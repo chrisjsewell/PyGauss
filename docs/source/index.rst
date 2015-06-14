@@ -16,12 +16,6 @@ Welcome to PyGauss's documentation!
 |**PyPi Distro**           | https://pypi.python.org/pypi/pygauss          |
 +--------------------------+-----------------------------------------------+
 
-.. image:: https://img.shields.io/github/release/chrisjsewell/PyGauss.svg
-   :scale: 25%
-.. image:: https://readthedocs.org/projects/pygauss/badge/?version=stable 
-   :scale: 25%
-
-
 PyGauss is designed to be an API for examining one or more input/output
 files from a `Gaussian <http://www.gaussian.com/>`__ quantum chemical
 computation, providing functionality to assess **molecular geometry**
@@ -58,3 +52,11 @@ License
 Pygauss is released under the `GNU GPLv3
 <http://www.gnu.org/licenses/gpl.html>`_ and its main developer is
 Chris Sewell.
+
+Status
+------
+
+.. image:: https://img.shields.io/github/release/chrisjsewell/PyGauss.svg
+   :scale: 25%
+.. image:: https://readthedocs.org/projects/pygauss/badge/?version=stable 
+   :scale: 25%

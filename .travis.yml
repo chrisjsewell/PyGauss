@@ -9,7 +9,7 @@ notifications:
 # whitelist
 branches:
   only:
-    - cli
+    - master
  
 # Setup anaconda
 before_install:

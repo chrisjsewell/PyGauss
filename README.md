@@ -1,5 +1,8 @@
-
 #Python Gaussian Analysis Tool (PyGauss)
+
+[![Git](https://img.shields.io/github/release/chrisjsewell/PyGauss.svg)](https://github.com/chrisjsewell/PyGauss/)
+[![PyPi](https://img.shields.io/pypi/v/pygauss.svg)](https://pypi.python.org/pypi/pygauss/)
+[![Downloads](https://img.shields.io/pypi/dm/pygauss.svg)](https://pypi.python.org/pypi/pygauss/)
 
 [![Documentation Status](https://readthedocs.org/projects/pygauss/badge/?version=latest)](https://readthedocs.org/projects/pygauss/)
 [![Documentation Status](https://readthedocs.org/projects/pygauss/badge/?version=stable)](https://readthedocs.org/projects/pygauss/)

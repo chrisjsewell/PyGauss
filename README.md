@@ -11,6 +11,7 @@ It is built on top of the [cclib](http://cclib.github.io/)/[chemview](http://che
 
 ##Instillation
 
+- Documentation is hosted at http://pygauss.readthedocs.org
 - The source code is hosted on GitHub; https://github.com/chrisjsewell/PyGauss
 - A PyPi distribution is available at; https://pypi.python.org/pypi/pygauss
 - A Conda distribution is available at; https://conda.binstar.org/cjs14

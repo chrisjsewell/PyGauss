@@ -14,14 +14,26 @@
 
 import sys
 import os
-import mock
 
-class PgMock(mock.Mock):
-    __name__ = ''
+class Mock(object):
+    def __init__(self, *args, **kwargs):
+        pass
     def __call__(self, *args, **kwargs):
-        return PgMock()
+        return Mock()
+    @classmethod
+    def __getattr__(cls, name):
+        if name in ('__file__', '__path__', '__name__'):
+            return '/dev/null'
+        elif name[0] == name[0].upper():
+            mockType = type(name, (), {})
+            mockType.__module__ = __name__
+            return Mock()
+        else:
+            return Mock()        
+    def __getitem__(self, index):
+        raise IndexError()
     def __mul__(self, other):
-        return PgMock()
+        return Mock()
 
 MOCK_MODULES = ['cclib', 'cclib.parser', 'cclib.parser.utils', 
 'chemlab', 'chemlab.graphics', 'chemlab.db', 'chemlab.graphics.renderers',
@@ -44,7 +56,7 @@ MOCK_MODULES = ['cclib', 'cclib.parser', 'cclib.parser.utils',
 'scipy', 'scipy.signal', 'scipy.interpolate',
 'nose', 'nose_parameterized']
 for mod_name in MOCK_MODULES:
-    sys.modules[mod_name] = PgMock()
+    sys.modules[mod_name] = Mock()
 
 import inspect
 import pygauss

@@ -6,15 +6,45 @@
 Welcome to PyGauss's documentation!
 ===================================
 
-Contents:
++--------------------------+-----------------------------------------+
+|**Author**                | Chris Sewell                            |
++--------------------------+-----------------------------------------+
+|**Project Page**          | https://github.com/chrisjsewell/PyGauss |
++--------------------------+-----------------------------------------+
+|**Conda Distributables**  | https://conda.binstar.org/cjs14         |
++--------------------------+-----------------------------------------+
+|**PyPi Distributables**   | https://pypi.python.org/pypi/pygauss    |
++--------------------------+-----------------------------------------+
+
+PyGauss is designed to be an API for examining one or more input/output
+files from a `Gaussian <http://www.gaussian.com/>`__ quantum chemical
+computation, providing functionality to assess **molecular geometry**
+and **electronic distribution** both visually and quantitatively.
+
+It is built on top of the
+`cclib <http://cclib.github.io/>`__/`chemview <http://chemview.readthedocs.org/en/latest/>`__/`chemlab <http://chemlab.readthedocs.org/en/latest/index.html>`__
+suite of packages and python scientific stack and is primarily designed
+to be used interactively in the `IPython
+Notebook <http://ipython.org/notebook.html>`__ . As shown in the examples, a molecular optimisation can be assesed
+individually (much like in
+`gaussview <http://www.gaussian.com/g_prod/gv5b.htm>`__), but also as
+part of a group. The advantages of this package are then:
+
+-  Faster, more efficient analysis
+-  Reproducible analysis
+-  Extensible analysis
+
+Contents
+--------
 
 .. toctree::
    :maxdepth: 2
 
-Reference Documentation
------------------------
+   install
+   example
 
-**Packages**
+Package Documentation
+---------------------
 
 .. toctree::
    :maxdepth: 1
@@ -26,10 +56,9 @@ Reference Documentation
    api/pygauss.utils
 
 
-Indices and tables
-==================
+License
+-------
 
-* :ref:`genindex`
-* :ref:`modindex`
-* :ref:`search`
-
+Pygauss is released under the `GNU GPLv3
+<http://www.gnu.org/licenses/gpl.html>`_ and its main developer is
+Chris Sewell.

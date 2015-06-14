@@ -91,11 +91,11 @@ A *molecule* can be created containg data about the inital geometry, optimisatio
     display(mol.show_optimisation(represent='ball_stick', rotations=[[0,0,90], [-90, 90, 0]]))
 
 
-![png](readme_images/output_11_0.png)
+![png](docs/source/images/output_11_0.png)
 
 
 
-![png](readme_images/output_11_1.png)
+![png](docs/source/images/output_11_1.png)
 
 
 Basic analysis of optimisation...
@@ -113,11 +113,11 @@ Basic analysis of optimisation...
 
 
 
-![png](readme_images/output_13_1.png)
+![png](docs/source/images/output_13_1.png)
 
 
 
-![png](readme_images/output_13_2.png)
+![png](docs/source/images/output_13_2.png)
 
 
 Geometric analysis...
@@ -133,7 +133,7 @@ Geometric analysis...
 
 
 
-![png](readme_images/output_15_1.png)
+![png](docs/source/images/output_15_1.png)
 
 
 Potential Energy Scan analysis of geometric conformers...
@@ -147,7 +147,7 @@ Potential Energy Scan analysis of geometric conformers...
     ax.get_figure().set_size_inches(7, 3)
 
 
-![png](readme_images/output_17_0.png)
+![png](docs/source/images/output_17_0.png)
 
 
 Natural Bond Orbital and Second Order Perturbation Theory analysis...
@@ -162,7 +162,7 @@ Natural Bond Orbital and Second Order Perturbation Theory analysis...
 
 
 
-![png](readme_images/output_19_1.png)
+![png](docs/source/images/output_19_1.png)
 
 
 
@@ -183,11 +183,11 @@ Natural Bond Orbital and Second Order Perturbation Theory analysis...
 
 
 
-![png](readme_images/output_20_1.png)
+![png](docs/source/images/output_20_1.png)
 
 
 
-![png](readme_images/output_20_2.png)
+![png](docs/source/images/output_20_2.png)
 
 
 ###Multiple Computations Analysis
@@ -214,7 +214,7 @@ Multiple computations, for instance of different starting conformations, can be 
 
 
 
-![png](readme_images/output_23_1.png)
+![png](docs/source/images/output_23_1.png)
 
 
 The methods mentioned for indivdiual molecules can then be applied to all or a subset of these computations.
@@ -355,7 +355,7 @@ The methods mentioned for indivdiual molecules can then be applied to all or a s
 
 
 
-![png](readme_images/output_27_0.png)
+![png](docs/source/images/output_27_0.png)
 
 
 
@@ -365,7 +365,7 @@ RadViz is a way of visualizing multi-variate data.
     ax = analysis.plot_radviz_comparison('Anion', columns=range(4, 10))
 
 
-![png](readme_images/output_29_0.png)
+![png](docs/source/images/output_29_0.png)
 
 
 The KMeans algorithm clusters data by trying to separate samples into n groups of equal variance.
@@ -378,28 +378,28 @@ The KMeans algorithm clusters data by trying to separate samples into n groups o
         axis_length=0.3)
 
 
-![png](readme_images/output_31_0.png)
+![png](docs/source/images/output_31_0.png)
 
 
     Figure: (A) B, (B) BE
 
 
 
-![png](readme_images/output_31_2.png)
+![png](docs/source/images/output_31_2.png)
 
 
     Figure: (A) F
 
 
 
-![png](readme_images/output_31_4.png)
+![png](docs/source/images/output_31_4.png)
 
 
     Figure: (A) BM
 
 
 
-![png](readme_images/output_31_6.png)
+![png](docs/source/images/output_31_6.png)
 
 
     Figure: (A) FE

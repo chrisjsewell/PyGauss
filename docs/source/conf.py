@@ -16,13 +16,20 @@ import sys
 import os
 import mock
 
-MOCK_MODULES = ['cclib', 'chemview', 'numpy', 
+class PgMock(mock.Mock):
+    __name__ = ''
+    def __call__(self, *args, **kwargs):
+        return PgMock()
+    def __mul__(self, other):
+        return PgMock()
+
+MOCK_MODULES = ['cclib', 'cclib.parser', 'chemview', 'numpy', 
 'chemlab', 'chemlab.graphics', 'chemlab.db', 'chemlab.graphics.renderers',
 'chemlab.graphics.renderers.base','chemlab.graphics.renderers.sphere',
 'chemlab.graphics.renderers.sphere_imp','chemlab.graphics.renderers.point',
 'chemlab.graphics.colors', 'chemlab.graphics.buffers', 'chemlab.core',
 'chemlab.io', 'chemlab.io.handlers', 'chemlab.graphics.qtviewer',
-'chemlab.graphics.buffers', 'chemlab.graphics.shaders',
+'chemlab.graphics.buffers', 'chemlab.graphics.shaders', 'chemlab.io.handlers.base',
 'OpenGL', 'OpenGL.GL',
 'matplotlib', 'matplotlib.pyplot', 'matplotlib.cm', 'matplotlib.offsetbox',
 'mpl_toolkits', 'mpl_toolkits.mplot3d',
@@ -31,15 +38,8 @@ MOCK_MODULES = ['cclib', 'chemview', 'numpy',
 'IPython', 'IPython.display', 'IPython.core', 'IPython.core.display',
 'scipy', 'scipy.signal']
 for mod_name in MOCK_MODULES:
-    sys.modules[mod_name] = mock.Mock()
+    sys.modules[mod_name] = PgMock()
 
-class cclibMock(mock.Mock):
-    __name__ = ''
-    def __call__(self, *args, **kwargs):
-        return cclibMock()
-sys.modules['chemlab.io.handlers.base'] = cclibMock()
-sys.modules['cclib.parser'] = cclibMock()
-    
 #import inspect
 
 #import pygauss

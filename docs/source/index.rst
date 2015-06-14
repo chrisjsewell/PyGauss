@@ -11,9 +11,9 @@ Welcome to PyGauss's documentation!
 +--------------------------+-----------------------------------------+
 |**Project Page**          | https://github.com/chrisjsewell/PyGauss |
 +--------------------------+-----------------------------------------+
-|**Conda Distributables**  | https://conda.binstar.org/cjs14         |
+|**Conda Distro**          | https://conda.binstar.org/cjs14         |
 +--------------------------+-----------------------------------------+
-|**PyPi Distributables**   | https://pypi.python.org/pypi/pygauss    |
+|**PyPi Distro**           | https://pypi.python.org/pypi/pygauss    |
 +--------------------------+-----------------------------------------+
 
 PyGauss is designed to be an API for examining one or more input/output

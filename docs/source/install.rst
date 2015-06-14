@@ -1,7 +1,7 @@
-Installation
-------------
+Instillation
+---------------------------
 
-The Easy Way (OSX and Linux)
+OSX and Linux
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The recommended was to use pygauss is to download the
@@ -15,13 +15,13 @@ in terminal and pygauss installed:
     conda install -c https://conda.binstar.org/cjs14 -n pg_env pygauss
 
 
-The Hard Way (Windows)
+Windows
 ~~~~~~~~~~~~~~~~~~~~~~
 
-There is currently no pygauss conda distributable for Windows or for
+There is currently no pygauss Conda distributable for Windows or for
 chemlab, which has C-extensions that need to be built using a compiler.
-Therefore it will need to be cloned from GitHub. the extensions built,
-dependancies installed and finally installed.
+Therefore chemlab will need to be cloned from GitHub, its extensions built,
+dependancies installed and finally install pygauss.
 
 ::
 
@@ -37,7 +37,10 @@ dependancies installed and finally installed.
     pip install . # or add to PYTHONPATH
     pip install pygauss
 
-If you encounter difficulties it may be useful for you to look in
+Troubleshooting
+~~~~~~~~~~~~~~~~~~~~~~
+
+If you encounter difficulties it may be useful to look in
 `working\_conda\_environments <https://github.com/chrisjsewell/PyGauss/tree/master/working_conda_environments>`__
 at conda environments known to work.
 

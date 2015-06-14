@@ -22,6 +22,7 @@ before_install:
 install:
   - deps='numpy pandas scipy matplotlib ipython scikit-learn paramiko pil cclib chemview pyopengl==3.0.2 chemlab nose nose-parameterized coverage'
   - conda install --yes -c https://conda.binstar.org/cjs14 python=$TRAVIS_PYTHON_VERSION $deps
+  - pip install coveralls
   - python setup.py install
 # Run test
 before_script:
@@ -30,3 +31,5 @@ before_script:
     - /sbin/start-stop-daemon --start --quiet --pidfile /tmp/custom_xvfb_99.pid --make-pidfile --background --exec /usr/bin/Xvfb -- :99 -screen 0 1400x900x24 -ac +extension GLX +render
 script:
   - nosetests -v --nocapture --with-coverage --cover-package=pygauss
+after_success:
+  coveralls

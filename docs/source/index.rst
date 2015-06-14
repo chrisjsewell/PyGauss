@@ -41,8 +41,9 @@ Contents
    :maxdepth: 2
 
    install
-   history
    example
+   history
+   enhancements
    user_api
 
 License

@@ -47,7 +47,7 @@ at conda environments known to work.
 Testing
 ~~~~~~~~~~~~~~~~~~~~~~
 
-Pygauss utilises a unit test suite (`nose <https://nose.readthedocs.org>`__/`nose-parameterized <https://github.com/wolever/nose-parameterized>`__)to ensure that computations run, 
+Pygauss utilises a unit test suite (`nose <https://nose.readthedocs.org>`__/`nose-parameterized <https://github.com/wolever/nose-parameterized>`__) to ensure that computations run, 
 and are correct. These tests are an automated condition of the conda build, but can also be run 
 manually in the command line;
 
@@ -55,7 +55,7 @@ manually in the command line;
 
 	nosetests
 
-or directly in python
+or directly in python;
 
 ::
 

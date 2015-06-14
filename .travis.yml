@@ -11,7 +11,7 @@ install:
   - sudo pip install conda
   # install deps
   - sudo conda init
-  - sudo conda update conda --yes
+  - sudo conda update --yes conda
   - deps='numpy pandas scipy matplotlib ipython scikit-learn paramiko pil cclib chemview pyopengl==3.0.2 chemlab nose nose-parameterized'
   - conda create -p $HOME/py --yes -c https://conda.binstar.org/cjs14 python=$TRAVIS_PYTHON_VERSION $deps
   - export PATH=$HOME/py/bin:$PATH

@@ -41,7 +41,8 @@ MOCK_MODULES = ['cclib', 'cclib.parser', 'cclib.parser.utils',
 'sklearn', 'sklearn.cluster',
 'IPython', 'IPython.display', 'IPython.core', 'IPython.core.display',
 'IPython.utils', 'IPython.utils.traitlets',
-'scipy', 'scipy.signal', 'scipy.interpolate']
+'scipy', 'scipy.signal', 'scipy.interpolate',
+'nose', 'nose_parameterized']
 for mod_name in MOCK_MODULES:
     sys.modules[mod_name] = PgMock()
 

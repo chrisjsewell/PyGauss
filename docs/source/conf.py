@@ -64,11 +64,15 @@ import json
 git_history = urllib2.urlopen('https://api.github.com/repos/chrisjsewell/Pygauss/releases')
 git_history_json = json.load(git_history)
 with open('history.rst', 'w') as f:
-	f.write('History\n')
+	f.write('Whats New\n')
 	f.write('---------\n')
 	f.write('\n')
-	#for r in git_history_json:
-	#	f.write(r['name'])
+	for r in git_history_json:
+		f.write(' '.join([r['tag_name'],'-',r['name'],'\n']))
+		f.write('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+		f.write('\n')
+		f.write(' '.join([r['body'], '\n']))
+		f.write('\n')
 
 import inspect
 import pygauss

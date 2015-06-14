@@ -17,7 +17,7 @@ import os
 import mock
 
 MOCK_MODULES = ['cclib', 'chemlab', 'chemview', 'numpy', 
-'matplotlib', 'matplotlib.pyplot', 
+'matplotlib', 'matplotlib.pyplot', 'matplotlib.cm',
 'scipy', 'scipy.signal']
 for mod_name in MOCK_MODULES:
     sys.modules[mod_name] = mock.Mock()

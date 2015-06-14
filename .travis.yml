@@ -16,28 +16,29 @@ before_install:
   - if [ ${TRAVIS_PYTHON_VERSION:0:1} == "2" ]; then wget http://repo.continuum.io/miniconda/Miniconda-latest-Linux-x86_64.sh -O miniconda.sh; else wget http://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh; fi
   - chmod +x miniconda.sh
   - ./miniconda.sh -b
-  - export PATH=/home/travis/anaconda/bin:$PATH
+  - export PATH=/home/travis/miniconda3/bin:/home/travis/miniconda/bin:$PATH
   # The next couple lines fix a crash with multiprocessing on Travis and
   # are not specific to using Miniconda
   - sudo rm -rf /dev/shm
   - sudo ln -s /run/shm /dev/shm
+  - conda update --yes conda
 # Install conda packages
 install:
-  - conda install -c https://conda.binstar.org/cjs14 python=$TRAVIS_PYTHON_VERSION     
-  - conda install -c https://conda.binstar.org/cjs14 numpy >=1.9
-  - conda install -c https://conda.binstar.org/cjs14 scipy >=0.15
-  - conda install -c https://conda.binstar.org/cjs14 matplotlib >=1.4
-  - conda install -c https://conda.binstar.org/cjs14 pandas >=0.15
-  - conda install -c https://conda.binstar.org/cjs14 ipython >=3
-  - conda install -c https://conda.binstar.org/cjs14 scikit-learn >=0.15
-  - conda install -c https://conda.binstar.org/cjs14 paramiko
-  - conda install -c https://conda.binstar.org/cjs14 pil
-  - conda install -c https://conda.binstar.org/cjs14 cclib
-  - conda install -c https://conda.binstar.org/cjs14 chemview
-  - conda install -c https://conda.binstar.org/cjs14 pyopengl ==3.0.2
-  - conda install -c https://conda.binstar.org/cjs14 chemlab
-  - conda install -c https://conda.binstar.org/cjs14 nose
-  - conda install -c https://conda.binstar.org/cjs14 nose-parameterized
+  - conda install -c --yes https://conda.binstar.org/cjs14 python=$TRAVIS_PYTHON_VERSION     
+  - conda install -c --yes https://conda.binstar.org/cjs14 numpy >=1.9
+  - conda install -c --yes https://conda.binstar.org/cjs14 scipy >=0.15
+  - conda install -c --yes https://conda.binstar.org/cjs14 matplotlib >=1.4
+  - conda install -c --yes https://conda.binstar.org/cjs14 pandas >=0.15
+  - conda install -c --yes https://conda.binstar.org/cjs14 ipython >=3
+  - conda install -c --yes https://conda.binstar.org/cjs14 scikit-learn >=0.15
+  - conda install -c --yes https://conda.binstar.org/cjs14 paramiko
+  - conda install -c --yes https://conda.binstar.org/cjs14 pil
+  - conda install -c --yes https://conda.binstar.org/cjs14 cclib
+  - conda install -c --yes https://conda.binstar.org/cjs14 chemview
+  - conda install -c --yes https://conda.binstar.org/cjs14 pyopengl ==3.0.2
+  - conda install -c --yes https://conda.binstar.org/cjs14 chemlab
+  - conda install -c --yes https://conda.binstar.org/cjs14 nose
+  - conda install -c --yes https://conda.binstar.org/cjs14 nose-parameterized
   - python setup.py install
  
 # Run test

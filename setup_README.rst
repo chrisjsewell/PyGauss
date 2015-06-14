@@ -1,6 +1,9 @@
-
 Python Gaussian Analysis Tool (PyGauss)
 =======================================
+
+.. image:: https://readthedocs.org/projects/pygauss/badge/?version=latest
+.. image:: https://readthedocs.org/projects/pygauss/badge/?version=stable
+
 
 PyGauss is designed to be an API for parsing one or more input/output
 files from a `Gaussian <http://www.gaussian.com/>`__ quantum chemical

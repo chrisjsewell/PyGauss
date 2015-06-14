@@ -20,7 +20,8 @@ before_install:
 # Install conda packages
 install:
   - deps='numpy pandas scipy matplotlib ipython scikit-learn paramiko pil cclib chemview pyopengl==3.0.2 chemlab nose nose-parameterized'
-  - conda install --yes -c https://conda.binstar.org/cjs14 python=$TRAVIS_PYTHON_VERSION $deps
+  - conda create -p $HOME/py --yes -c https://conda.binstar.org/cjs14 python=$TRAVIS_PYTHON_VERSION $deps
+  - export PATH=$HOME/py/bin:$PATH
   - python setup.py install
 # Run test
 script:

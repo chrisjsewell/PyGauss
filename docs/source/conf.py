@@ -34,7 +34,7 @@ for mod_name in MOCK_MODULES:
     sys.modules[mod_name] = mock.Mock()
 
 class cclibMock(mock.Mock):
-    __name__ = None
+    __name__ = ''
     def __call__(self, *args, **kwargs):
         return cclibMock()
 sys.modules['chemlab.io.handlers.base'] = cclibMock()

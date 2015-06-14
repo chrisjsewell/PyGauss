@@ -58,6 +58,15 @@ MOCK_MODULES = ['cclib', 'cclib.parser', 'cclib.parser.utils',
 for mod_name in MOCK_MODULES:
     sys.modules[mod_name] = Mock()
 
+import urllib2
+import json
+
+git_history = urllib2.urlopen('https://api.github.com/repos/chrisjsewell/Pygauss/releases')
+git_history_json = json.load(git_history)
+with open('history.rst', 'w') as f:
+	for r in git_history_json:
+		f.write(r['name'])
+
 import inspect
 import pygauss
 

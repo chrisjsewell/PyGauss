@@ -41,6 +41,7 @@ Contents
    :maxdepth: 2
 
    install
+   history
    example
 
 Package Documentation

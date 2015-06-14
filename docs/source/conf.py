@@ -64,9 +64,10 @@ import json
 git_history = urllib2.urlopen('https://api.github.com/repos/chrisjsewell/Pygauss/releases')
 git_history_json = json.load(git_history)
 with open('history.rst', 'w') as f:
+	f.write(r'History\n')
+	f.write(r'---------\n')
+	f.write(r'\n')
 	for r in git_history_json:
-		f.write('History\n')
-		f.write('---------')
 		f.write(r['name'])
 
 import inspect

@@ -9,36 +9,22 @@ It is built on top of the [cclib](http://cclib.github.io/)/[chemview](http://che
 - Reproducible analysis
 - Trend analysis
 
-##Instillation
+##Quick Start
 
-- Documentation is hosted at http://pygauss.readthedocs.org
+- Documentation is hosted at https://pygauss.readthedocs.org
 - The source code is hosted on GitHub; https://github.com/chrisjsewell/PyGauss
 - A PyPi distribution is available at; https://pypi.python.org/pypi/pygauss
 - A Conda distribution is available at; https://conda.binstar.org/cjs14
 
-###The Easy Way (OSX and Linux)
+###OSX and Linux
 
 The recommended was to use pygauss is to download the [Anaconda](http://continuum.io/downloads) Scientific Python Distribution (64-bit). Once downloaded a new environment can be created in terminal and pygauss installed:
 
     conda create -n pg_env -c https://conda.binstar.org/cjs14 pygauss
 
-###The Hard Way (Windows)
+###Windows
 
-There is currently no pygauss conda distributable for Windows or for chemlab, which has C-extensions that need to be built using a compiler. Therefore it will need to be cloned from GitHub. the extensions built, dependancies installed and finally installed.
-
-    conda create -n pg_env python=2.7
-	conda install -n pg_env -c https://conda.binstar.org/cjs14 cclib
-    conda install -n pg_env -c https://conda.binstar.org/cjs14 chemview
-    conda install -n pg_env -c https://conda.binstar.org/cjs14 pyopengl		
-	git clone --recursive https://github.com/chemlab/chemlab.git
-	cd chemlab
-	python setup.py build_ext --inplace
-    conda install -n pg_env <pil, pandas, matplotlib, scikit-learn, ...> 
-    activate pg_env
-    pip install . # or add to PYTHONPATH
-    pip install pygauss
-    
-If you encounter difficulties it may be useful for you to look in [working_conda_environments](https://github.com/chrisjsewell/PyGauss/tree/master/working_conda_environments) at conda environments known to work.
+There is currently no pygauss Conda distributable for Windows. Please see the documentation for an explanation of how to install on this platform.
 
 ##Example Assessment
 

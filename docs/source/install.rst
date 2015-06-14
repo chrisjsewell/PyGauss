@@ -44,3 +44,15 @@ If you encounter difficulties it may be useful to look in
 `working\_conda\_environments <https://github.com/chrisjsewell/PyGauss/tree/master/working_conda_environments>`__
 at conda environments known to work.
 
+Testing
+~~~~~~~~~~~~~~~~~~~~~~
+
+Pygauss utilises a unit test suite (nose/nose-parameterized)to ensure that computations run, 
+and are correct. These tests are an automated condition of the conda build, but can also be run 
+manually in the command line;
+
+	nosetests
+
+or directly in python
+
+	pygauss.run_nose(verbose=True)

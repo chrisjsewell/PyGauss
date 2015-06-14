@@ -42,9 +42,11 @@ Contents
 
    install
    example
+   status
    history
    enhancements
    user_api
+
 
 License
 -------
@@ -52,11 +54,3 @@ License
 Pygauss is released under the `GNU GPLv3
 <http://www.gnu.org/licenses/gpl.html>`_ and its main developer is
 Chris Sewell.
-
-Status
-------
-
-.. image:: https://img.shields.io/github/release/chrisjsewell/PyGauss.svg
-   :scale: 25%
-.. image:: https://readthedocs.org/projects/pygauss/badge/?version=stable 
-   :scale: 25%

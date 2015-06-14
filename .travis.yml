@@ -30,4 +30,4 @@ install:
  
 # Run test
 script:
-  - nosetest
+  - nosetests

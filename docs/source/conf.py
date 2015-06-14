@@ -32,13 +32,15 @@ MOCK_MODULES = ['cclib', 'cclib.parser', 'cclib.parser.utils',
 'chemlab.graphics.buffers', 'chemlab.graphics.shaders', 'chemlab.io.handlers.base',
 'chemlab.graphics.camera', 'chemlab.graphics.renderers.wireframe',
 'chemlab.utils', 'chemlab.qc', 'chemlab.qc.pgbf',
-'paramiko', 'chemview', 'numpy',
+'chemview', 'chemview.widget', 'chemview.utils', 'chemview.marchingcubes',
+'paramiko', 'numpy',
 'OpenGL', 'OpenGL.GL',
 'matplotlib', 'matplotlib.pyplot', 'matplotlib.cm', 'matplotlib.offsetbox',
 'mpl_toolkits', 'mpl_toolkits.mplot3d',
 'pandas', 'pandas.tools', 'pandas.tools.plotting',
 'sklearn', 'sklearn.cluster',
 'IPython', 'IPython.display', 'IPython.core', 'IPython.core.display',
+'IPython.utils', 'IPython.utils.traitlets',
 'scipy', 'scipy.signal']
 for mod_name in MOCK_MODULES:
     sys.modules[mod_name] = PgMock()

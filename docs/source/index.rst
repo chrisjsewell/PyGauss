@@ -17,7 +17,6 @@ Welcome to PyGauss's documentation!
 +--------------------------+-----------------------------------------------+
 |.. image:: https://img.shields.io/github/release/chrisjsewell/PyGauss.svg |
 |.. image:: https://readthedocs.org/projects/pygauss/badge/?version=stable |
-|.. image:: https://img.shields.io/pypi/dm/pygauss.svg                     |
 +--------------------------+-----------------------------------------------+
 
 

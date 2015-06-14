@@ -22,7 +22,9 @@ install:
   - deps='numpy pandas scipy matplotlib ipython scikit-learn paramiko pil cclib chemview pyopengl==3.0.2 chemlab nose nose-parameterized'
   - conda install --yes -c https://conda.binstar.org/cjs14 python=$TRAVIS_PYTHON_VERSION $deps
   - python setup.py install
-  - ls /home/travis/miniconda
+  - ls /home/travis/miniconda/lib
+  - ls /home/travis/miniconda/bin
+  - ls /home/travis/miniconda/imports
 # Run test
 script:
-  - "nosetests -w /home/travis/miniconda/pygauss/tests/ -v"
+  - "nosetests -w /home/travis/miniconda/lib/site-packages/pygauss/tests/ -v"

@@ -16,10 +16,11 @@ Welcome to PyGauss's documentation!
 |**PyPi Distro**           | https://pypi.python.org/pypi/pygauss          |
 +--------------------------+-----------------------------------------------+
 |.. image:: https://img.shields.io/github/release/chrisjsewell/PyGauss.svg |
-|  :scale: 100%                                                            |
-|.. image:: https://readthedocs.org/projects/pygauss/badge/?version=stable |
-|  :scale: 100%                                                            |
+|   :scale: 50%                                                            |
 +--------------------------+-----------------------------------------------+
+
+.. image:: https://readthedocs.org/projects/pygauss/badge/?version=stable 
+   :scale: 50%                                                            
 
 
 PyGauss is designed to be an API for examining one or more input/output

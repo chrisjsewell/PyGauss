@@ -23,13 +23,16 @@ class PgMock(mock.Mock):
     def __mul__(self, other):
         return PgMock()
 
-MOCK_MODULES = ['cclib', 'cclib.parser', 'chemview', 'numpy', 
+MOCK_MODULES = ['cclib', 'cclib.parser', 'cclib.parser.utils', 
 'chemlab', 'chemlab.graphics', 'chemlab.db', 'chemlab.graphics.renderers',
 'chemlab.graphics.renderers.base','chemlab.graphics.renderers.sphere',
 'chemlab.graphics.renderers.sphere_imp','chemlab.graphics.renderers.point',
 'chemlab.graphics.colors', 'chemlab.graphics.buffers', 'chemlab.core',
 'chemlab.io', 'chemlab.io.handlers', 'chemlab.graphics.qtviewer',
 'chemlab.graphics.buffers', 'chemlab.graphics.shaders', 'chemlab.io.handlers.base',
+'chemlab.graphics.camera', 'chemlab.graphics.renderers.wireframe',
+'chemlab.utils', 'chemlab.qc', 'chemlab.qc.pgbf',
+'paramiko', 'chemview', 'numpy',
 'OpenGL', 'OpenGL.GL',
 'matplotlib', 'matplotlib.pyplot', 'matplotlib.cm', 'matplotlib.offsetbox',
 'mpl_toolkits', 'mpl_toolkits.mplot3d',

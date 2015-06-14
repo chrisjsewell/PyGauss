@@ -16,7 +16,12 @@ import sys
 import os
 import mock
 
-MOCK_MODULES = ['cclib', 'chemlab', 'chemview', 'numpy', 
+MOCK_MODULES = ['cclib', 'chemview', 'numpy', 
+'chemlab', 'chemlab.graphics', 'chemlab.db', 'chemlab.graphics.renderers',
+'chemlab.graphics.renderers.base','chemlab.graphics.renderers.sphere',
+'chemlab.graphics.renderers.sphere_imp','chemlab.graphics.renderers.point',
+'chemlab.graphics.colors', 'chemlab.graphics.buffers',
+'OpenGL', 'OpenGL.GL',
 'matplotlib', 'matplotlib.pyplot', 'matplotlib.cm', 'matplotlib.offsetbox',
 'mpl_toolkits', 'mpl_toolkits.mplot3d',
 'pandas', 'pandas.tools', 'pandas.tools.plotting',

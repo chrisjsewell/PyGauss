@@ -24,4 +24,4 @@ install:
   - python setup.py install
 # Run test
 script:
-  - "/home/travis/miniconda/bin/nosetests -w /home/travis/miniconda/lib/python2.7/site-packages/pygauss/tests/ -v"
+  - nosetests -v --nocapture

@@ -2,7 +2,7 @@
 
 **Documentation**: https://pygauss.readthedocs.org
 
-**Conda Distro**: https://pypi.python.org/pypi/pygauss
+**Conda Distro**: https://binstar.org/cjs14/pygauss
 
 **PyPi Distro**: https://pypi.python.org/pypi/pygauss
 

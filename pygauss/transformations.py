@@ -198,6 +198,7 @@ from __future__ import division, print_function
 import math
 
 import numpy
+import random  # used in doctests
 
 __version__ = '2015.03.19'
 __docformat__ = 'restructuredtext en'
@@ -908,6 +909,7 @@ def affine_matrix_from_points(v0, v1, shear=True, scale=True, usesvd=True):
 
     >>> v0 = [[0, 1031, 1031, 0], [0, 0, 1600, 1600]]
     >>> v1 = [[675, 826, 826, 677], [55, 52, 281, 277]]
+	>>> numpy.set_printoptions(suppress=True, precision=5)
     >>> affine_matrix_from_points(v0, v1)
     array([[   0.14549,    0.00062,  675.50008],
            [   0.00048,    0.14094,   53.24971],

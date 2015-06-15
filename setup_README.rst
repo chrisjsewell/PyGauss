@@ -1,20 +1,15 @@
 Python Gaussian Analysis Tool (PyGauss)
 =======================================
 
-+------------+---------------------------------------------------------------------------+
-|Documents   | https://pygauss.readthedocs.org                                           |
-+            +---------------------------------------------------------------------------+
-|            |.. image:: https://readthedocs.org/projects/pygauss/badge/?version=stable  |
-+------------+---------------------------------------------------------------------------+
-|Conda       | https://pypi.python.org/pypi/pygauss                                      |
-+            +---------------------------------------------------------------------------+
-|            |.. image:: https://binstar.org/cjs14/pygauss/badges/version.svg            |
-+------------+---------------------------------------------------------------------------+
-|GitHub      | https://github.com/chrisjsewell/PyGauss                                   |
-+            +---------------------------------------------------------------------------+
-|            |.. image:: https://img.shields.io/github/release/chrisjsewell/PyGauss.svg  |
-+------------+---------------------------------------------------------------------------+
+**Documentation**: https://pygauss.readthedocs.org
 
+**Conda Distro**: https://pypi.python.org/pypi/pygauss
+
+**Project**: https://github.com/chrisjsewell/PyGauss
+
+.. image:: https://readthedocs.org/projects/pygauss/badge/?version=stable
+.. image:: https://binstar.org/cjs14/pygauss/badges/version.svg
+.. image:: https://img.shields.io/github/release/chrisjsewell/PyGauss.svg
 
 PyGauss is designed to be an API for parsing one or more input/output
 files from a `Gaussian <http://www.gaussian.com/>`__ quantum chemical

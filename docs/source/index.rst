@@ -18,23 +18,25 @@ Welcome to PyGauss!
 |**Communication**         | pygauss@googlegroups.com                      |
 +--------------------------+-----------------------------------------------+
 
-PyGauss is designed to be an API for examining one or more input/output
-files from a `Gaussian <http://www.gaussian.com/>`__ quantum chemical
-computation, providing functionality to assess **molecular geometry**
-and **electronic distribution** both visually and quantitatively.
+.. include:: mission_statement.txt
 
-It is built on top of the
+Intitally PyGauss has been designed for the purpose of examining one or more
+`Gaussian <http://www.gaussian.com/>`__ quantum chemical
+computations, both **geometrically** and **electronically**. It is built on top of the
 `cclib <http://cclib.github.io/>`__/`chemview <http://chemview.readthedocs.org/en/latest/>`__/`chemlab <http://chemlab.readthedocs.org/en/latest/index.html>`__
-suite of packages and python scientific stack and is primarily designed
-to be used interactively in the `IPython
-Notebook <http://ipython.org/notebook.html>`__ . As shown in the examples, a molecular optimisation can be assesed
+suite of packages and python scientific stack though, and so should be extensible 
+to other types of computational chemical analysis. 
+PyGauss is primarily designed to be used interactively in the 
+`IPython Notebook <http://ipython.org/notebook.html>`__. 
+
+As shown in the examples, a molecular optimisation can be assesed
 individually (much like in
 `gaussview <http://www.gaussian.com/g_prod/gv5b.htm>`__), but also as
 part of a group. The advantages of this package are then:
 
 -  Faster, more efficient analysis
--  Reproducible analysis
 -  Extensible analysis
+-  Reproducible analysis
 
 Contents
 --------

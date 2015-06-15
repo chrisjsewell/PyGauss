@@ -1,0 +1,4 @@
+PyGauss is intended as an interactive tool for supporting the 
+lifecycle of a computational molecular chemistry investigation.
+From visual and analytical exploration, 
+through to documentation and publication.

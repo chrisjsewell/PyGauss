@@ -1,12 +1,17 @@
 #Python Gaussian Analysis Tool (PyGauss)
 
 [![Git](https://img.shields.io/github/release/chrisjsewell/PyGauss.svg)](https://github.com/chrisjsewell/PyGauss/)
+[![Travis](https://travis-ci.org/chrisjsewell/PyGauss.svg?branch=master)](https://travis-ci.org/chrisjsewell/PyGauss)
+[![Coverall](https://coveralls.io/repos/chrisjsewell/PyGauss/badge.svg?branch=master)](https://coveralls.io/r/chrisjsewell/PyGauss?branch=master)
+[![Documentation](https://readthedocs.org/projects/pygauss/badge/?version=latest)](https://readthedocs.org/projects/pygauss/)
+[![Conda](https://binstar.org/cjs14/pygauss/badges/version.svg)]()
 [![PyPi](https://img.shields.io/pypi/v/pygauss.svg)](https://pypi.python.org/pypi/pygauss/)
-[![Documentation Status](https://readthedocs.org/projects/pygauss/badge/?version=stable)](https://readthedocs.org/projects/pygauss/)
-[![Downloads](https://img.shields.io/pypi/dm/pygauss.svg)](https://pypi.python.org/pypi/pygauss/)
-
 
 PyGauss is designed to be an API for parsing one or more input/output files from a [Gaussian](http://www.gaussian.com/) quantum chemical computation and provide functionality to assess  **molecular geometry** and **electronic distribution** both visually and quantitatively.
+
+- Documentation is hosted at https://pygauss.readthedocs.org
+- A Conda distribution is available at; https://conda.binstar.org/cjs14
+- A PyPi distribution is available at; https://pypi.python.org/pypi/pygauss
 
 It is built on top of the [cclib](http://cclib.github.io/)/[chemview](http://chemview.readthedocs.org/en/latest/)/[chemlab](http://chemlab.readthedocs.org/en/latest/index.html) suite of packages and python scientific stack and is primarily designed to be used interactively in the [IPython Notebook](http://ipython.org/notebook.html) (within which this readme was created). As shown below, a molecular optimisation can be assesed individually (much like in [gaussview](http://www.gaussian.com/g_prod/gv5b.htm)), but also as part of a group. The advantages of this package are then:
 
@@ -15,11 +20,6 @@ It is built on top of the [cclib](http://cclib.github.io/)/[chemview](http://che
 - Trend analysis
 
 ##Quick Start
-
-- Documentation is hosted at https://pygauss.readthedocs.org
-- The source code is hosted on GitHub; https://github.com/chrisjsewell/PyGauss
-- A PyPi distribution is available at; https://pypi.python.org/pypi/pygauss
-- A Conda distribution is available at; https://conda.binstar.org/cjs14
 
 ###OSX and Linux
 

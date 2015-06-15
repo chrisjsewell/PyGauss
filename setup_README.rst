@@ -1,10 +1,13 @@
 Python Gaussian Analysis Tool (PyGauss)
 =======================================
 
-.. image:: https://img.shields.io/github/release/chrisjsewell/PyGauss.svg
-.. image:: https://img.shields.io/pypi/v/pygauss.svg
-.. image:: https://readthedocs.org/projects/pygauss/badge/?version=stable
-.. image:: https://img.shields.io/pypi/dm/pygauss.svg
++------------+---------------------------------------------------------------------------+
+|Conda       |.. image:: https://binstar.org/cjs14/pygauss/badges/version.svg            |
++------------+---------------------------------------------------------------------------+
+|PyPi        |.. image:: https://img.shields.io/pypi/v/pygauss.svg                       |
++------------+---------------------------------------------------------------------------+
+|Documents   |.. image:: https://readthedocs.org/projects/pygauss/badge/?version=stable  |
++------------+---------------------------------------------------------------------------+
 
 
 PyGauss is designed to be an API for parsing one or more input/output

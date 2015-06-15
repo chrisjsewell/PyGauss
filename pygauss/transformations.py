@@ -680,7 +680,8 @@ def shear_matrix(angle, direction, point, normal):
 def shear_from_matrix(matrix):
     """Return shear angle, direction and plane from shear matrix.
 
-    >>> angle = (random.random() - 0.5) * 4*math.pi
+    >>> numpy.set_printoptions(suppress=True, precision=5)
+	>>> angle = (random.random() - 0.5) * 4*math.pi
     >>> direct = numpy.random.random(3) - 0.5
     >>> point = numpy.random.random(3) - 0.5
     >>> normal = numpy.cross(direct, numpy.random.random(3))

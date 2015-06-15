@@ -2,11 +2,21 @@ Python Gaussian Analysis Tool (PyGauss)
 =======================================
 
 +------------+---------------------------------------------------------------------------+
-|Conda       |.. image:: https://binstar.org/cjs14/pygauss/badges/version.svg            |
+|Documents   | https://pygauss.readthedocs.org                                           |
++            +---------------------------------------------------------------------------+
+|            |.. image:: https://readthedocs.org/projects/pygauss/badge/?version=stable  |
 +------------+---------------------------------------------------------------------------+
-|PyPi        |.. image:: https://img.shields.io/pypi/v/pygauss.svg                       |
+|Conda       | https://pypi.python.org/pypi/pygauss                                      |
++            +---------------------------------------------------------------------------+
+|            |.. image:: https://binstar.org/cjs14/pygauss/badges/version.svg            |
 +------------+---------------------------------------------------------------------------+
-|Documents   |.. image:: https://readthedocs.org/projects/pygauss/badge/?version=stable  |
+|PyPi        | https://pypi.python.org/pypi/pygauss                                      |
++            +---------------------------------------------------------------------------+
+|            |.. image:: https://img.shields.io/pypi/v/pygauss.svg                       |
++------------+---------------------------------------------------------------------------+
+|GitHub      | https://github.com/chrisjsewell/PyGauss                                   |
++            +---------------------------------------------------------------------------+
+|            |.. image:: https://img.shields.io/github/release/chrisjsewell/PyGauss.svg  |
 +------------+---------------------------------------------------------------------------+
 
 
@@ -32,15 +42,7 @@ part of a group. The advantages of this package are then:
 Instillation
 ------------
 
--  Documentation is hosted at;
-   https://pygauss.readthedocs.org
--  The source code is hosted on GitHub;
-   https://github.com/chrisjsewell/PyGauss
--  A PyPi distribution is available at;
-   https://pypi.python.org/pypi/pygauss
--  A Conda distribution is available at; https://conda.binstar.org/cjs14
-
-The Easy Way (OSX and Linux)
+OSX and Linux
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The recommended was to use pygauss is to download the
@@ -50,35 +52,16 @@ in terminal and pygauss installed:
 
 ::
 
-    conda create -n pg_env python=2.7
-    conda install -c https://conda.binstar.org/cjs14 -n pg_env pygauss
+    conda create -n pg_env conda install -c https://conda.binstar.org/cjs14 pygauss
 
 
-The Hard Way (Windows)
+Windows
 ~~~~~~~~~~~~~~~~~~~~~~
 
 There is currently no pygauss conda distributable for Windows or for
-chemlab, which has C-extensions that need to be built using a compiler.
-Therefore it will need to be cloned from GitHub. the extensions built,
-dependancies installed and finally installed.
+chemlab, which has C-extensions that need to be built using a compiler. 
+Please see the documentation for guidance.
 
-::
-
-    conda create -n pg_env python=2.7
-    conda install -n pg_env -c https://conda.binstar.org/cjs14 cclib
-    conda install -n pg_env -c https://conda.binstar.org/cjs14 chemview
-    conda install -n pg_env -c https://conda.binstar.org/cjs14 pyopengl     
-    git clone --recursive https://github.com/chemlab/chemlab.git
-    cd chemlab
-    python setup.py build_ext --inplace
-    conda install -n pg_env <pil, pandas, matplotlib, scikit-learn, ...> 
-    activate pg_env
-    pip install . # or add to PYTHONPATH
-    pip install pygauss
-
-If you encounter difficulties it may be useful for you to look in
-`working\_conda\_environments <https://github.com/chrisjsewell/PyGauss/tree/master/working_conda_environments>`__
-at conda environments known to work.
 
 Example Assessment
 ------------------

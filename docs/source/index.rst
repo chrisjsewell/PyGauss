@@ -3,7 +3,7 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-Welcome to PyGauss's documentation!
+Welcome to PyGauss!
 ===================================
 
 +--------------------------+-----------------------------------------------+
@@ -14,6 +14,8 @@ Welcome to PyGauss's documentation!
 |**Conda Distro**          | https://conda.binstar.org/cjs14               |
 +--------------------------+-----------------------------------------------+
 |**PyPi Distro**           | https://pypi.python.org/pypi/pygauss          |
++--------------------------+-----------------------------------------------+
+|**Communication**         | pygauss@googlegroups.com                      |
 +--------------------------+-----------------------------------------------+
 
 PyGauss is designed to be an API for examining one or more input/output

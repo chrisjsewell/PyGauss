@@ -3,13 +3,16 @@ PyGauss Computational Chemistry Analysis
 
 **Documentation**: https://pygauss.readthedocs.org
 
-**Conda Distro**: https://pypi.python.org/pypi/pygauss
+**Conda Distro**: https://binstar.org/cjs14/pygauss
 
 **Project**: https://github.com/chrisjsewell/PyGauss
 
 .. image:: https://readthedocs.org/projects/pygauss/badge/?version=stable
+   :target: https://pygauss.readthedocs.org
 .. image:: https://binstar.org/cjs14/pygauss/badges/version.svg
+   :target: https://binstar.org/cjs14/pygauss
 .. image:: https://img.shields.io/github/release/chrisjsewell/PyGauss.svg
+   :target: https://github.com/chrisjsewell/PyGauss
 
 PyGauss is intended as an interactive tool for supporting the 
 lifecycle of a computational molecular chemistry investigation.

@@ -10,10 +10,6 @@ Python Gaussian Analysis Tool (PyGauss)
 +            +---------------------------------------------------------------------------+
 |            |.. image:: https://binstar.org/cjs14/pygauss/badges/version.svg            |
 +------------+---------------------------------------------------------------------------+
-|PyPi        | https://pypi.python.org/pypi/pygauss                                      |
-+            +---------------------------------------------------------------------------+
-|            |.. image:: https://img.shields.io/pypi/v/pygauss.svg                       |
-+------------+---------------------------------------------------------------------------+
 |GitHub      | https://github.com/chrisjsewell/PyGauss                                   |
 +            +---------------------------------------------------------------------------+
 |            |.. image:: https://img.shields.io/github/release/chrisjsewell/PyGauss.svg  |

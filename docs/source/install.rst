@@ -1,4 +1,4 @@
-Installation
+Quick Start
 ---------------------------
 
 OSX and Linux
@@ -7,12 +7,11 @@ OSX and Linux
 The recommended was to use pygauss is to download the
 `Anaconda <http://continuum.io/downloads>`__ Scientific Python
 Distribution (64-bit). Once downloaded a new environment can be created
-in terminal and pygauss installed:
+in terminal and pygauss installed in one simple line:
 
 ::
 
-    conda create -n pg_env python=2.7
-    conda install -c https://conda.binstar.org/cjs14 -n pg_env pygauss
+    conda create -n pg_env -c https://conda.binstar.org/cjs14 pygauss
 
 
 Windows

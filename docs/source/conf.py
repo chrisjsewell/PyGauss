@@ -79,14 +79,14 @@ git_issues = urllib2.urlopen('https://api.github.com/repos/chrisjsewell/Pygauss/
 git_issues_json = json.load(git_issues)
 with open('enhancements.rst', 'w') as f:
 	f.write('Whats To Come\n')
-	f.write('---------\n')
+	f.write('--------------\n')
 	f.write('\n')
 	for r in git_issues_json:
 		if not r["state"] == "open":
 			continue
 		labels = r['labels']
 		for l in labels:
-			if l['name'] == 'enhancement':
+			if l['name'] == 'new feature':
 				f.write(' '.join([r['title'],'\n']))
 				f.write('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
 				f.write('\n')

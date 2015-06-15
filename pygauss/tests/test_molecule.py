@@ -69,10 +69,38 @@ RMS     Displacement     0.000326     0.001200     YES
 
     def test_optimisation_E(self):
         
-        that.assert_equal(self.mol.get_optimisation_E(units='hartree'), -805.105260336)       
+        that.assert_equal(self.mol.get_optimisation_E(units='hartree'), -805.105260336)
+
+    def test_plot_optimisation(self):
+
+        ax = self.mol.plot_optimisation_E(units='hartree')
+
+        data_line = ax.get_lines()[0]
+        xd = data_line.get_xdata()
+        yd = data_line.get_ydata()
+
+        that.assert_equal(yd[-1], -805.105260336)
 
 class Test_Freq(object):
-    pass
+    def setUp(self):
+        self.mol = pg.Molecule(folder_obj=pg.get_test_folder(),
+        freq_fname='CJS1_emim-cl_B_6-311+g-d-p-_gd3bj_freq_unfrz.log')
+
+    def test_is_conformer(self):
+    
+        that.assert_true(self.mol.is_conformer())
+
+    def test_plot_freq(self):
+    
+        df = self.mol.get_freq_analysis()
+        
+        that.assert_greater_equal(0., df['Frequency ($cm^{-1}$)'].min())
+        that.assert_greater_equal(0., df['IR Intensity ($km/mol$)'].min())
+
+    def test_plot_freq(self):
+
+        ax = self.mol.plot_freq_analysis()
+
 
 class Test_NBO(object):
     """
@@ -208,6 +236,18 @@ class Test_Images(object):
 
     def test_returns_nbo_charges_img(self):
         self.mol.show_nbo_charges()
+
+class Test_PES(object):
+    
+    @parameterized(['local_maxs', 'local_mins', 'global_min', 'global_max'])
+    def test_plot_pes(self, img_pos):
+        mol2 = pg.molecule.Molecule(folder_obj=pg.get_test_folder(),
+                                    alignto=[3,2,1],
+                                    pes_fname=['CJS_emim_6311_plus_d3_scan.log',
+                                               'CJS_emim_6311_plus_d3_scan_bck.log'])
+        ax = mol2.plot_pes_scans([1,4,9,10], rotation=[0,0,90], img_pos=img_pos, zoom=0.5)
+
+
     
 if __name__=='__main__':
     import nose

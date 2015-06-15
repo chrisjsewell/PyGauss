@@ -4,7 +4,7 @@ language: python
 python:
   - 2.7
 notifications:
-  email: false
+  email: true
 
 # Setup anaconda
 before_install:

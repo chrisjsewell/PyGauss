@@ -1,4 +1,10 @@
-#Python Gaussian Analysis Tool (PyGauss)
+#PyGauss Project Page
+
+**Documentation**: https://pygauss.readthedocs.org
+
+**Conda Distro**: https://pypi.python.org/pypi/pygauss
+
+**PyPi Distro**: https://pypi.python.org/pypi/pygauss
 
 [![Git](https://img.shields.io/github/release/chrisjsewell/PyGauss.svg)](https://github.com/chrisjsewell/PyGauss/)
 [![Travis](https://travis-ci.org/chrisjsewell/PyGauss.svg?branch=master)](https://travis-ci.org/chrisjsewell/PyGauss)
@@ -7,17 +13,29 @@
 [![Conda](https://binstar.org/cjs14/pygauss/badges/version.svg)]()
 [![PyPi](https://img.shields.io/pypi/v/pygauss.svg)](https://pypi.python.org/pypi/pygauss/)
 
-PyGauss is designed to be an API for parsing one or more input/output files from a [Gaussian](http://www.gaussian.com/) quantum chemical computation and provide functionality to assess  **molecular geometry** and **electronic distribution** both visually and quantitatively.
+PyGauss is intended as an interactive tool for supporting the 
+lifecycle of a computational molecular chemistry investigation.
+From visual and analytical exploration, 
+through to documentation and publication.
 
-- Documentation is hosted at https://pygauss.readthedocs.org
-- A Conda distribution is available at; https://conda.binstar.org/cjs14
-- A PyPi distribution is available at; https://pypi.python.org/pypi/pygauss
+Intitally PyGauss has been designed for the purpose of examining one or more
+[Gaussian](http://www.gaussian.com/) quantum chemical
+computations, both **geometrically** and **electronically**. It is built on top of the
+[cclib](http://cclib.github.io/)/[chemview](http://chemview.readthedocs.org/en/latest/)/
+[chemlab](http://chemlab.readthedocs.org/en/latest/index.html)
+suite of packages and python scientific stack though, and so should be extensible 
+to other types of computational chemical analysis. 
+PyGauss is primarily designed to be used interactively in the 
+[IPython Notebook](http://ipython.org/notebook.html). 
 
-It is built on top of the [cclib](http://cclib.github.io/)/[chemview](http://chemview.readthedocs.org/en/latest/)/[chemlab](http://chemlab.readthedocs.org/en/latest/index.html) suite of packages and python scientific stack and is primarily designed to be used interactively in the [IPython Notebook](http://ipython.org/notebook.html) (within which this readme was created). As shown below, a molecular optimisation can be assesed individually (much like in [gaussview](http://www.gaussian.com/g_prod/gv5b.htm)), but also as part of a group. The advantages of this package are then:
+As shown in the examples, a molecular optimisation can be assesed
+individually (much like in
+[gaussview](http://www.gaussian.com/g_prod/gv5b.htm)), but also as
+part of a group. The advantages of this package are then:
 
-- Faster, more efficient analysis
-- Reproducible analysis
-- Trend analysis
+-  Faster, more efficient analysis
+-  Extensible analysis
+-  Reproducible analysis
 
 ##Quick Start
 

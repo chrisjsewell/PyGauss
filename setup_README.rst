@@ -1,5 +1,5 @@
-Python Gaussian Analysis Tool (PyGauss)
-=======================================
+PyGauss Computational Chemistry Analysis
+========================================
 
 **Documentation**: https://pygauss.readthedocs.org
 
@@ -11,26 +11,30 @@ Python Gaussian Analysis Tool (PyGauss)
 .. image:: https://binstar.org/cjs14/pygauss/badges/version.svg
 .. image:: https://img.shields.io/github/release/chrisjsewell/PyGauss.svg
 
-PyGauss is designed to be an API for parsing one or more input/output
-files from a `Gaussian <http://www.gaussian.com/>`__ quantum chemical
-computation and provide functionality to assess **molecular geometry**
-and **electronic distribution** both visually and quantitatively.
+PyGauss is intended as an interactive tool for supporting the 
+lifecycle of a computational molecular chemistry investigation.
+From visual and analytical exploration, 
+through to documentation and publication.
 
-It is built on top of the
+Intitally PyGauss has been designed for the purpose of examining one or more
+`Gaussian <http://www.gaussian.com/>`__ quantum chemical
+computations, both **geometrically** and **electronically**. It is built on top of the
 `cclib <http://cclib.github.io/>`__/`chemview <http://chemview.readthedocs.org/en/latest/>`__/`chemlab <http://chemlab.readthedocs.org/en/latest/index.html>`__
-suite of packages and python scientific stack and is primarily designed
-to be used interactively in the `IPython
-Notebook <http://ipython.org/notebook.html>`__ (within which this readme
-was created). As shown below, a molecular optimisation can be assesed
+suite of packages and python scientific stack though, and so should be extensible 
+to other types of computational chemical analysis. 
+PyGauss is primarily designed to be used interactively in the 
+`IPython Notebook <http://ipython.org/notebook.html>`__. 
+
+As shown in the examples, a molecular optimisation can be assesed
 individually (much like in
 `gaussview <http://www.gaussian.com/g_prod/gv5b.htm>`__), but also as
 part of a group. The advantages of this package are then:
 
 -  Faster, more efficient analysis
+-  Extensible analysis
 -  Reproducible analysis
--  Trend analysis
 
-Instillation
+Quick Start
 ------------
 
 OSX and Linux

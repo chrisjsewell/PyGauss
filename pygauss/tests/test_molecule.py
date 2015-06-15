@@ -161,7 +161,8 @@ File Extracts:
         that.assert_almost_equal(self.mol.calc_sopt_energy(eunits='kcal'), total_e)
     
     def test_group_energy(self):
-        """
+        """test_group_energy
+        File lines to filter:        
    9. CR (   1) O   7                / 33. RY*(   1) H   9                    0.75   19.70    0.108
   15. LP (   2) O   7                / 32. RY*(   1) H   8                    0.62    1.41    0.026       
         """
@@ -170,8 +171,9 @@ File Extracts:
             0.75+0.62)
 
     def test_hbond_energy(self):
-        """
-  11. LP (   2) O   1                / 36. BD*(   1) O   4 - H   5            0.20    0.88    0.012
+        """test_hbond_energy
+         File lines to filter:       
+ 11. LP (   2) O   1                / 36. BD*(   1) O   4 - H   5            0.20    0.88    0.012
   11. LP (   2) O   1                / 37. BD*(   1) O   4 - H   6            0.10    0.88    0.008
   13. LP (   2) O   4                / 34. BD*(   1) O   1 - H   2            9.59    1.06    0.091
   13. LP (   2) O   4                / 39. BD*(   1) O   7 - H   9            9.49    1.06    0.090

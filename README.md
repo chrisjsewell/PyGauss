@@ -10,7 +10,7 @@
 [![Travis](https://travis-ci.org/chrisjsewell/PyGauss.svg?branch=master)](https://travis-ci.org/chrisjsewell/PyGauss)
 [![Coverall](https://coveralls.io/repos/chrisjsewell/PyGauss/badge.svg?branch=master)](https://coveralls.io/r/chrisjsewell/PyGauss?branch=master)
 [![Documentation](https://readthedocs.org/projects/pygauss/badge/?version=latest)](https://readthedocs.org/projects/pygauss/)
-[![Conda](https://binstar.org/cjs14/pygauss/badges/version.svg)]()
+[![Conda](https://binstar.org/cjs14/pygauss/badges/version.svg)](https://binstar.org/cjs14/pygauss)
 [![PyPi](https://img.shields.io/pypi/v/pygauss.svg)](https://pypi.python.org/pypi/pygauss/)
 
 PyGauss is intended as an interactive tool for supporting the 

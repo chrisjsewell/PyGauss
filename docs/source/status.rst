@@ -15,11 +15,14 @@ Distribution
 Development
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-+------------+---------------------------------------------------------------------------+
-|GitHub      |.. image:: https://img.shields.io/github/release/chrisjsewell/PyGauss.svg  |
-+------------+---------------------------------------------------------------------------+
-|Travis      |.. image:: https://travis-ci.org/chrisjsewell/PyGauss.svg?branch=master    |
-|Testing     |    :target: https://travis-ci.org/chrisjsewell/PyGauss                    |
-+------------+---------------------------------------------------------------------------+
-|Documents   |.. image:: https://readthedocs.org/projects/pygauss/badge/?version=latest  |
-+------------+---------------------------------------------------------------------------+
++------------+-----------------------------------------------------------------------------------+
+|GitHub      |.. image:: https://img.shields.io/github/release/chrisjsewell/PyGauss.svg          |
++------------+-----------------------------------------------------------------------------------+
+|Unit        |.. image:: https://travis-ci.org/chrisjsewell/PyGauss.svg?branch=master            |
+|Testing     |    :target: https://travis-ci.org/chrisjsewell/PyGauss                            |
++------------+-----------------------------------------------------------------------------------+
+|Testing     |.. image:: https://coveralls.io/repos/chrisjsewell/PyGauss/badge.svg?branch=master |
+|Coverage    |    :target: https://coveralls.io/r/chrisjsewell/PyGauss?branch=master             |
++------------+-----------------------------------------------------------------------------------+
+|Documents   |.. image:: https://readthedocs.org/projects/pygauss/badge/?version=latest          |
++------------+-----------------------------------------------------------------------------------+

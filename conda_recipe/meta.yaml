@@ -41,6 +41,7 @@ requirements:
     - chemlab
     - nose
     - nose-parameterized
+    - python-docx
 
   run:
     - python
@@ -58,6 +59,7 @@ requirements:
     - chemlab
     - nose
     - nose-parameterized
+    - python-docx
 
 test:
   # Python imports

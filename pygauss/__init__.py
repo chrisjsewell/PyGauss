@@ -23,6 +23,7 @@ import chemlab # version 0.4
 from .molecule import Molecule
 from .analysis import Analysis
 from .file_io import Folder
+from .docs import MSDoc
 
 import os, inspect
 from . import test_data

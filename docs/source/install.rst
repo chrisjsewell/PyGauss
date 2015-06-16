@@ -47,12 +47,13 @@ Testing
 ~~~~~~~~~~~~~~~~~~~~~~
 
 Pygauss utilises a unit test suite (`nose <https://nose.readthedocs.org>`__/`nose-parameterized <https://github.com/wolever/nose-parameterized>`__) to ensure that computations run, 
-and are correct. These tests are an automated condition of the conda build, but can also be run 
-manually in the command line;
+and are correct. Continuous integration testing of the source code is provided by `Travis CI <https://travis-ci.org/>`__ 
+and pass completion is an automated condition of the Conda build. 
+These unit tests can also be run manually in the command line;
 
 ::
 
-	nosetests
+	nosetests -v --with-doctest
 
 or directly in python;
 

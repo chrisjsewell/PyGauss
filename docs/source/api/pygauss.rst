@@ -18,6 +18,7 @@ Submodules
 .. toctree::
 
    pygauss.analysis
+   pygauss.docs
    pygauss.file_io
    pygauss.isosurface
    pygauss.molecule

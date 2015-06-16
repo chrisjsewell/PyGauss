@@ -54,7 +54,8 @@ MOCK_MODULES = ['cclib', 'cclib.parser', 'cclib.parser.utils',
 'IPython', 'IPython.display', 'IPython.core', 'IPython.core.display',
 'IPython.utils', 'IPython.utils.traitlets',
 'scipy', 'scipy.signal', 'scipy.interpolate',
-'nose', 'nose_parameterized']
+'nose', 'nose_parameterized',
+]
 for mod_name in MOCK_MODULES:
     sys.modules[mod_name] = Mock()
 
@@ -352,8 +353,10 @@ texinfo_documents = [
 
 
 # Example configuration for intersphinx: refer to the Python standard library.
-intersphinx_mapping = {'http://docs.python.org/': None}
-
+intersphinx_mapping = {
+  'python': ('http://docs.python.org/2.7/', None),
+  'docx': ('http://python-docx.readthedocs.org/en/latest/', None),
+    }
 autoclass_content = 'init'
 # Napoleon settings
 napoleon_google_docstring = True

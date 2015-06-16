@@ -7,5 +7,6 @@ User API
    api/pygauss.file_io
    api/pygauss.molecule
    api/pygauss.analysis
+   api/pygauss.docs
    api/pygauss.isosurface
    api/pygauss.utils

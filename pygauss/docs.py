@@ -8,7 +8,7 @@ import docx
 #from docx import Document
 #from docx.shared import Cm
 
-class MSDoc(docx.Document):
+class MSDoc(docx.api.Document):
     """a class to output a Microsoft Word Document
     """
     def __init__(self, docx=None):

@@ -1,1 +1,1 @@
-python-docx
+python-docx>=0.8.5

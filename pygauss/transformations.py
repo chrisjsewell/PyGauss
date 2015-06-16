@@ -668,7 +668,7 @@ def shear_matrix(angle, direction, point, normal):
     """
     normal = unit_vector(normal[:3])
     direction = unit_vector(direction[:3])
-    if abs(numpy.dot(normal, direction)) > 1e-6:
+    if abs(numpy.dot(normal, direction)) > 1e-3:
         raise ValueError("direction and normal vectors are not orthogonal")
     angle = math.tan(angle)
     M = numpy.identity(4)

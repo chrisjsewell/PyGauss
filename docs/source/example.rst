@@ -490,7 +490,7 @@ produce a full document of your analysis.
 
 Which gives us the following:
 
-.. image:: /images/example_docx.png
+.. image:: images/example_docx.png
    :alt: DocX Image
 
 MORE TO COME!!

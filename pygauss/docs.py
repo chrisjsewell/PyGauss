@@ -180,7 +180,7 @@ class MSDocument(object):
                     return round(val, -int(floor(log10(val))) + (sig_figures - 1))
                 else:
                     return -round(-val, -int(floor(log10(-val))) + (sig_figures - 1))
-            except TypeError:
+            except Exception:
                 return val
                 
         for row, id_series in enumerate(df.iterrows()):

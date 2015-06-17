@@ -20,8 +20,9 @@ before_install:
   - conda update --yes conda
 # Install conda packages
 install:
-  - deps='numpy pandas scipy matplotlib ipython scikit-learn paramiko pil cclib chemview pyopengl==3.0.2 chemlab nose nose-parameterized python-docx coverage coveralls'
+  - deps='numpy pandas scipy matplotlib ipython scikit-learn paramiko pil cclib chemview pyopengl==3.0.2 chemlab nose nose-parameterized coverage coveralls'
   - conda install --yes -c https://conda.binstar.org/cjs14 python=$TRAVIS_PYTHON_VERSION $deps
+  - pip install python-docx
   - python setup.py install
 # Run test
 before_script:

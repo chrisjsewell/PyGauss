@@ -490,7 +490,7 @@ produce a full document of your analysis.
 
 Which gives us the following:
 
-.. figure:: https://github.com/chrisjsewell/PyGauss/blob/master/docs/source/images/example_docx.png
+.. image:: /images/example_docx.png
    :alt: DocX Image
 
 MORE TO COME!!

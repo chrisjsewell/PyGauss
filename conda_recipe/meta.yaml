@@ -7,7 +7,7 @@ source:
 
 package:
   name: pygauss
-  version: 0.4.3
+  version: 0.4.4
 
 # build:
   # preserve_egg_dir: True
@@ -41,7 +41,7 @@ requirements:
     - chemlab
     - nose
     - nose-parameterized
-    - python-docx
+    - python-docx >=0.8.5
 
   run:
     - python
@@ -59,7 +59,7 @@ requirements:
     - chemlab
     - nose
     - nose-parameterized
-    - python-docx
+    - python-docx >=0.8.5
 
 test:
   # Python imports

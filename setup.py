@@ -60,12 +60,12 @@ setup(name='pygauss',
                           "scikit-learn>=0.15",
                           "paramiko",
                         #"scikit-image",
-                          "pillow",
+                          "pil",
                         #"numexpr",
                           "cclib",
                           "chemview",
                           "pyopengl==3.0.2",
                           "chemlab",
-						  "python-docx"
+						  "python-docx>=0.8.5"
                        ],               
      )

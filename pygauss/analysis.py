@@ -686,7 +686,7 @@ class Analysis(object):
         
         caption = 'Figure: ' + ', '.join(caption)
         #insert newline character every 80 charaters
-        caption = re.sub("(.{80})", "\\1\n", caption, 0, re.DOTALL)
+        #caption = re.sub("(.{80})", "\\1\n", caption, 0, re.DOTALL)
         
         return fig, caption
         

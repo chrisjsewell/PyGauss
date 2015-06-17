@@ -11,8 +11,17 @@ from ._version import __version__
 # mokeypatch cclib/chemlab classes improved for this implementation 
 # TODO don't think this is working, use mock?
 
-import sys
+import os, sys
 
+##TODO a weird thing sometimes happens if docx installed, 
+#whereby 'import enum' installs docx/enum instead of enum (req for numba)!?
+if sys.platform == 'win32':
+    import imp
+    init = os.path.abspath(__file__)
+    pkg = os.path.dirname(init)
+    sites = os.path.dirname(pkg)
+    imp.load_package('enum', os.path.join(sites, 'enum'))        
+    
 from .cclib_patch.parser import data
 
 sys.modules['cclib.parser.data'] = data 
@@ -23,9 +32,9 @@ import chemlab # version 0.4
 from .molecule import Molecule
 from .analysis import Analysis
 from .file_io import Folder
-from .docs import MSDoc
+from .docs import MSDocument
 
-import os, inspect
+import inspect
 from . import test_data
 def get_test_folder():
     """return a folder obj of test data """

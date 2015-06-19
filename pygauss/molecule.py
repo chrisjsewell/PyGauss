@@ -25,7 +25,7 @@ import pandas as pd
 
 from IPython.display import Image as ipy_Image
 
-from .chemlab_patch.io.handlers._cclib  import _create_cclib_handler
+from .chemlab_patch.io.handlers._cclib  import Handler
 
 from chemlab.graphics.qtviewer import QtViewer
 #have to add method to instances of chemlab.graphics.camera.Camera
@@ -162,6 +162,12 @@ class Molecule(object):
         """ return the Folder instance """
         return self._folder
         
+    def get_atom_group(self, group):
+        """return list of atoms in group """
+        if not self._atom_groups.has_key(group):
+            raise ValueError('the molecule does not have an; {0}, atom group'.format(group))
+        return self._atom_groups[group]        
+        
     def get_init_read_errors(self):
         """ get read errors, recorded if fail_silently was set to True on initialise """
         return self._init_read_errors[:]
@@ -182,16 +188,14 @@ class Molecule(object):
             return result
         
     def _get_data(self, file_name, ftype='gaussian'):
-
-        gaussian_handler = _create_cclib_handler(ftype)
-        
+       
         if not self._folder.active():
             with self._folder as folder:
                 with folder.read_file(file_name) as fd:            
-                    data = gaussian_handler(fd)
+                    data = Handler(fd, ftype)
         else:
             with self._folder.read_file(file_name) as fd:            
-                data = gaussian_handler(fd)
+                data = Handler(fd, ftype)
         
         return data       
     
@@ -789,7 +793,7 @@ class Molecule(object):
         else:
             natoms = self._read_data('_init_data', 'natom')
         
-        atomlists=[self._atom_groups[grp] if type(grp) is str else grp for grp in atomlists]
+        atomlists=[self.get_atom_group(grp) if type(grp) is str else grp for grp in atomlists]
 
         colorlist = self._get_highlight_colors(natoms, atomlists, active,
                                                alpha=alpha)
@@ -873,7 +877,7 @@ class Molecule(object):
         mol = self._create_molecule(optimised=self_opt)
         if self_atoms:
             if type(self_atoms) is str:
-                self_atoms = self._atom_groups[self_atoms]
+                self_atoms = self.get_atom_group(self_atoms)
             self_indxs = np.array(self_atoms) - 1
             mol.r_array = mol.r_array[self_indxs]
             mol.type_array = mol.type_array[self_indxs]
@@ -1164,9 +1168,9 @@ class Molecule(object):
             molecule = self._read_data('_init_data', 'molecule')
             
         if type(idx_list1) is str:
-            idx_list1 = self._atom_groups[idx_list1]
+            idx_list1 = self.get_atom_group(idx_list1)
         if type(idx_list2) is str:
-            idx_list2 = self._atom_groups[idx_list2]
+            idx_list2 = self.get_atom_group(idx_list2)
         
         # remove atoms not in molecule
         if ignore_missing:
@@ -1366,7 +1370,7 @@ class Molecule(object):
             return np.sum(charges)
             
         if type(atoms) is str:
-            atoms = self._atom_groups[atoms]
+            atoms = self.get_atom_group(atoms)
             
         atoms = np.array(atoms) -1 # 1->0 base        
         try:
@@ -1396,7 +1400,7 @@ class Molecule(object):
         coords = molecule.r_array   
         
         if type(atoms) is str:
-            atoms = self._atom_groups[atoms]
+            atoms = self.get_atom_group(atoms)
 
         if atoms:
             atoms = np.array(atoms) -1 # 1->0 base
@@ -1449,9 +1453,9 @@ class Molecule(object):
             group1, group2 = atom_groups
 
             if type(group1) is str:
-                group1 = self._atom_groups[group1]
+                group1 = self.get_atom_group(group1)
             if type(group2) is str:
-                group2 = self._atom_groups[group2]
+                group2 = self.get_atom_group(group2)
         
             match_rows=[]
             for indx, rw in df.iterrows():
@@ -1638,6 +1642,90 @@ class Molecule(object):
                                   width=width, height=height, linestyle='lines', 
                                   transparent=transparent,
                                   ipyimg=ipyimg) 
+
+    def _get_dos(self, mol, atoms=[], dos_type='all', bins=100, eunits='eV'):
+        homo, lumo = mol.get_orbital_homo_lumo()
+        num_mo = mol.get_orbital_count()
+        
+        lbound = int(homo*0.5)
+        ubound = int(lumo+(num_mo-lumo)*0.5)
+    
+        energy_bounds = mol.get_orbital_energies([lbound, ubound], 
+                                                 eunits=eunits)
+    
+        if atoms:    
+            df_occupancy = pd.DataFrame(mol._read_data('_nbo_data', 'nbo_occupancy'),
+                                        columns=['NBO', 'Atom', 'Occ'])
+            sub_df = df_occupancy[df_occupancy.Atom.isin(atoms)].groupby('NBO').sum()
+            sub_df = sub_df.reindex(range(1, mol.get_orbital_count()+1))
+            weights = sub_df.Occ.fillna(0)/100.
+        else:
+            weights=None
+    
+        hist, bin_edges = np.histogram(
+                        mol.get_orbital_energies(np.arange(1, num_mo+1), eunits=eunits),
+                        bins=bins, range=energy_bounds, density=False, weights=weights)
+        energy = bin_edges[:-1] + 0.5*(bin_edges[1:]-bin_edges[:-1])
+        
+        df = pd.DataFrame(zip(energy, hist), columns=['Energy', 'Hist'])
+        
+        if dos_type == 'all':
+            pass
+        elif dos_type == 'homo':
+            df = df[df.Energy <= mol.get_orbital_energies(homo, eunits=eunits)[0]]
+        elif dos_type == 'lumo':
+            df = df[df.Energy >= mol.get_orbital_energies(lumo, eunits=eunits)[0]]
+        else:
+            raise ValueError('dos_type must be; all. homo or lumo')
+
+        return df
+
+    def _plot_single_dos(self, mol, atoms=[], dos_type='all', bins=100, eunits='eV', ax=None,
+                 color='g', label='', 
+                 line=True, linestyle='-', linewidth=2, linealpha = 1, 
+                 fill=True, fillalpha = 1):
+
+        df = self._get_dos(mol, atoms, dos_type, bins, eunits)        
+                
+        if not ax:
+            fig, ax = plt.subplots()
+            
+        if line:
+            ax.plot(df.Hist, df.Energy, label=label, color=color, 
+                    alpha=linealpha, linestyle=linestyle, linewidth=linewidth)   
+        else:
+            ax.plot([], [], label=label, color=color, linewidth=linewidth)   
+    
+        if fill:
+            ax.fill_betweenx(df.Energy, df.Hist, color=color, alpha=fillalpha)
+        
+        return ax
+    
+    def plot_dos(self, bins=100, eunits='eV', ax=None,
+                 atom_groups=[], group_colors=[], group_labels=[], group_fill=False):
+
+        if not ax:
+            fig, ax = plt.subplots()
+
+        mol = self
+        
+        self._plot_single_dos(mol, ax=ax, label='Total HOMO', dos_type='homo', color='g', 
+                      line=False, fillalpha=0.3)
+        self._plot_single_dos(mol, ax=ax, label='Total LUMO', dos_type='lumo', color='r', 
+                      fillalpha=0.3, line=False)
+
+        for atoms, color, label in zip(atom_groups, group_colors, group_labels):  
+
+            if type(atoms) is str:
+                atoms = self.get_atom_group(atoms)
+                
+            self._plot_single_dos(mol, ax=ax, atoms=atoms, fill=group_fill,
+                          color=color, label=label)
+
+        ax.legend()
+        ax.grid(True)
+        
+        return ax
 
     def _img_to_plot(self, x, y, image, ax=None, zoom=1):
         """add image to matplotlib axes at (x,y) """

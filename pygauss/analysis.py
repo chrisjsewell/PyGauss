@@ -1,9 +1,10 @@
 # -*- coding: utf-8 -*-
-from itertools import product
+from itertools import product, imap
 import copy
 import math
 import string
-import re
+import multiprocessing
+
 
 import numpy as np
 import pandas as pd
@@ -18,6 +19,13 @@ from IPython.core.display import clear_output
 from .molecule import Molecule
 from .utils import df_to_img
 from .file_io import Folder
+
+def unpack_and_make_molecule(val_dict):      
+    if val_dict.has_key('args'):
+        args = val_dict.pop('args')
+    else:
+        args = []            
+    return Molecule(*args, **val_dict)
 
 class Analysis(object):
     """a class to analyse multiple computations """
@@ -68,6 +76,21 @@ class Analysis(object):
             
     folder = property(get_folder, set_folder, 
                         doc="The folder for gaussian runs")      
+
+    def count_runs(self):
+        """ get number of runs held in analysis """
+        return len(self._df.index)        
+        
+    def _add_molecule(self, molecule, identifiers):
+        """add molecule to internal dataframe """
+
+        identifiers['Molecule'] = molecule
+        series = pd.DataFrame(identifiers, 
+                              index=[self._next_index])
+        self._df = self._df.copy().append(series)
+        self._next_index += 1
+        
+        return True
     
     def add_run(self, identifiers={}, 
                       init_fname=None, opt_fname=None, 
@@ -88,67 +111,103 @@ class Analysis(object):
         
         num_files = filter(lambda x:x, [init_fname, opt_fname, 
                                         freq_fname, nbo_fname])
-        if not len(molecule.get_init_read_errors()) == num_files:
-            if not molecule.get_init_read_errors() or add_if_error:
-                    
-                identifiers['Molecule'] = molecule
-                series = pd.DataFrame(identifiers, 
-                                      index=[self._next_index])
-                self._df = self._df.copy().append(series)#, ignore_index=True)
-                self._next_index += 1
+        read_errors = molecule.get_init_read_errors()
+        if len(read_errors) != num_files and (not read_errors or add_if_error):                
+                self._add_molecule(molecule, identifiers)
                 
         return molecule.get_init_read_errors() 
              
-    def add_runs(self, headers=[], values=[], 
-                 init_pattern=None, opt_pattern=None, 
-                 freq_pattern=None, nbo_pattern=None,
-                 add_if_error=False,
-                 alignto=[], atom_groups={},
-                 ipython_print=False):
-        """add multiple Gaussian run inputs/outputs """             
-        with self._folder as folder:
-            
-            read_errors=[]
-            for idents in product(*values):
-                identifiers = dict(zip(headers, idents))
-                if ipython_print: print identifiers
-                init = init_pattern.format(*idents) if init_pattern else None
-                if type(opt_pattern) is str:
-                    opt = opt_pattern.format(*idents) if opt_pattern else None
-                elif type(opt_pattern) is list or type(opt_pattern) is tuple:
-                    opt = [o.format(*idents) for o in opt_pattern]
-                else:
-                    opt = None
-                freq = freq_pattern.format(*idents) if freq_pattern else None
-                nbo = nbo_pattern.format(*idents) if nbo_pattern else None
-                
-                file_read_errs = self.add_run(identifiers, init, opt, freq, nbo,
-                            alignto=alignto, atom_groups=atom_groups,
-                            add_if_error=add_if_error, folder_obj=folder)
-                
-                for fname, msg in file_read_errs:
+    def _get_molecules(self, mol_inputs, folder_obj, identifiers, ipython_print=False):
+        """ get molecules """
+
+        if folder_obj.islocal():    
+            pool = multiprocessing.Pool(processes=multiprocessing.cpu_count())
+            mapping = pool.imap
+        else:
+            mapping = imap
+        
+        with folder_obj:
+            molecules=[]
+            all_read_errors = []
+            for molecule in mapping(unpack_and_make_molecule, mol_inputs):
+                molecules.append(molecule)
+
+                read_errors = []
+                for fname, msg in molecule.get_init_read_errors():
                     idents = identifiers.copy()
                     idents.pop('Molecule', '_')
                     idents['File'] = fname
                     idents['Error_Message'] = msg
                     read_errors.append(idents)
-    
+                all_read_errors.append(read_errors)
+
                 if ipython_print: 
+                    print 'Reading data {0} of {1}'.format(len(molecules), 
+                                                           len(mol_inputs))
                     try:
                         clear_output(wait=True)    
                     except:
                         pass
-                                        
-            err_df = pd.DataFrame(read_errors)
-            if read_errors:
-                cols = err_df.columns.tolist()
-                cols.remove('File')
-                cols.append('File')
-                cols.remove('Error_Message')
-                cols.append('Error_Message')
-                err_df = err_df[cols]
+                    
+        return molecules, all_read_errors                    
+
+    def add_runs(self, headers=[], values=[], 
+                 init_pattern=None, opt_pattern=None, 
+                 freq_pattern=None, nbo_pattern=None,
+                 add_if_error=False,
+                 alignto=[], atom_groups={},
+                 ipython_print=False, folder_obj=None):
+        """add multiple Gaussian run inputs/outputs """ 
+        # set folder oject
+        if not folder_obj:
+            folder_obj = self._folder
+
+        #get variables for each run
+        mol_inputs = []
+        identifiers = []
+        for idents in product(*values):
+            mol_input = {}
+            identifiers.append(dict(zip(headers, idents)))
+            mol_input['init_fname'] = init_pattern.format(*idents) if init_pattern else None
+            if type(opt_pattern) is str:
+                mol_input['opt_fname'] = opt_pattern.format(*idents) if opt_pattern else None
+            elif type(opt_pattern) is list or type(opt_pattern) is tuple:
+                mol_input['opt_fname'] = [o.format(*idents) for o in opt_pattern]
+            else:
+                mol_input['opt_fname'] = None
+            mol_input['freq_fname'] = freq_pattern.format(*idents) if freq_pattern else None
+            mol_input['nbo_fname'] = nbo_pattern.format(*idents) if nbo_pattern else None
             
-            return err_df
+            mol_input['folder_obj'] = folder_obj
+            mol_input['alignto'] = alignto 
+            mol_input['atom_groups'] = atom_groups
+            mol_input['fail_silently'] = True
+                            
+            mol_inputs.append(mol_input)
+            
+        #create the molecules
+        molecules, read_errors = self._get_molecules(mol_inputs, folder_obj, 
+                                                     ipython_print)
+
+        #add the molecules to the internal table  
+        for molecule, idents, inputs, read_error in zip(molecules, identifiers, 
+                                                         mol_inputs, read_errors):
+            num_files = filter(lambda x:x, [inputs['init_fname'], inputs['opt_fname'], 
+                                            inputs['freq_fname'], inputs['nbo_fname']])
+            if read_error != num_files and (not read_error or add_if_error):
+                self._add_molecule(molecule, idents)
+        
+        #collate read errors into a dataframe to return  
+        read_errors = filter(len, read_errors)                         
+        err_df = pd.DataFrame(read_errors)
+        if read_errors:
+            cols = err_df.columns.tolist()
+            #rearrange columns headers
+            cols.remove('File'); cols.append('File')
+            cols.remove('Error_Message'); cols.append('Error_Message')
+            err_df = err_df[cols]
+        
+        return err_df
                 
     def get_table(self, rows=[], columns=[],  filters={},
                   precision=4, head=False, mol=False, 
@@ -721,7 +780,7 @@ class Analysis(object):
             main = main.append(df)
         
         return main
-        
+                
     def plot_freq_analysis(self, info_columns=[], rows=[], filters={}, 
                            share_plot=True, include_row=False):
         """plot frequency analysis 

@@ -148,6 +148,10 @@ class Analysis(object):
                         clear_output(wait=True)    
                     except:
                         pass
+
+        if folder_obj.islocal():
+            pool.close()
+            pool.join()
                     
         return molecules, all_read_errors                    
 

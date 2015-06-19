@@ -17,6 +17,47 @@ class Test_Analysis(object):
     def test_initialises(self):
         pg.Analysis(folder_obj=self.folder)
 
+    def test_add_run(self):
+
+        analysis = pg.Analysis(folder_obj=self.folder)
+                              
+        errors = analysis.add_run(identifiers={'Test':'test'},
+                    init_fname='*emim-cl_B_init.com',
+                    opt_fname='*emim-cl_B_6-311+g-d-p-_gd3bj_opt*unfrz.log',
+                    freq_fname='*emim-cl_B_6-311+g-d-p-_gd3bj_freq*.log',
+                    nbo_fname='*emim-cl_B_6-311+g-d-p-_gd3bj_pop-nbo-full-*.log',
+                    alignto=[3,2,1], atom_groups={'emim':range(20), 'cl':[20]})
+        that.assert_equals(len(errors), 0)
+        that.assert_equals(analysis.count_runs(), 1)
+        
+
+    def test_add_run_fails(self):
+
+        analysis = pg.Analysis(folder_obj=self.folder)
+                              
+        errors = analysis.add_run(identifiers={'Test':'test'},
+                    init_fname='none.com',
+                    opt_fname='*emim-cl_B_6-311+g-d-p-_gd3bj_opt*unfrz.log',
+                    freq_fname='*emim-cl_B_6-311+g-d-p-_gd3bj_freq*.log',
+                    nbo_fname='*emim-cl_B_6-311+g-d-p-_gd3bj_pop-nbo-full-*.log',
+                    alignto=[3,2,1], atom_groups={'emim':range(20), 'cl':[20]})
+        that.assert_equals(len(errors), 1)
+        that.assert_equals(analysis.count_runs(), 0)
+
+    def test_add_run_on_error(self):
+
+        analysis = pg.Analysis(folder_obj=self.folder)
+                              
+        errors = analysis.add_run(identifiers={'Test':'test'},
+                    init_fname='none.com',
+                    opt_fname='*emim-cl_B_6-311+g-d-p-_gd3bj_opt*unfrz.log',
+                    freq_fname='*emim-cl_B_6-311+g-d-p-_gd3bj_freq*.log',
+                    nbo_fname='*emim-cl_B_6-311+g-d-p-_gd3bj_pop-nbo-full-*.log',
+                    alignto=[3,2,1], atom_groups={'emim':range(20), 'cl':[20]},
+                    add_if_error=True)
+        that.assert_equals(len(errors), 1)
+        that.assert_equals(analysis.count_runs(), 1)
+
     def test_add_runs(self):
 
         analysis = pg.Analysis(folder_obj=self.folder)
@@ -28,6 +69,8 @@ class Test_Analysis(object):
                     freq_pattern='*{0}-{1}_{2}_6-311+g-d-p-_gd3bj_freq*.log',
                     nbo_pattern='*{0}-{1}_{2}_6-311+g-d-p-_gd3bj_pop-nbo-full-*.log',
                     alignto=[3,2,1], atom_groups={'emim':range(20), 'cl':[20]})
+        
+        that.assert_equals(analysis.count_runs(), 3)
 
     @parameterized([param('name','get_optimisation_E'),
                     param('name','calc_bond_angle', [1, 4, 9]),

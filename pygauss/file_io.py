@@ -84,12 +84,15 @@ class Folder(object):
             self._sftp = None                 
 
     def get_path(self):
+        """get folder path """
         return self._path
     
     def islocal(self):
+        """ if folder is local """
         return self._local
     
     def active(self):
+        """ if folder is active """
         if self._local:
             return True
         elif self._ssh:
@@ -139,6 +142,8 @@ class Folder(object):
     def list_files(self, pattern=None, one_file=False):
         """ list files in folder 
 
+        Parameters
+        ----------
         pattern : str
             a pattern the file must match that can include * wildcards
             
@@ -185,7 +190,7 @@ class Folder(object):
             return files[0]
     
     def read_file(self, file_name):
-        """ """
+        """return an open file ready for reading """
         mode='rb'
         
         file_name = self.list_files(file_name, one_file=True)
@@ -206,7 +211,7 @@ class Folder(object):
         return self._sftp.file(file_path, mode)
 
     def write_file(self, file_name, overwrite=False):
-        """ """
+        """return an open file ready for writing to """
         mode = 'w'
         
         if not overwrite:
@@ -237,7 +242,9 @@ class Folder(object):
     def save_mplfig(self, fig, fig_name, dpi=256, format='png'):
         """a function for outputing a matplotlib figure to a file
         
-        fig : Matplotlib.figure.Figure
+        Parameters
+        ----------
+        fig : matplotlib.figure.Figure
             a Matplotlib figure
         fig_name : str
             the desired name of the file
@@ -264,6 +271,8 @@ class Folder(object):
     def save_ipyimg(self, img, img_name):
         """a function for outputing an IPython Image to a file
         
+        Parameters
+        ----------
         img : IPython.display.Image
             an IPyton image
         img_name : str

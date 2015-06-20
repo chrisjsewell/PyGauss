@@ -117,7 +117,9 @@ class Molecule(object):
             groups of atoms that can be selected as a subset
         alignto: [int, int, int]
             the atom numbers to align the geometry to
-        
+
+        Notes
+        -----        
         any of the file names can have wildcards (e.g. 'filename*.log) in them, 
         as long as this resolves to a single path in the directory 
         
@@ -262,7 +264,7 @@ class Molecule(object):
         
         Returns
         -------
-        out : float or list of floats
+        energy : float or list of floats
             dependant on final
         """
         
@@ -284,7 +286,7 @@ class Molecule(object):
 
         Returns
         -------
-        data : matplotlib.axes._subplots.AxesSubplot
+        data : matplotlib.axes.Axes
             plotted optimisation data
         
         """
@@ -318,7 +320,7 @@ class Molecule(object):
         
         Returns
         -------
-        data : pd.DataFrame
+        data : pandas.DataFrame
             frequency data
         """
         frequencies = self._read_data('_freq_data', 'vibfreqs')
@@ -333,7 +335,7 @@ class Molecule(object):
 
         Returns
         -------
-        data : matplotlib.axes._subplots.AxesSubplot
+        data : matplotlib.axes.Axes
             plotted frequency data
         
         """
@@ -411,7 +413,7 @@ class Molecule(object):
         return transform_matrix
     
     def _apply_transfom_matrix(self, transform_matrix, coords):
-        
+        """apply transform matrix calculated in _create_transform_matrix """
         if transform_matrix is None:
             return coords
             
@@ -422,6 +424,7 @@ class Molecule(object):
     
     def _create_molecule(self, optimised=True, opt_step=False, scan_step=False, 
                          gbonds=True, data=None, alignment_atoms=None):
+        """create molecule """
         if not optimised:
             molecule = self._read_data('_init_data', 'molecule')            
         else:
@@ -601,7 +604,7 @@ class Molecule(object):
 
         Parameters
         ----------
-        images : list of pil.Image
+        images : PIL.Image list
             the images to concatenate
         gap : int
             the pixel gap between images
@@ -625,7 +628,7 @@ class Molecule(object):
 
         Parameters
         ----------
-        images : list of pil.Image
+        images : PIL.Image list
             the images to concatenate
         gap : int
             the pixel gap between images
@@ -649,7 +652,7 @@ class Molecule(object):
         
         Parameters
         ----------
-        image : pil.Image
+        image : PIL.Image
             the images to process
         color : (int, int, int)
             the RGB (0 to 255) color to set alpha to 0
@@ -750,7 +753,7 @@ class Molecule(object):
     def show_initial(self, gbonds=True, active=False, represent='vdw', 
                      rotations=[[0., 0., 0.]], zoom=1., width=300, height=300,
                      axis_length=0, lines=[], ipyimg=True):
-        """show initial geometry (before optimisation) of molecule """
+        """show initial geometry (before optimisation) of molecule coloured by atom type """
         molecule = self._create_molecule(optimised=False, gbonds=gbonds)
         
         return self._show_molecule(molecule, active=active, 
@@ -762,7 +765,7 @@ class Molecule(object):
                           represent='vdw', rotations=[[0., 0., 0.]], zoom=1.,
                           width=300, height=300, axis_length=0, lines=[], 
                           ipyimg=True):
-        """show optimised geometry of molecule """       
+        """show optimised geometry of molecule coloured by atom type """       
         molecule = self._create_molecule(optimised=True, opt_step=opt_step, 
                                          gbonds=gbonds)
 
@@ -799,7 +802,7 @@ class Molecule(object):
                              gbonds=True, active=False, optimised=True,
                         represent='vdw', rotations=[[0., 0., 0.]], zoom=1.,
                         width=300, height=300, axis_length=0, lines=[], ipyimg=True):
-               
+        """show optimised geometry of molecule with certain atoms highlighted """               
         if optimised:
             natoms = self._read_data('_opt_data', 'natom')        
         else:
@@ -945,7 +948,7 @@ class Molecule(object):
                          relative=False, minval=-1, maxval=1,
                          represent='vdw', rotations=[[0., 0., 0.]], zoom=1.,
                          width=300, height=300, axis_length=0, lines=[], ipyimg=True):
-        
+        """ show optimised geometry coloured by charge from nbo analysis """
         colorlist = self._get_charge_colors(relative, minval, maxval)
 
         molecule = self._create_molecule(optimised=True, gbonds=gbonds)
@@ -1002,9 +1005,10 @@ class Molecule(object):
             the orbital(s) to return energies for (starting at 1) 
         eunits : str
             the units of energy
+            
         Returns
         -------
-        moenergies : np.array
+        moenergies : numpy.array
             energy for each orbital
         """
         orbitals = np.array(orbitals, ndmin=1, dtype=int)
@@ -1447,6 +1451,7 @@ class Molecule(object):
         charge_info : bool
             include charge info for atoms 
             (under headings 'A_Charges' and 'D_Charges')
+            
         Returns
         -------
         analysis : pandas.DataFrame
@@ -1516,6 +1521,8 @@ class Molecule(object):
         analysis : pandas.DataFrame
             a table of interactions
 
+        Notes
+        -----
         uses a strict definition of a hydrogen bond as:
         interactions between "filled" (donor) Lewis-type Lone Pair (LP) NBOs 
         and "empty" (acceptor) non-Lewis Bonding (BD) NBOs
@@ -1542,6 +1549,7 @@ class Molecule(object):
             restrict interactions to between two lists (or identifiers) of atom indexes
         no_hbonds : bool
             whether to ignore H-Bonds in the calculation
+            
         Returns
         -------
         analysis : pandas.DataFrame
@@ -1754,7 +1762,7 @@ class Molecule(object):
             
         Returns
         -------
-        data : matplotlib.axes._subplots.AxesSubplot
+        plot : matplotlib.axes.Axes
             plotted optimisation data        
         
         """
@@ -1803,6 +1811,8 @@ class Molecule(object):
                        img_pos='', rotation=[0., 0., 0.], zoom=1, order=1):
         """plot Potential Energy Scan
 
+        Parameters
+        ----------
         img_pos : <'','local_mins','local_maxs','global_min','global_max'>
             position image(s) of molecule conformation(s) on plot
         rotation : [float, float, float]

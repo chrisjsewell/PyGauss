@@ -308,6 +308,8 @@ class Analysis(object):
     def remove_rows(self, rows):
         """remove one or more rows of molecules
 
+        Parameters
+        ----------
         rows : int or list of ints:
             the rows to remove
         

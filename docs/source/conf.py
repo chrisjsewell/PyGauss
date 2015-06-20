@@ -359,8 +359,9 @@ intersphinx_mapping = {
     'scipy': ('http://docs.scipy.org/doc/scipy/reference/', None),
     'matplotlib': ('http://matplotlib.sourceforge.net/', None),
     'pandas': ('http://pandas.pydata.org/pandas-docs/stable/', None),
-    'ipython': ('http://ipython.org/ipython-doc/stable/', None),
+    'IPython': ('http://ipython.org/ipython-doc/stable/', None),
     'docx': ('http://python-docx.readthedocs.org/en/latest/', None),
+	'PIL': ('http://pillow.readthedocs.org/', None)
     }
 autoclass_content = 'init'
 # Napoleon settings

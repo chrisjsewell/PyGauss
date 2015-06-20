@@ -354,8 +354,13 @@ texinfo_documents = [
 
 # Example configuration for intersphinx: refer to the Python standard library.
 intersphinx_mapping = {
-  'python': ('http://docs.python.org/2.7/', None),
-  'docx': ('http://python-docx.readthedocs.org/en/latest/', None),
+    'python': ('http://docs.python.org/2.7/', None),
+    'numpy': ('http://docs.scipy.org/doc/numpy/', None),
+    'scipy': ('http://docs.scipy.org/doc/scipy/reference/', None),
+    'matplotlib': ('http://matplotlib.sourceforge.net/', None),
+    'pandas': ('http://pandas.pydata.org/pandas-docs/stable/', None),
+    'ipython': ('http://ipython.org/ipython-doc/stable/', None),
+    'docx': ('http://python-docx.readthedocs.org/en/latest/', None),
     }
 autoclass_content = 'init'
 # Napoleon settings

@@ -1382,6 +1382,42 @@ class Gaussian(logfileparser.Logfile):
                     charges.append(float(nline.split()[2]))
                 self.atomcharges["natural"] = charges
                 
+        # CJS added extraction of NBO occupancy data
+        # 
+        # extract:
+        #       (Occupancy)   Bond orbital/ Coefficients/ Hybrids
+        # ---------------------------------------------------------------------------------
+        #     1. (1.97781) BD ( 1) C   1 - C   2  
+        #                ( 50.04%)   0.7074* C   1 s( 37.70%)p 1.65( 62.25%)d 0.00(  0.05%)
+        #                                            0.0000  0.6136 -0.0217 -0.0049 -0.0004
+        if line.strip() == '(Occupancy)   Bond orbital/ Coefficients/ Hybrids':
+            
+            occupancies=[]
+            p = re.compile('([\d]+).[\s]*[(]\d+.\d+[)].+[(][\s\d]+[)]')
+            
+            line = next(inputfile)
+            line = line.strip()
+            while line and line.find(' NHO Directionality')<0:
+
+                if p.match(line):
+                    null, mo, other = p.split(line)
+                    mo = int(mo)
+                    atoms = [int(d) for d in re.findall("\d+", other.split('(')[0])]
+                    if len(atoms)==1:
+                        occupancies.append([mo, atoms[0], 100.])
+                    elif len(atoms)>2:
+                        raise NotImplementedError('found a mo occupancy of over 2 atoms')
+                    else:
+                        line = next(inputfile)
+                        occ = float(line.strip().split('%')[0].split('(')[1])
+                        occupancies.append([mo, atoms[0], occ])
+                        occupancies.append([mo, atoms[1], 100.-occ])
+                
+                line = next(inputfile)
+                line = line.strip()
+
+            self.set_attribute('nbo_occupancy', occupancies)
+
         # CJS added extraction of Second Order Perturbation NBO data
         # The next segment summarizes the second-order perturbative estimates 
         # of donor-acceptor (bond-antibond) interactions in the NBO basis
@@ -1433,7 +1469,7 @@ class Gaussian(logfileparser.Logfile):
                     
                 line = next(inputfile)
             
-            self.set_attribute('sopt', sopt_analysis[:])
+            self.set_attribute('sopt', sopt_analysis)
 
         #Extract Thermochemistry
         #Temperature   298.150 Kelvin.  Pressure   1.00000 Atm.

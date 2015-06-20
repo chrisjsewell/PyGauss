@@ -6,7 +6,7 @@ Created on Thu May 14 18:55:52 2015
 
 """
 from nose import tools as that
-from nose_parameterized import parameterized
+from nose_parameterized import parameterized, param
 
 import pygauss as pg
 
@@ -67,13 +67,13 @@ RMS     Displacement     0.000326     0.001200     YES
         
         that.assert_true(self.mol.is_optimised())
 
-    def test_optimisation_E(self):
+    def test_optimisation_energy(self):
         
-        that.assert_equal(self.mol.get_optimisation_E(units='hartree'), -805.105260336)
+        that.assert_equal(self.mol.get_opt_energy(units='hartree'), -805.105260336)
 
     def test_plot_optimisation(self):
 
-        ax = self.mol.plot_optimisation_E(units='hartree')
+        ax = self.mol.plot_opt_energy(units='hartree')
 
         data_line = ax.get_lines()[0]
         xd = data_line.get_xdata()
@@ -247,6 +247,35 @@ class Test_PES(object):
                                                'CJS_emim_6311_plus_d3_scan_bck.log'])
         ax = mol2.plot_pes_scans([1,4,9,10], rotation=[0,0,90], img_pos=img_pos, zoom=0.5)
 
+class Test_Orbitals(object):
+    
+    def setUp(self):
+        self.mol = pg.Molecule(folder_obj=pg.get_test_folder(),
+                          opt_fname='CJS1_emim-cl_F_6-311+g-d-p-_gd3bj_opt-modredundant_unfrz.log',
+                          nbo_fname='CJS1_emim-cl_F_6-311+g-d-p-_gd3bj_pop-nbo-full-_unfrz.log',
+                          atom_groups={'emim':range(1,20), 'cl':[20]},
+                          alignto=[3,2,1])
+
+    def test_orbital_count(self):
+        that.assert_equal(self.mol.get_orbital_count(), 272)
+
+    def test_orbital_homo_lumo(self):
+        that.assert_equal(self.mol.get_orbital_homo_lumo(), (39,40))
+
+    @parameterized([param(1,-101.39532), 
+                    param(10, -9.30938),
+                    param(39, -0.19600),
+                    param(40, -0.04310),
+                    param(272, 215.85458),
+                    ])
+    def test_orbital_energies(self, orbital, energy):        
+        that.assert_almost_equal(self.mol.get_orbital_energies(orbital, eunits='hartree')[0], 
+                          energy)
+        
+    def test_plot_dos(self):
+        ax = self.mol.plot_dos(atom_groups=['cl'], group_colors=['blue'], 
+                     group_labels=['Cl'], group_fill=True, lbound=-20, ubound=10)
+        
 
     
 if __name__=='__main__':

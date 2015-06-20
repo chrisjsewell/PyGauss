@@ -220,6 +220,8 @@ class Analysis(object):
                   width=None, height=None, unconfined=False):
         """return pandas table of requested data in requested format
 
+        Parameters
+        -----------
         rows : integer or list of integers
             select row ids
         columns : string/integer or list of strings/integers
@@ -242,6 +244,12 @@ class Analysis(object):
             how to represent empty (nan) cells (if outputting image)
         width, height, unconfined : int, int, bool
             args for IPy Image
+        
+        Returns
+        -------
+        df : pandas.DataFrame
+            a table of data            
+            
         """
         pd.set_option('precision', precision)
         
@@ -596,8 +604,9 @@ class Analysis(object):
                 raise ValueError(
                 'mtype must be initial, optimised, nbo, highlight, sopt or hbond')                
     
-    def plot_mol_images(self, mtype='optimised', info_columns=[], info_incl_id=False,
-                        max_cols=1, label_size=20, start_letter='A', save_fname=None,
+    def plot_mol_images(self, mtype='optimised', max_cols=1,
+                        info_columns=[], info_incl_id=False,
+                        label_size=20, start_letter='A',
                         rows=[], filters={}, align_to=[], rotations=[[0., 0., 0.]],
                         gbonds=True, represent='ball_stick',
                         zoom=1., width=500, height=500, axis_length=0,
@@ -612,18 +621,16 @@ class Analysis(object):
         ----------
         mtype :
             'initial', 'optimised', 'nbo', 'highlight', 'sopt' or 'hbond'
+        max_cols : int
+            maximum columns in plot
         info_columns : list of str
             columns to use as info in caption
         info_incl_id : bool
             include molecule id number in caption
-        max_cols : int
-            maximum columns in plot
         label_size : int
             subplot label size (pts)
         start_letter : str
             starting (capital) letter for labelling subplots
-        save_fname : str
-            name of file, if you wish to save the plot to file
         rows : int or list
             index for the row of each molecule to plot (all plotted if empty)
         filters : dict
@@ -718,135 +725,189 @@ class Analysis(object):
                       mol_num % max_cols]
             ax.imshow(img)#, aspect='equal')
             ax.set_frame_on(frame_on)
+
             if label_size:
                 ax.text(0,0.8,string.ascii_uppercase[mol_num+letter_offset], 
                         size=label_size, weight="bold")
             
-            info=[]
+            info = ', '.join(df[info_columns].loc[indx].fillna('-').astype(str))
             if info_incl_id:
-                info.append(str(indx))
-            for col in info_columns:
-                try:
-                    isnan = pd.np.isnan(df[col].loc[indx])
-                except TypeError:
-                    isnan = False
-                if isnan:
-                    value = '-'
-                else:
-                    value = df[col].loc[indx]
-                    
-                info.append(str(value))
+                info = str(indx) + ', ' + info
                                 
             caption.append(
-                '(' + string.ascii_uppercase[mol_num+letter_offset] + ') ' + ', '.join(info))
+                '(' + string.ascii_uppercase[mol_num+letter_offset] + ') ' + info)
             
             mol_num += 1                            
 
         fig.tight_layout(h_pad=2.0)
-        
-        if save_fname:
-            self._folder.save_mplfig(fig, save_fname)
-        
+                
         caption = 'Figure: ' + ', '.join(caption)
         #insert newline character every 80 charaters
         #caption = re.sub("(.{80})", "\\1\n", caption, 0, re.DOTALL)
         
         return fig, caption
         
-    def get_freq_analysis(self, info_columns=[], rows=[], filters={}):
-        """return frequency analysis 
-
-        Parameters
-        ----------
-        info_columns : list of str
-            columns to use as info in caption
-        rows : int or list
-            index for the row of each molecule to plot (all plotted if empty)
-        filters : dict
-            {columns:values} to filter by
-        
-        Returns
-        -------
-        data : pd.DataFrame
-            frequency data
-        """
-        
-        df = self.get_table(columns=info_columns, rows=rows, 
-                            filters=filters, mol=True)
-        
-        main = pd.DataFrame()
-        for indx, row in df.iterrows():
-            df = row.Molecule.get_freq_analysis()
-            
-            df['row']=indx
-            for col in info_columns:
-                df[col] = row[col]
-            main = main.append(df)
-        
-        return main
                 
-    def plot_freq_analysis(self, info_columns=[], rows=[], filters={}, 
-                           share_plot=True, include_row=False):
-        """plot frequency analysis 
-
+    def plot_mol_graphs(self, gtype='energy', share_plot=False, max_cols=1, tick_rotation=0,
+                    rows=[], filters={}, info_columns=[], info_incl_id=False,
+                    start_letter='A',
+                    grid=True, sharex=True, sharey=True,
+                    color_scheme='jet', eunits='eV',
+                    per_energy=1., lbound=None, ubound=None,
+                    atom_groups=[], group_colors=[], group_labels=[], group_fill=False):
+        """get a set of data plots for each molecule
+        
         Parameters
         ----------
-        info_columns : list of str
-            columns to use as info in caption
+        gtype : str
+            the type of plot, 
+            energy = optimisation energies, 
+            freq = frequency analsis,
+            dos = Densty of States,
+        share_plot : bool
+            whether to plot all data on the same or separate axes
+        max_cols : int
+            maximum columns on plots (share_plot=False only)
+        tick_rotation : int
+            rotation of x-axis labels
         rows : int or list
             index for the row of each molecule to plot (all plotted if empty)
         filters : dict
             {columns:values} to filter by
-        share_plot : bool
-            whether to share a single plot or have multiple ones
-        include_row : bool
-            include row number in legend labels
+        info_columns : list of str
+            columns to use as info in caption
+        info_incl_id : bool
+            include molecule id number in labels
+        start_letter : str
+            starting (capital) letter for labelling subplots (share_plot=False only)
+        grid : bool
+            whether to include a grid in the axes
+        sharex : bool
+            whether to align x-axes (share_plot=False only)
+        sharey : bool
+            whether to align y-axes (share_plot=False only)
+        color_scheme : str
+            the scheme to use for each molecule (share_plot=True only)
+            according to http://matplotlib.org/examples/color/colormaps_reference.html 
+        eunits : str
+            the units of energy to use
+        per_energy : float
+            energy interval to group states by (DoS only)
+        lbound : float
+            lower bound energy (DoS only)
+        ubound: float
+            upper bound energy (DoS only)
+        atom_groups : list of lists or strings
+            atom groups to highlight (DoS only)
+        group_colors : list of str
+            highlight colour for each atom group (DoS only)
+            format adheres to matplotlib.colors
+        group_labels : list of str
+            label for each atom group (DoS only)
+        group_fill : bool
+            whether to fill colour for groups (DoS only)
         
         Returns
         -------
         data : matplotlib.figure.Figure
             plotted frequency data
+        caption : str
+            A caption describing each subplot, given info_columns
+            
         """
+        df = self.get_table(columns=info_columns, rows=rows, 
+                            filters=filters, mol=True)
+        num_plots = df.index.shape[0]
 
-        df = self.get_freq_analysis(info_columns=info_columns, rows=rows, 
-                                    filters=filters)
-        
+        if gtype == 'energy':
+            mol_func = 'plot_opt_energy'
+            x_label = 'Optimisation Step'
+            y_label = 'Energy ({0})'.format(eunits)
+            all_plot_kwargs = {'units':eunits}
+            per_plot_kwargs = {'linecolor':getattr(cm,color_scheme)(
+                                            np.linspace(0.1, 0.9, num_plots))}
+        elif gtype == 'freq':
+            mol_func = 'plot_freq_analysis'
+            x_label = 'Frequency ($cm^{-1}$)'
+            y_label = 'IR Intensity ($km/mol$)' 
+            all_plot_kwargs = {}
+            per_plot_kwargs = {'color':getattr(cm,color_scheme)(
+                                                np.linspace(0, 1, num_plots)),
+                               'alpha':np.linspace(1, 0.5, num_plots),
+                                'marker_size':np.linspace(25, 15, num_plots)}
+        elif gtype == 'dos':
+            if share_plot:
+                raise ValueError('share_plots not available for Density of States')
+            mol_func = 'plot_dos'
+            x_label = 'States per {0} {1}'.format(per_energy, eunits)
+            y_label = 'Energy ({})'.format(eunits)
+            all_plot_kwargs = {'eunits':eunits, 'per_energy':per_energy, 
+                               'lbound':lbound, 'ubound':ubound,
+                               'atom_groups':atom_groups, 'group_colors':group_colors, 
+                               'group_labels':group_labels, 'group_fill':group_fill}
+        else:
+            raise ValueError('gtype; {0}, not available'.format(gtype))
+
+        ax_num = 0
+        caption = []  
+
         if share_plot:
             fig, ax = plt.subplots()
-        
-            colors = cm.rainbow(np.linspace(0, 1, df.row.unique().shape[0]))
-            alphas = np.linspace(1, 0.5, df.row.unique().shape[0])
-            m_sizes = np.linspace(25, 15, df.row.unique().shape[0])
             
-            for data, c, a, s in zip(df.groupby('row'), colors, alphas, m_sizes):
-                row, group = data
-                label = ', '.join([str(group[col].iloc[0]) for col in info_columns])
-                if include_row:
-                    label += ' ({0})'.format(row)
-                ax.bar(group['Frequency ($cm^{-1}$)'], group['IR Intensity ($km/mol$)'], 
-                         align='center', width=30, linewidth=0,  alpha=a,color=c, label=label)
-                ax.scatter(group['Frequency ($cm^{-1}$)'], group['IR Intensity ($km/mol$)'], 
-                                 marker='o', alpha=a, color=c, s=s)
+            legend = []
+            for indx, row in df.iterrows():
+                plot_kwargs = all_plot_kwargs.copy()
+                for k, v in per_plot_kwargs.iteritems():
+                    plot_kwargs[k] = v[ax_num]
+                getattr(row.Molecule, mol_func)(ax=ax, **plot_kwargs)
 
-            ax.grid()
-            ax.legend(bbox_to_anchor=(1.05, 1), loc=2, borderaxespad=0.)
-            ax.set_ybound(-10)
-            ax.set_xlabel('Frequency ($cm^{-1}$)')
-            ax.set_ylabel('IR Intensity ($km/mol$)')       
+                label = ', '.join(row[info_columns].fillna('-').astype(str))
+                if info_incl_id:
+                    label = str(indx) + ', ' + label
+                legend.append(label)
+                
+                ax_num += 1
+
+            ax.grid(grid)
+            for tick in ax.get_xticklabels():
+                tick.set_rotation(tick_rotation)
+            ax.legend(legend, bbox_to_anchor=(1.05, 1), loc=2, borderaxespad=0.)
         else:
-            fig, axes = plt.subplots(df.row.unique().shape[0], sharex=True, sharey=True)            
-            for data, ax in zip(df.groupby('row'), axes):
-                row, group = data
-                label = ', '.join([str(group[col].iloc[0]) for col in info_columns])
-                if include_row:
-                    label += ' ({0})'.format(row)
-                ax.bar(group['Frequency ($cm^{-1}$)'], group['IR Intensity ($km/mol$)'], 
-                         align='center', width=30, linewidth=0)
-                ax.scatter(group['Frequency ($cm^{-1}$)'], group['IR Intensity ($km/mol$)'], 
-                                 marker='o')
-                ax.set_title(label)
-                ax.grid()
-                ax.set_ybound(-10)
+        
+            num_rows = int(math.ceil(num_plots/float(max_cols)))
+            num_cols = min([max_cols, num_plots])
+            fig, axes = plt.subplots(nrows=num_rows, ncols=num_cols, squeeze=False,
+                                     sharex=sharex, sharey=sharey)
+
+            letter_offset = string.ascii_uppercase.find(start_letter)
+            if letter_offset == -1:
+                raise ValueError('start_letter must be an uppercase single letter')
+
+            for indx, row in df.iterrows():
+                i = int(math.ceil((ax_num+1)/float(max_cols)))-1
+                j = ax_num % max_cols               
+                
+                getattr(row.Molecule, mol_func)(ax=axes[i,j], **all_plot_kwargs) 
+                axes[i,j].grid(grid)
+                for tick in axes[i,j].get_xticklabels():
+                    tick.set_rotation(tick_rotation)
+
+                info = ', '.join(row[info_columns].fillna('-').astype(str))
+                if info_incl_id:
+                    info = str(indx) + ', ' + info
+                letter = string.ascii_uppercase[ax_num+letter_offset]
+                axes[i,j].set_title(letter, fontweight="bold")
+                    
+                caption.append('(' + letter + ') ' + info)
+                
+                ax_num += 1
+            
+            #hide extraneous axes
+            for extra_ax in range(ax_num, num_rows*num_cols):
+                i = int(math.ceil((extra_ax+1)/float(max_cols)))-1
+                j = extra_ax % max_cols  
+                axes[i,j].axis('off')
+
 
             ax = fig.add_subplot(111)    # The big subplot
             ax.tick_params(top='off', bottom='off', left='off', right='off',
@@ -855,11 +916,16 @@ class Analysis(object):
             ax.set_xticklabels([])
             ax.set_yticklabels([])           
             ax.set_frame_on(False)
-            ax.set_ylabel('IR Intensity ($km/mol$)')  
-            ax.set_xlabel('Frequency ($cm^{-1}$)')
-            
-        fig.tight_layout()
-        return fig
+        
+        ax.set_xlabel(x_label)  
+        ax.set_ylabel(y_label)
+        
+        fig.tight_layout(h_pad=2.0)
+        
+        caption = 'Figure: ' + ', '.join(caption)
+        
+        return fig, caption
+        
         
     def plot_radviz_comparison(self, category_column, 
                                columns=[], rows=[], filters={}, point_size=30,

@@ -57,6 +57,7 @@ class ccData(object):
         mult -- multiplicity of the system (integer)
         natom -- number of atoms (integer)
         nbasis -- number of basis functions (integer)
+        nbo_occupancy -- occupancy of natural nod orbitals
         nmo -- number of molecular orbitals (integer)
         nocoeffs -- natural orbital coefficients (array[2])
         optdone -- flags whether an optimization has converged (Boolean)
@@ -121,6 +122,7 @@ class ccData(object):
         "mult":           int,
         "natom":          int,
         "nbasis":         int,
+        "nbo_occupancy":  list,
         "nmo":            int,
         "nocoeffs":       numpy.ndarray,
         "nscans":         int,

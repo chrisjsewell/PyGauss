@@ -250,7 +250,7 @@ class Molecule(object):
         """ was the geometry optimised """
         return self._read_data('_opt_data', 'optdone')
 
-    def get_optimisation_E(self, units='eV', final=True):
+    def get_opt_energy(self, units='eV', final=True):
         """ return the SCF optimisation energy 
         
         Parameters
@@ -279,20 +279,32 @@ class Molecule(object):
         
         return energies[-1] if final else energies  
             
-    def plot_optimisation_E(self, units='eV'):
-        """ plot SCF optimisation energy """
+    def plot_opt_energy(self, units='eV', linecolor='blue', ax=None):
+        """ plot SCF optimisation energy 
+
+        Returns
+        -------
+        data : matplotlib.axes._subplots.AxesSubplot
+            plotted optimisation data
+        
+        """
         energies = self._read_data('_opt_data', 'scfenergies')
+        ylabel = 'Energy ({0})'.format(units)
+        xlabel = 'Optimisation Step'
+      
         for data in reversed(self._prev_opt_data):
             energies = np.concatenate([data.read('scfenergies'), energies])
             
         if not units == 'eV':
             energies = convertor(energies, 'eV', units)
         
-        f, ax = plt.subplots()
-        ax.plot(energies)
-        ax.set_ylabel('Energy ({0})'.format(units))
-        ax.set_xlabel('Optimisation Step')
-        ax.grid(True)
+        if not ax:
+            f, ax = plt.subplots()
+            ax.set_xlabel(xlabel)
+            ax.set_ylabel(ylabel)
+            ax.grid(True)
+            
+        ax.plot(energies, color=linecolor)
         
         return ax
 
@@ -316,7 +328,7 @@ class Molecule(object):
                              columns=['Frequency ($cm^{-1}$)', 
                              'IR Intensity ($km/mol$)'])
 
-    def plot_freq_analysis(self):
+    def plot_freq_analysis(self, color='blue', alpha=1, marker_size=20, ax=None):
         """plot frequency analysis 
 
         Returns
@@ -325,19 +337,19 @@ class Molecule(object):
             plotted frequency data
         
         """
-
         df = self.get_freq_analysis()
         
-        fig, ax = plt.subplots()
-                
+        if not ax:
+            fig, ax = plt.subplots()
+            ax.grid(True)
+            ax.set_xlabel('Frequency ($cm^{-1}$)')
+            ax.set_ylabel('IR Intensity ($km/mol$)')    
+
         ax.bar(df['Frequency ($cm^{-1}$)'], df['IR Intensity ($km/mol$)'], 
-                 align='center', width=30, linewidth=0)
+                 align='center', width=30, linewidth=0, alpha=alpha,color=color)
         ax.scatter(df['Frequency ($cm^{-1}$)'], df['IR Intensity ($km/mol$)'] , 
-                      marker='o',alpha=0.7)
-        ax.grid()
-        ax.set_ybound(-10)
-        ax.set_xlabel('Frequency ($cm^{-1}$)')
-        ax.set_ylabel('IR Intensity ($km/mol$)')    
+                      marker='o',alpha=alpha,color=color, s=marker_size)
+        ax.set_ybound(-10)                
         
         return ax
 
@@ -1643,6 +1655,136 @@ class Molecule(object):
                                   transparent=transparent,
                                   ipyimg=ipyimg) 
 
+    def _get_dos(self, mol, atoms=[], dos_type='all', eunits='eV',
+                per_energy=1., lbound=None, ubound=None):
+
+        homo, lumo = mol.get_orbital_homo_lumo()
+        num_mo = mol.get_orbital_count()
+        
+        if not lbound:
+            lbound = mol.get_orbital_energies(1, eunits=eunits)
+        if not ubound:
+            ubound = mol.get_orbital_energies(mol.get_orbital_count(), eunits=eunits)
+
+        #round down/up to nearest multiple of per_energy                                         
+        lenergy_bound = lbound - (lbound % per_energy)
+        uenergy_bound = ubound + (per_energy - ubound % per_energy)
+        
+        num_bins = int((uenergy_bound-lenergy_bound) / per_energy)
+    
+        if atoms:    
+            df_occupancy = pd.DataFrame(mol._read_data('_nbo_data', 'nbo_occupancy'),
+                                        columns=['NBO', 'Atom', 'Occ'])
+            sub_df = df_occupancy[df_occupancy.Atom.isin(atoms)].groupby('NBO').sum()
+            sub_df = sub_df.reindex(range(1, mol.get_orbital_count()+1))
+            weights = sub_df.Occ.fillna(0)/100.
+        else:
+            weights=None
+    
+        hist, bin_edges = np.histogram(
+                        mol.get_orbital_energies(np.arange(1, num_mo+1), eunits=eunits),
+                        bins=num_bins, range=(lenergy_bound, uenergy_bound), 
+                        density=False, weights=weights)
+        energy = bin_edges[:-1] + 0.5*(bin_edges[1:]-bin_edges[:-1])
+        
+        df = pd.DataFrame(zip(energy, hist), columns=['Energy', 'Hist'])
+        
+        if dos_type == 'all':
+            pass
+        elif dos_type == 'homo':
+            df = df[df.Energy <= mol.get_orbital_energies(homo, eunits=eunits)[0]]
+        elif dos_type == 'lumo':
+            df = df[df.Energy >= mol.get_orbital_energies(lumo, eunits=eunits)[0]]
+        else:
+            raise ValueError('dos_type must be; all. homo or lumo')
+
+        return df
+
+    def _plot_single_dos(self, mol, atoms=[], dos_type='all', 
+                 eunits='eV', per_energy=1., lbound=None, ubound=None, 
+                 ax=None,
+                 color='g', label='', 
+                 line=True, linestyle='-', linewidth=2, linealpha = 1, 
+                 fill=True, fillalpha = 1):
+
+        df = self._get_dos(mol, atoms=atoms, dos_type=dos_type, 
+                           per_energy=per_energy, eunits=eunits,
+                           lbound=lbound, ubound=ubound)        
+                
+        if not ax:
+            fig, ax = plt.subplots()
+            
+        if line:
+            ax.plot(df.Hist, df.Energy, label=label, color=color, 
+                    alpha=linealpha, linestyle=linestyle, linewidth=linewidth)   
+        else:
+            ax.plot([], [], label=label, color=color, linewidth=linewidth)   
+    
+        if fill:
+            ax.fill_betweenx(df.Energy, df.Hist, color=color, alpha=fillalpha)
+        
+        return ax
+    
+    def plot_dos(self, eunits='eV', per_energy=1., lbound=None, ubound=None,
+                 atom_groups=[], group_colors=[], group_labels=[], group_fill=False,
+                 ax=None):
+        """plot Density of States
+        
+        Parameters
+        -----------
+        eunits : str
+            unit of energy
+        per_energy : float
+            energy interval to group states by
+        lbound : float
+            lower bound energy
+        ubound: float
+            upper bound energy
+        atom_groups : list of lists or strings
+            atom groups to highlight
+        group_colors : list of str
+            highlight colour for each atom group
+            format adheres to matplotlib.colors
+        group_labels : list of str
+            label for each atom group
+        group_fill : bool
+            whether to fill colour for groups
+        ax : matplotlib.Axes
+            an existing axes to plot the data on
+            
+        Returns
+        -------
+        data : matplotlib.axes._subplots.AxesSubplot
+            plotted optimisation data        
+        
+        """
+        if not ax:
+            fig, ax = plt.subplots()
+            ax.set_xlabel('States per {0} {1}'.format(per_energy, eunits))
+            ax.set_ylabel('Energy ({})'.format(eunits))
+
+        mol = self
+        
+        self._plot_single_dos(mol, ax=ax, label='HOMO', dos_type='homo', color='g', 
+                      line=False, fillalpha=0.3, 
+                      per_energy=per_energy, eunits=eunits, lbound=lbound, ubound=ubound)
+        self._plot_single_dos(mol, ax=ax, label='LUMO', dos_type='lumo', color='r', 
+                      fillalpha=0.3, line=False, 
+                      per_energy=per_energy, eunits=eunits, lbound=lbound, ubound=ubound)
+
+        for atoms, color, label in zip(atom_groups, group_colors, group_labels):  
+
+            if type(atoms) is str:
+                atoms = self.get_atom_group(atoms)
+                
+            self._plot_single_dos(mol, ax=ax, atoms=atoms, fill=group_fill,
+                          color=color, label=label,
+                          per_energy=per_energy, eunits=eunits, lbound=lbound, ubound=ubound)
+
+        ax.legend(framealpha=0.5)
+        ax.grid(True)
+        
+        return ax
 
     def _img_to_plot(self, x, y, image, ax=None, zoom=1):
         """add image to matplotlib axes at (x,y) """
@@ -1703,6 +1845,7 @@ class Molecule(object):
         ax.scatter(angles, energies)
         ax.set_ylabel('Energy ({0})'.format(eunits))
         ax.set_xlabel(xlabel)
+        ax.grid(True)
             
         feature_dict = {
         '':[],

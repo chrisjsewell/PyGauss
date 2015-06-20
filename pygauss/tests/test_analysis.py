@@ -72,7 +72,7 @@ class Test_Analysis(object):
         
         that.assert_equals(analysis.count_runs(), 3)
 
-    @parameterized([param('name','get_optimisation_E'),
+    @parameterized([param('name','get_opt_energy'),
                     param('name','calc_bond_angle', [1, 4, 9]),
                     param('name','calc_dihedral_angle', [1, 4, 9, 10]),
                     param('name','calc_min_dist', 'emim', 'cl'),
@@ -110,3 +110,29 @@ class Test_Analysis(object):
         fig, caption = analysis.plot_mol_images(mtype=mtype, max_cols=2,
                                 info_columns=['Cation', 'Anion', 'Initial'],
                                 rotations=[[0,0,90]])
+    
+    @parameterized([param('energy', True),
+                    param('energy', False),
+                    param('freq', True),
+                    param('freq', False),
+                    param('dos', False, atom_groups=['cl'], group_colors=['blue'], 
+                          group_labels=['Cl'], group_fill=True, lbound=-20, ubound=10),
+                  ])
+    def test_tbl_graphs(self, gtype, share_plot, **kwargs):
+
+        analysis = pg.Analysis(folder_obj=pg.get_test_folder())
+        analysis.add_runs(headers=['Cation', 'Anion', 'Initial'], 
+                               values=[['emim'], ['cl'],
+                                       ['B', 'F', 'FE']],
+            init_pattern='*{0}-{1}_{2}_init.com',
+            opt_pattern='*{0}-{1}_{2}_6-311+g-d-p-_gd3bj_opt*unfrz.log',
+            freq_pattern='*{0}-{1}_{2}_6-311+g-d-p-_gd3bj_freq*.log',
+            nbo_pattern='*{0}-{1}_{2}_6-311+g-d-p-_gd3bj_pop-nbo-full-*.log',
+            alignto=[3,2,1], atom_groups={'emim':range(20), 'cl':[20]})
+            
+        fig, caption = analysis.plot_mol_graphs(gtype=gtype, share_plot=share_plot, 
+                                                info_columns=['Cation', 'Anion', 'Initial'], 
+                                                max_cols=2, info_incl_id=True, tick_rotation=45, 
+                                                **kwargs)
+        
+        that.assert_equal(type(caption), str)

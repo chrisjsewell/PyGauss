@@ -4,7 +4,7 @@ import copy
 import math
 import string
 import multiprocessing
-
+import platform
 
 import numpy as np
 import pandas as pd
@@ -120,7 +120,7 @@ class Analysis(object):
     def _get_molecules(self, mol_inputs, folder_obj, identifiers, ipython_print=False):
         """ get molecules """
 
-        if folder_obj.islocal():    
+        if folder_obj.islocal() and not platform.system() == 'Windows':    
             pool = multiprocessing.Pool(processes=multiprocessing.cpu_count())
             mapping = pool.imap
         else:
@@ -134,7 +134,7 @@ class Analysis(object):
 
                 read_errors = []
                 for fname, msg in molecule.get_init_read_errors():
-                    idents = identifiers.copy()
+                    idents = identifiers[len(molecules)-1].copy()
                     idents.pop('Molecule', '_')
                     idents['File'] = fname
                     idents['Error_Message'] = msg
@@ -149,7 +149,7 @@ class Analysis(object):
                     except:
                         pass
 
-        if folder_obj.islocal():
+        if folder_obj.islocal() and not platform.system() == 'Windows':
             pool.close()
             pool.join()
                     
@@ -191,7 +191,7 @@ class Analysis(object):
             
         #create the molecules
         molecules, read_errors = self._get_molecules(mol_inputs, folder_obj, 
-                                                     ipython_print)
+                                                     identifiers, ipython_print)
 
         #add the molecules to the internal table  
         for molecule, idents, inputs, read_error in zip(molecules, identifiers, 
@@ -203,7 +203,7 @@ class Analysis(object):
         
         #collate read errors into a dataframe to return  
         read_errors = filter(len, read_errors)                         
-        err_df = pd.DataFrame(read_errors)
+        err_df = pd.DataFrame([item for sublist in read_errors for item in sublist])
         if read_errors:
             cols = err_df.columns.tolist()
             #rearrange columns headers

@@ -72,6 +72,23 @@ class Test_Analysis(object):
         
         that.assert_equals(analysis.count_runs(), 3)
 
+
+    @parameterized([param(False, 1),
+                    param(True, 2)])
+    def test_add_runs_with_errors(self, add_if_error, count):
+
+        analysis = pg.Analysis(folder_obj=self.folder)
+        errors = analysis.add_runs(headers=['Cation', 'Anion', 'Initial'], 
+                                       values=[['emim'], ['cl'],
+                                               ['B', 'Error']],
+                    init_pattern='*{0}-{1}_{2}_init.com',
+                    opt_pattern='*{0}-{1}_{2}_6-311+g-d-p-_gd3bj_opt*unfrz.log',
+                    freq_pattern='*{0}-{1}_{2}_6-311+g-d-p-_gd3bj_freq*.log',
+                    nbo_pattern='*{0}-{1}_{2}_6-311+g-d-p-_gd3bj_pop-nbo-full-*.log',
+                    add_if_error=add_if_error)
+        
+        that.assert_equals(analysis.count_runs(), count)
+
     @parameterized([param('name','get_opt_energy'),
                     param('name','calc_bond_angle', [1, 4, 9]),
                     param('name','calc_dihedral_angle', [1, 4, 9, 10]),

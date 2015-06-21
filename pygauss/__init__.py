@@ -11,11 +11,11 @@ from ._version import __version__
 # mokeypatch cclib/chemlab classes improved for this implementation 
 # TODO don't think this is working, use mock?
 
-import os, sys
+import os, sys, platform
 
 ##TODO a weird thing sometimes happens if docx installed, 
 #whereby 'import enum' installs docx/enum instead of enum (req for numba)!?
-if sys.platform == 'win32':
+if platform.system() == 'Windows':
     import imp
     init = os.path.abspath(__file__)
     pkg = os.path.dirname(init)
@@ -42,12 +42,14 @@ def get_test_folder():
 
 from .utils import df_to_img, set_imagik_exe
 
-def run_nose(verbose=False):
+def run_nose(doctests=False, verbose=False):
     import pygauss, nose
     nose_argv = sys.argv
     nose_argv += ['--detailed-errors', '--exe']
     if verbose:
         nose_argv.append('-v')
+    if doctests:
+        nose_argv.append('--with-doctest')        
     initial_dir = os.getcwd()
     my_package_file = os.path.abspath(pygauss.__file__)
     my_package_dir = os.path.dirname(my_package_file)

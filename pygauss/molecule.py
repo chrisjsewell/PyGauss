@@ -1692,21 +1692,22 @@ class Molecule(object):
         else:
             weights=None
     
-        hist, bin_edges = np.histogram(
+        freq, e_edges = np.histogram(
                         mol.get_orbital_energies(np.arange(1, num_mo+1), eunits=eunits),
                         bins=num_bins, range=(lenergy_bound, uenergy_bound), 
                         density=False, weights=weights)
-        energy = bin_edges[:-1] + 0.5*(bin_edges[1:]-bin_edges[:-1])
+        #energy = bin_edges[:-1] + 0.5*(bin_edges[1:]-bin_edges[:-1])
         
-        df = pd.DataFrame(zip(energy, hist), columns=['Energy', 'Hist'])
+        df = pd.DataFrame(zip(e_edges[:-1], e_edges[1:], freq), 
+                          columns=['MinEnergy', 'MaxEnergy', 'Freq'])
         
         homo, lumo = mol.get_orbital_homo_lumo()
         if dos_type == 'all':
             pass
         elif dos_type == 'homo':
-            df = df[df.Energy <= mol.get_orbital_energies(homo, eunits=eunits)[0]]
+            df = df[df.MinEnergy <= mol.get_orbital_energies(homo, eunits=eunits)[0]]
         elif dos_type == 'lumo':
-            df = df[df.Energy >= mol.get_orbital_energies(lumo, eunits=eunits)[0]]
+            df = df[df.MaxEnergy >= mol.get_orbital_energies(lumo, eunits=eunits)[0]]
         else:
             raise ValueError('dos_type must be; all, homo or lumo')
 
@@ -1721,20 +1722,23 @@ class Molecule(object):
 
         df = self._get_dos(mol, atoms=atoms, dos_type=dos_type, 
                            per_energy=per_energy, eunits=eunits,
-                           lbound=lbound, ubound=ubound)        
+                           lbound=lbound, ubound=ubound)    
+        
+        energy = df.set_index('Freq').stack().values
+        freq = df.set_index('Freq').stack().index.droplevel(level=1).values
                 
         if not ax:
             fig, ax = plt.subplots()
             
         if line:
-            ax.plot(df.Hist, df.Energy, label=label, color=color, 
+            ax.plot(freq, energy, label=label, color=color, 
                     alpha=linealpha, linestyle=linestyle, linewidth=linewidth)
                     #drawstyle='steps-mid')   
         else:
             ax.plot([], [], label=label, color=color, linewidth=linewidth)   
     
         if fill:
-            ax.fill_betweenx(df.Energy, df.Hist, color=color, alpha=fillalpha)
+            ax.fill_betweenx(energy, freq, color=color, alpha=fillalpha)
         
         return ax
     
@@ -1793,10 +1797,7 @@ class Molecule(object):
                 atoms = self.get_atom_group(atoms)
                 
             self._plot_single_dos(mol, ax=ax, atoms=atoms, fill=group_fill,
-                          color=color, label=label, dos_type='homo',
-                          per_energy=per_energy, eunits=eunits, lbound=lbound, ubound=ubound)
-            self._plot_single_dos(mol, ax=ax, atoms=atoms, fill=group_fill,
-                          color=color, label=None,  dos_type='lumo',  
+                          color=color, label=label,
                           per_energy=per_energy, eunits=eunits, lbound=lbound, ubound=ubound)
 
         ax.set_ybound(lbound, ubound)

@@ -19,7 +19,10 @@ import matplotlib as mpl
 import matplotlib.pyplot as plt
 import matplotlib.cm as cm
 from matplotlib.offsetbox import OffsetImage, AnnotationBbox
-from mpl_toolkits.mplot3d import Axes3D
+
+with warnings.catch_warnings():
+    warnings.simplefilter("ignore")
+    from mpl_toolkits.mplot3d import Axes3D
 
 import pandas as pd
 
@@ -1666,7 +1669,6 @@ class Molecule(object):
     def _get_dos(self, mol, atoms=[], dos_type='all', eunits='eV',
                 per_energy=1., lbound=None, ubound=None):
 
-        homo, lumo = mol.get_orbital_homo_lumo()
         num_mo = mol.get_orbital_count()
         
         if not lbound:
@@ -1684,8 +1686,9 @@ class Molecule(object):
             df_occupancy = pd.DataFrame(mol._read_data('_nbo_data', 'nbo_occupancy'),
                                         columns=['NBO', 'Atom', 'Occ'])
             sub_df = df_occupancy[df_occupancy.Atom.isin(atoms)].groupby('NBO').sum()
-            sub_df = sub_df.reindex(range(1, mol.get_orbital_count()+1))
+            sub_df = sub_df.reindex(range(1, num_mo+1))
             weights = sub_df.Occ.fillna(0)/100.
+            
         else:
             weights=None
     
@@ -1697,6 +1700,7 @@ class Molecule(object):
         
         df = pd.DataFrame(zip(energy, hist), columns=['Energy', 'Hist'])
         
+        homo, lumo = mol.get_orbital_homo_lumo()
         if dos_type == 'all':
             pass
         elif dos_type == 'homo':
@@ -1704,7 +1708,7 @@ class Molecule(object):
         elif dos_type == 'lumo':
             df = df[df.Energy >= mol.get_orbital_energies(lumo, eunits=eunits)[0]]
         else:
-            raise ValueError('dos_type must be; all. homo or lumo')
+            raise ValueError('dos_type must be; all, homo or lumo')
 
         return df
 
@@ -1724,7 +1728,8 @@ class Molecule(object):
             
         if line:
             ax.plot(df.Hist, df.Energy, label=label, color=color, 
-                    alpha=linealpha, linestyle=linestyle, linewidth=linewidth)   
+                    alpha=linealpha, linestyle=linestyle, linewidth=linewidth)
+                    #drawstyle='steps-mid')   
         else:
             ax.plot([], [], label=label, color=color, linewidth=linewidth)   
     
@@ -1735,7 +1740,7 @@ class Molecule(object):
     
     def plot_dos(self, eunits='eV', per_energy=1., lbound=None, ubound=None,
                  atom_groups=[], group_colors=[], group_labels=[], group_fill=False,
-                 ax=None):
+                 legend_size=10, ax=None):
         """plot Density of States
         
         Parameters
@@ -1757,6 +1762,8 @@ class Molecule(object):
             label for each atom group
         group_fill : bool
             whether to fill colour for groups
+        legend_size : int
+            the font size (in pts) for the legend
         ax : matplotlib.Axes
             an existing axes to plot the data on
             
@@ -1786,10 +1793,14 @@ class Molecule(object):
                 atoms = self.get_atom_group(atoms)
                 
             self._plot_single_dos(mol, ax=ax, atoms=atoms, fill=group_fill,
-                          color=color, label=label,
+                          color=color, label=label, dos_type='homo',
+                          per_energy=per_energy, eunits=eunits, lbound=lbound, ubound=ubound)
+            self._plot_single_dos(mol, ax=ax, atoms=atoms, fill=group_fill,
+                          color=color, label=None,  dos_type='lumo',  
                           per_energy=per_energy, eunits=eunits, lbound=lbound, ubound=ubound)
 
-        ax.legend(framealpha=0.5)
+        ax.set_ybound(lbound, ubound)
+        ax.legend(framealpha=0.5, prop={'size':legend_size})
         ax.grid(True)
         
         return ax

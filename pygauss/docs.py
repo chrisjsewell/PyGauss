@@ -99,6 +99,7 @@ class MSDocument(object):
         """add dataframe as a table
         
         """
+        df = df.fillna('-')
         rows, cols = df.shape 
 
         if type(df.columns) == Index:

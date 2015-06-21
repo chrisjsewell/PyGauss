@@ -753,10 +753,11 @@ class Analysis(object):
     def plot_mol_graphs(self, gtype='energy', share_plot=False, max_cols=1, tick_rotation=0,
                     rows=[], filters={}, info_columns=[], info_incl_id=False,
                     start_letter='A',
-                    grid=True, sharex=True, sharey=True,
+                    grid=True, sharex=True, sharey=True, legend_size=10,
                     color_scheme='jet', eunits='eV',
                     per_energy=1., lbound=None, ubound=None,
-                    atom_groups=[], group_colors=[], group_labels=[], group_fill=False):
+                    atom_groups=[], group_colors=[], 
+                    group_labels=[], group_fill=False):
         """get a set of data plots for each molecule
         
         Parameters
@@ -788,6 +789,8 @@ class Analysis(object):
             whether to align x-axes (share_plot=False only)
         sharey : bool
             whether to align y-axes (share_plot=False only)
+        legend_size : int
+            the font size (in pts) for the legend
         color_scheme : str
             the scheme to use for each molecule (share_plot=True only)
             according to http://matplotlib.org/examples/color/colormaps_reference.html 
@@ -846,7 +849,8 @@ class Analysis(object):
             all_plot_kwargs = {'eunits':eunits, 'per_energy':per_energy, 
                                'lbound':lbound, 'ubound':ubound,
                                'atom_groups':atom_groups, 'group_colors':group_colors, 
-                               'group_labels':group_labels, 'group_fill':group_fill}
+                               'group_labels':group_labels, 'group_fill':group_fill,
+                               'legend_size':legend_size}
         else:
             raise ValueError('gtype; {0}, not available'.format(gtype))
 
@@ -873,7 +877,8 @@ class Analysis(object):
             ax.grid(grid)
             for tick in ax.get_xticklabels():
                 tick.set_rotation(tick_rotation)
-            ax.legend(legend, bbox_to_anchor=(1.05, 1), loc=2, borderaxespad=0.)
+            ax.legend(legend, bbox_to_anchor=(1.05, 1), loc=2, borderaxespad=0.,
+                      prop={'size':legend_size})
         else:
         
             num_rows = int(math.ceil(num_plots/float(max_cols)))

@@ -324,12 +324,12 @@ The methods mentioned for indivdiual molecules can be applied to all or a subset
       <th></th>
       <th>Opt</th>
       <th>Energy (au)</th>
-      <th>chain, $\psi$</th>
+      <th>chain, &#968</th>
       <th>Charge</th>
       <th>Charge</th>
-      <th>$r$</th>
-      <th>$\theta$</th>
-      <th>$\phi$</th>
+      <th>r</th>
+      <th>&#952</th>
+      <th>&#966</th>
       <th>h-bond</th>
     </tr>
     <tr>

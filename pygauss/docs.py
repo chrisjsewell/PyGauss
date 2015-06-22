@@ -13,7 +13,7 @@ from docx.enum.text import WD_ALIGN_PARAGRAPH
 from docx.enum.section import WD_ORIENT
 from docx.shared import Cm
 
-from pandas import Index, MultiIndex
+from pandas import DataFrame, Index, MultiIndex
 
 class MSDocument(object):
     """a class to output a Microsoft Word Document
@@ -46,29 +46,112 @@ class MSDocument(object):
         dirlist = self.__class__.__dict__.keys() + self._docx.__class__.__dict__.keys()
         return sorted(dirlist)           
     
-    def add_markdown(self, text='', style='Body Text'):
-        """adds a paragraph to the document, allowing for 
-        markdown style **bold** and *italic* text
-        """
+
+    _MARKUPS = {
+            'italic':('*','*'),
+            'bold':('**', '**'),
+            'subscript':('_{', '}'),
+            'superscript':('^{', '}'),
+            'strike':('~~','~~'),
+            'math': ('$', '$')
+            }
+
+    def _get_markup(self, para):
+        """get markup """
+
+        df = DataFrame(self._MARKUPS, index=['Enter', 'Exit']).T
+        df['In']=False
         
-        p = self._docx.add_paragraph(style=style)
-        if not text:
-            return p
+        sects=[]
+        place=0
+        while place > -1:
+            place = -1
+            markup = None
+            estr = None
+            for mark, enter in df[df.In==False].Enter.iterkv():
+                find = para.find(enter)
+                if find > -1 and (find<=place or place==-1):
+                    if find == place and len(enter) < len(estr):
+                        continue
+                    place = find
+                    markup = mark
+                    estr = enter
+            for mark, exit in df[df.In==True].Exit.iterkv():
+                find = para.find(exit)
+                if find > -1 and (find<=place or place==-1):
+                    if find == place and len(exit) < len(estr):
+                        continue
+                    place = find
+                    markup = mark
+                    estr = exit
+        
+            if place > -1:
+                sects.append([para[:place], df[df.In==True].index.tolist()])
+                df.set_value(markup, 'In', not df.get_value(markup, 'In'))
+                para = para[place+len(estr):]
+
+        if df.In.any():
+            raise ValueError(
+                'the markup does not exit from;\n{}'.format(df[df.In==True]))
             
-        bold_split = text.split('**')
-        for i, text in enumerate(bold_split):
-            if i % 2 == 0:
-                italic_split = text.split('*')
-                for j, other in enumerate(italic_split):
-                    if j % 2 == 0:
-                        p.add_run(other)
-                    else:
-                        p.add_run(other).italic = True
-            else:
-                p.add_run(text).bold = True
+        sects.append([para, []])
+                         
+        return sects
+
+    def add_markup(self, text='', style='Body Text', para=None):
+        """adds a paragraph to the document, allowing for
+            font styling akin to markdown text;
+            
+            - bullet list
+            
+            **bold**
+            *italic*
+            _{subscript}
+            ^{superscript}
+            ~~strikethrough~~
+            $mathML$
+            
+        """
+        if not para:
+            para = self._docx.add_paragraph(style=style)
+        if not text:
+            return para
         
-        return p
+        if len(text) >= 2:
+            if text[0:2] == '- ':
+                para.style = 'List Bullet'
+                text = text[2:]
+
+        sects = self._get_markup(text)
+        for txt, markups in sects:
+            run = para.add_run(txt)
+            font = run.font
+            for markup in markups:
+                setattr(font, markup, True)
+
+        return para
+
+
+    def add_docstring(self, docstring, style='Body Text',
+                      markup=True):
+        """adds a doctring to the document
+            
+        this function will split text into paragraphs 
+        (denominated by a separating blank line with no spaces)
+        remove new-line characters and add to document, allowing for 
+        markup style text designated in :py:func:`pygauss.docs.MSDocument.add_markup`
+
+       """
+        paras = []
+        for para in docstring.split('\n\n'):
+            para = para.replace('\n', ' ').strip()
+            if markup:
+                paras.append(self.add_markup(para, style=style))
+            else:
+                paras.append(self._docx.add_paragraph(para, style=style))
     
+        return paras
+
     def add_list(self, text_list=[], numbered=False):
         """adds a list """
         if numbered:
@@ -95,7 +178,7 @@ class MSDocument(object):
         return pic
            
     def add_dataframe(self, df, incl_indx=True, autofit=True, sig_figures=5,
-                      style='Medium List 1 Accent 1'):
+                      style='Medium List 1 Accent 1', header_markup=True):
         """add dataframe as a table
         
         """

@@ -21,12 +21,27 @@ class Test_MSDocuments(object):
     '*italic* first', 'last *italic*', 'middle *italic* middle',
     '*italic* **bold**', '**bold** *italic*',
     'a *full* phrase of **mixed bold** and *italic*'])
-    def test_add_markdown(self, phrase):
-        para = self.doc.add_markdown(phrase)
+    def test_add_markup(self, phrase):
+        para = self.doc.add_markup(phrase)
         that.assert_equal(para.text, phrase.replace('*', ''))
+
+    @that.raises(Exception)
+    def test_add_markup_fails(self):
+        self.doc.add_markup('**open bold')
+    
+    def test_add_docstring(self):
+        paras = self.doc.add_docstring("""
+        paragraph 1
+
+        paragraph 2
+        """)
+
+        that.assert_equal([p.text for p in paras], ['paragraph 1', 'paragraph 2'])        
+        
     def test_add_list(self):
         plist = self.doc.add_list(['one', 'two', 'three'])
         that.assert_equal([p.text for p in plist], ['one', 'two', 'three'])
+
     def test_add_mpl(self):
         fig, ax = plt.subplots()
         self.doc.add_mpl(fig, width=1, height=1)

@@ -101,7 +101,9 @@ class MSDocument(object):
     def add_markup(self, text='', style='Body Text', para=None):
         """adds a paragraph to the document, allowing for
             font styling akin to markdown text;
-            
+        
+        .. raw::  
+          
             - bullet list
             
             **bold**

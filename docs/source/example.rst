@@ -1,6 +1,6 @@
 
 Example Assessment
-------------------
+==================
 
 After installing PyGauss you should be able to open this IPython
 Notebook from;
@@ -17,7 +17,7 @@ and run the following...
 
 .. parsed-literal::
 
-    pygauss version: 0.4.3
+    pygauss version: 0.5.0
     
 
 The test folder has a number of example Gaussian outputs to play around
@@ -48,11 +48,10 @@ path or one on a server over ssh (using
                     ssh_username='username')
 
 Single Molecule Analysis
-~~~~~~~~~~~~~~~~~~~~~~~~
+------------------------
 
 A *molecule* can be created containg data about the inital geometry,
-optimisation process and analysis of the final configuration. Molecules
-can be viewed statically or interactively.
+optimisation process and analysis of the final configuration.
 
 .. code:: python
 
@@ -65,7 +64,14 @@ can be viewed statically or interactively.
                     nbo_fname='CJS1_emim-cl_B_6-311+g-d-p-_gd3bj_pop-nbo-full-_unfrz.log', 
                     atom_groups={'emim':range(20), 'cl':[20]},
                     alignto=[3,2,1])
-    
+
+Geometric Analysis
+~~~~~~~~~~~~~~~~~~
+
+Molecules can be viewed statically or interactively.
+
+.. code:: python
+
     #mol.show_initial(active=True)
     vdw = mol.show_initial(represent='vdw', rotations=[[0,0,90], [-90, 90, 0]])
     ball_stick = mol.show_optimisation(represent='ball_stick', rotations=[[0,0,90], [-90, 90, 0]])
@@ -73,40 +79,12 @@ can be viewed statically or interactively.
 
 
 
-.. image::  images/output_7_0.png
+.. image:: images/output_9_0.png
 
 
 
-.. image::  images/output_7_1.png
+.. image:: images/output_9_1.png
 
-
-Basic analysis of optimisation...
-
-.. code:: python
-
-    print('Optimised? {0}, Conformer? {1}, Energy = {2} a.u.'.format(
-        mol.is_optimised(), mol.is_conformer(), 
-        round(mol.get_optimisation_E(units='hartree'),3)))
-    ax = mol.plot_optimisation_E(units='hartree')
-    ax.get_figure().set_size_inches(3, 2)
-    ax = mol.plot_freq_analysis()
-    ax.get_figure().set_size_inches(4, 2)
-
-
-.. parsed-literal::
-
-    Optimised? True, Conformer? True, Energy = -805.105 a.u.
-    
-
-
-.. image::  images/output_9_1.png
-
-
-
-.. image::  images/output_9_2.png
-
-
-Geometric analysis...
 
 .. code:: python
 
@@ -123,7 +101,34 @@ Geometric analysis...
     
 
 
-.. image::  images/output_11_1.png
+.. image:: images/output_10_1.png
+
+
+Energetics and Frequency Analysis
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. code:: python
+
+    print('Optimised? {0}, Conformer? {1}, Energy = {2} a.u.'.format(
+        mol.is_optimised(), mol.is_conformer(), 
+        round(mol.get_opt_energy(units='hartree'),3)))
+    ax = mol.plot_opt_energy(units='hartree')
+    ax.get_figure().set_size_inches(3, 2)
+    ax = mol.plot_freq_analysis()
+    ax.get_figure().set_size_inches(4, 2)
+
+
+.. parsed-literal::
+
+    Optimised? True, Conformer? True, Energy = -805.105 a.u.
+    
+
+
+.. image:: images/output_12_1.png
+
+
+
+.. image:: images/output_12_2.png
 
 
 Potential Energy Scan analysis of geometric conformers...
@@ -139,10 +144,13 @@ Potential Energy Scan analysis of geometric conformers...
 
 
 
-.. image::  images/output_13_0.png
+.. image:: images/output_14_0.png
 
 
-Natural Bond Orbital and Second Order Perturbation Theory analysis...
+Partial Charge Analysis
+~~~~~~~~~~~~~~~~~~~~~~~
+
+using Natural Bond Orbital (NBO) analysis
 
 .. code:: python
 
@@ -158,8 +166,45 @@ Natural Bond Orbital and Second Order Perturbation Theory analysis...
     
 
 
-.. image::  images/output_15_1.png
+.. image:: images/output_16_1.png
 
+
+Density of States Analysis
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. code:: python
+
+    print 'Number of Orbitals: {}'.format(mol.get_orbital_count())
+    homo, lumo = mol.get_orbital_homo_lumo()
+    homoe, lumoe = mol.get_orbital_energies([homo, lumo])
+    print 'HOMO at {} eV'.format(homoe)
+    print 'LUMO at {} eV'.format(lumoe)
+
+
+.. parsed-literal::
+
+    Number of Orbitals: 272
+    HOMO at -4.91492036773 eV
+    LUMO at -1.85989816817 eV
+    
+
+.. code:: python
+
+    ax = mol.plot_dos(per_energy=1,
+                    atom_groups=['cl', 'emim'], 
+                    group_colors=['blue', 'orange'], 
+                    group_labels=['Cl', 'EMIM'], group_fill=False, 
+                    lbound=-20, ubound=10, legend_size=12)
+
+
+
+.. image:: images/output_19_0.png
+
+
+Bonding Analysis
+~~~~~~~~~~~~~~~~
+
+Using Second Order Perturbation Theory.
 
 .. code:: python
 
@@ -183,18 +228,18 @@ Natural Bond Orbital and Second Order Perturbation Theory analysis...
     
 
 
-.. image::  images/output_16_1.png
+.. image:: images/output_21_1.png
 
 
 
-.. image::  images/output_16_2.png
+.. image:: images/output_21_2.png
 
 
 Multiple Computations Analysis
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+------------------------------
 
 Multiple computations, for instance of different starting conformations,
-can be grouped into an *Analysis* class.
+can be grouped into an *Analysis* class and anlaysed collectively.
 
 .. code:: python
 
@@ -206,9 +251,21 @@ can be grouped into an *Analysis* class.
                 opt_pattern='*{0}-{1}_{2}_6-311+g-d-p-_gd3bj_opt*unfrz.log',
                 freq_pattern='*{0}-{1}_{2}_6-311+g-d-p-_gd3bj_freq*.log',
                 nbo_pattern='*{0}-{1}_{2}_6-311+g-d-p-_gd3bj_pop-nbo-full-*.log',
-                alignto=[3,2,1], atom_groups={'emim':range(1,20), 'cl':[20]})
+                alignto=[3,2,1], atom_groups={'emim':range(1,20), 'cl':[20]}, 
+                ipython_print=True)
+
+
+.. parsed-literal::
+
+    Reading data 5 of 5
     
-    fig, caption = analysis.plot_mol_images(mtype='initial', max_cols=3,
+
+Molecular Comparison
+~~~~~~~~~~~~~~~~~~~~
+
+.. code:: python
+
+    fig, caption = analysis.plot_mol_images(mtype='optimised', max_cols=3,
                             info_columns=['Cation', 'Anion', 'Initial'],
                             rotations=[[0,0,90]])
     print caption
@@ -220,16 +277,38 @@ can be grouped into an *Analysis* class.
     
 
 
-.. image::  images/output_19_1.png
+.. image:: images/output_26_1.png
 
 
-The methods mentioned for indivdiual molecules can then be applied to
-all or a subset of these computations.
+Data Comparison
+~~~~~~~~~~~~~~~
+
+.. code:: python
+
+    fig, caption = analysis.plot_mol_graphs(gtype='dos', max_cols=3,
+                            info_columns=['Cation', 'Anion', 'Initial'],
+                            atom_groups=['cl'], group_colors=['blue'], 
+                            group_labels=['Cl'], group_fill=True, 
+                            lbound=-20, ubound=10, legend_size=8)
+    print caption
+
+
+.. parsed-literal::
+
+    Figure: (A) emim, cl, B, (B) emim, cl, BE, (C) emim, cl, BM, (D) emim, cl, F, (E) emim, cl, FE
+    
+
+
+.. image:: images/output_28_1.png
+
+
+The methods mentioned for indivdiual molecules can be applied to all or
+a subset of these computations.
 
 .. code:: python
 
     analysis.add_mol_property_subset('Opt', 'is_optimised', rows=[2,3])
-    analysis.add_mol_property('Energy (au)', 'get_optimisation_E', units='hartree')
+    analysis.add_mol_property('Energy (au)', 'get_opt_energy', units='hartree')
     analysis.add_mol_property('Cation chain, $\\psi$', 'calc_dihedral_angle', [1, 4, 9, 10])
     analysis.add_mol_property('Cation Charge', 'calc_nbo_charge', 'emim')
     analysis.add_mol_property('Anion Charge', 'calc_nbo_charge', 'cl')
@@ -241,16 +320,11 @@ all or a subset of these computations.
                        column_index=['Cation', 'Anion', 'Anion-Cation'])
 
 
-
-.. role:: raw-latex(raw)
-    :format: latex html
-
 .. raw:: html
 
-    <script type="text/javascript" src="http://localhost/mathjax/MathJax.js?config=TeX-AMS_HTML"></script>
-
-.. raw:: latex html
-
+    <script type="text/javascript"
+      src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
+    </script>
     <div style="max-height:1000px;max-width:1500px;overflow:auto;">
     <table border="1" class="dataframe">
       <thead>
@@ -269,12 +343,12 @@ all or a subset of these computations.
           <th></th>
           <th>Opt</th>
           <th>Energy (au)</th>
-          <th>chain, $\psi$</th>
+          <th>chain, &#968</th>
           <th>Charge</th>
           <th>Charge</th>
-          <th>$r$</th>
-          <th>$\theta$</th>
-          <th>$\phi$</th>
+          <th>r</th>
+          <th>&#952</th>
+          <th>&#966</th>
           <th>h-bond</th>
         </tr>
         <tr>
@@ -361,7 +435,7 @@ all or a subset of these computations.
 
 
 
-**NEW FEATURE:** there is now an option (requiring
+There is also an option (requiring
 `pdflatex <http://www.tug.org/applications/pdftex/>`__ and
 `ghostscript <http://www.ghostscript.com/download/gsdnld.html>`__\ +\ `imagemagik <http://www.imagemagick.org/script/binary-releases.php>`__)
 to output the tables as a latex formatted image.
@@ -375,9 +449,12 @@ to output the tables as a latex formatted image.
 
 
 
-.. image::  images/output_23_0.png
+.. image:: images/output_32_0.png
 
 
+
+Multi-Variate Analysis
+~~~~~~~~~~~~~~~~~~~~~~
 
 RadViz is a way of visualizing multi-variate data.
 
@@ -387,7 +464,7 @@ RadViz is a way of visualizing multi-variate data.
 
 
 
-.. image::  images/output_25_0.png
+.. image:: images/output_35_0.png
 
 
 The KMeans algorithm clusters data by trying to separate samples into n
@@ -403,7 +480,7 @@ groups of equal variance.
 
 
 
-.. image::  images/output_27_0.png
+.. image:: images/output_37_0.png
 
 
 .. parsed-literal::
@@ -412,7 +489,7 @@ groups of equal variance.
     
 
 
-.. image::  images/output_27_2.png
+.. image:: images/output_37_2.png
 
 
 .. parsed-literal::
@@ -421,7 +498,7 @@ groups of equal variance.
     
 
 
-.. image::  images/output_27_4.png
+.. image:: images/output_37_4.png
 
 
 .. parsed-literal::
@@ -430,7 +507,7 @@ groups of equal variance.
     
 
 
-.. image::  images/output_27_6.png
+.. image:: images/output_37_6.png
 
 
 .. parsed-literal::
@@ -439,7 +516,7 @@ groups of equal variance.
     
 
 Documentation (MS Word)
-~~~~~~~~~~~~~~~~~~~~~~~
+-----------------------
 
 After analysing the computations, it would be reasonable to want to
 document some of our findings. This can be achieved by outputting
@@ -453,7 +530,7 @@ individual figure or table images via the folder object.
 
 
 
-.. image::  images/output_30_0.png
+.. image:: images/output_40_0.png
 
 
 
@@ -464,6 +541,7 @@ produce a full document of your analysis.
 
 .. code:: python
 
+    import matplotlib.pyplot as plt
     d = pg.MSDocument()
     d.add_heading('A Pygauss Example Assessment', level=1)
     
@@ -475,8 +553,8 @@ produce a full document of your analysis.
                     rotations=[[90,0,0], [0,0,90]], 
                     info_columns=['Anion', 'Cation', 'Initial'])
     d.add_mpl(fig, dpi=96, height=9)
-    fig.clear()
-    d.add_markdown(caption.replace('Figure:', '**Figure:**'))
+    plt.close()
+    d.add_markdown('*' + caption + '*')
     d.add_paragraph()
     df = analysis.get_table(columns=['Anion Charge', 'Cation Charge', 
                                      'Energy (au)'],
@@ -484,14 +562,23 @@ produce a full document of your analysis.
     d.add_dataframe(df, incl_indx=True, style='Medium Shading 1 Accent 1')
     d.add_markdown('**Table:** Analysis of Conformer Charge')
     
+    d.add_heading('Molecular Orbital Analysis', level=2)
+    fig, caption = analysis.plot_mol_graphs(gtype='dos', max_cols=3,
+                            info_columns=['Cation', 'Anion', 'Initial'],
+                            atom_groups=['cl'], group_colors=['blue'], 
+                            group_labels=['Cl'], group_fill=True, 
+                            lbound=-20, ubound=10, legend_size=8)
+    d.add_mpl(fig, dpi=96, height=9)
+    plt.close()
+    d.add_markdown('*' + caption + '*')
+    
     d.save('exmpl_assess.docx')
-
-
 
 Which gives us the following:
 
-.. image:: images/example_docx.png
-   :alt: DocX Image
+.. image:: images/example_docx1.png
+
+.. image:: images/example_docx2.png
 
 MORE TO COME!!
 

@@ -927,7 +927,7 @@ class Analysis(object):
         ax.set_xlabel(x_label)  
         ax.set_ylabel(y_label)
         
-        fig.tight_layout(h_pad=2.0)
+        fig.tight_layout(h_pad=1.0)
         
         caption = 'Figure: ' + ', '.join(caption)
         

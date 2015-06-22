@@ -362,7 +362,7 @@ intersphinx_mapping = {
     'IPython': ('http://ipython.org/ipython-doc/stable/', None),
     'docx': ('http://python-docx.readthedocs.org/en/latest/', None),
     'PIL': ('http://pillow.readthedocs.org/', None),
-    'pygauss' : ('http://pygauss.readthedocs.org/stable/', None)
+    'pygauss' : ('http://pygauss.readthedocs.org/en/stable/', None)
     }
 autoclass_content = 'init'
 # Napoleon settings

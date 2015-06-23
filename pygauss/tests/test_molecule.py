@@ -238,7 +238,7 @@ class Test_Images(object):
         self.mol.show_initial(represent='wire')
 
     def test_returns_init_with_rotations(self):
-        self.mol.show_initial(rotations=[[45,45,45]])
+        self.mol.show_initial(rotations=[[0,0,0],[45,45,45]])
 
     def test_returns_init_with_axes(self):
         self.mol.show_initial(axis_length=1)

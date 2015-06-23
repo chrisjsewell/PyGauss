@@ -101,11 +101,12 @@ class MSDocument(object):
 
     def add_markup(self, text='', style='Body Text', para=None):
         r"""adds a paragraph to the document, allowing for
-            font styling akin to markdown text:
+            paragraph/font styling akin to a stripped down version of
+            markdown text::
         
-            - bullet list 
+            - bullet list
 
-            # numbered list
+            + numbered list
             
             **bold**, 
             *italic*, 
@@ -119,7 +120,7 @@ class MSDocument(object):
         text : str
             the text to add
         style : str
-            the style to apply (overriden if a list)
+            the style to apply (overriden if a header or list)
         para : docx.text.paragraph.Paragraph
             a pre-existing paragraph to add the text to
         
@@ -129,19 +130,27 @@ class MSDocument(object):
             a paragraph added to the document
             
         """
+        head_pattern = re.compile('^#+\s')
+        level=0
+        
+        if text[0:2] == '- ':
+            style = 'List Bullet'
+            text = text[2:]
+        elif text[0:2] == '+ ':
+            style = 'List Number'
+            text = text[2:]
+        elif re.match(head_pattern, text):
+            level = len(re.findall(head_pattern, text)[0]) - 1
+            text = text[level+1:]
+ 
         if not para:
-            para = self._docx.add_paragraph(style=style)
+            if level:
+                para = self._docx.add_heading(level=level)
+            else:
+                para = self._docx.add_paragraph(style=style)
         if not text:
             return para
         
-        if len(text) >= 2:
-            if text[0:2] == '- ':
-                para.style = 'List Bullet'
-                text = text[2:]
-            elif text[0:2] == '# ':
-                para.style = 'List Number'
-                text = text[2:]
-
         sects = self._get_markup(text)
         for txt, markups in sects:
             run = para.add_run(txt)
@@ -150,6 +159,23 @@ class MSDocument(object):
                 setattr(font, markup, True)
 
         return para
+
+
+    def _split_list(self, text):
+        """split text into paras if a list
+        denominated by - bullet or + numbered)
+        """
+        if text[0:2] == '- ':
+            symbol = '-'
+        elif text[0:2] == '+ ':
+            symbol = '+'
+        else:
+            return [text]
+
+        list_pattern = re.compile('\n[\s]*[{0}]\s'.format(symbol))
+        list_paras = re.split(list_pattern, text)
+        
+        return list_paras[0:1] + [' '.join([symbol, t]) for t in list_paras[1:]]
 
 
     def add_docstring(self, docstring, style='Body Text',
@@ -178,17 +204,20 @@ class MSDocument(object):
 
         """
         docx_paras = []
-        pattern = re.compile('\n[\s]*\n')
-        paras = re.split(pattern, docstring)
+        para_pattern = re.compile('\n[\s]*\n')
+        paras = re.split(para_pattern, docstring)
+
         for para in paras:
-            para = para.replace('\n', ' ').strip()
             if markup:
-                docx_paras.append(self.add_markup(para, style=style))
+                for p in self._split_list(para):
+                    p = p.replace('\n', ' ').strip()
+                    docx_paras.append(self.add_markup(p, style=style))
             else:
+                para = para.replace('\n', ' ').strip()
                 docx_paras.append(self._docx.add_paragraph(para, style=style))
     
         return docx_paras
-
+        
     def add_list(self, text_list=[], numbered=False):
         """adds a list """
         if numbered:
@@ -215,7 +244,7 @@ class MSDocument(object):
         return pic
            
     def add_dataframe(self, df, incl_indx=True, autofit=True, sig_figures=5,
-                      style='Medium List 1 Accent 1', header_markup=True):
+                      style='Medium List 1 Accent 1'):
         """add dataframe as a table
         
         """

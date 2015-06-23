@@ -228,13 +228,25 @@ class Test_Images(object):
                 opt_fname='CJS1_emim-cl_B_6-311+g-d-p-_gd3bj_opt-modredundant_unfrz.log',
                 nbo_fname='CJS1_emim-cl_B_6-311+g-d-p-_gd3bj_pop-nbo-full-_unfrz.log') 
 
-    def test_returns_init_img(self):
+    def test_returns_init(self):
         self.mol.show_initial()
     
-    def test_returns_opt_img(self):
+    def test_returns_init_with_ball_stick(self):
+        self.mol.show_initial(represent='ball_stick')
+
+    def test_returns_init_with_wire(self):
+        self.mol.show_initial(represent='wire')
+
+    def test_returns_init_with_rotations(self):
+        self.mol.show_initial(rotations=[[45,45,45]])
+
+    def test_returns_init_with_axes(self):
+        self.mol.show_initial(axis_length=1)
+
+    def test_returns_opt(self):
         self.mol.show_optimisation()
 
-    def test_returns_nbo_charges_img(self):
+    def test_returns_nbo_charges(self):
         self.mol.show_nbo_charges()
 
 class Test_PES(object):
@@ -283,6 +295,44 @@ class Test_Orbitals(object):
     def test_yield_orbital_images_no_isos(self):
         pg.isosurface.get_isosurface = mock_isosurface
         self.mol.yield_orbital_images(1)
+
+from io import BytesIO
+class MockFolder(object):
+    def __enter__(self):
+        return self
+    def __exit__(self, type, value, traceback):
+        return
+    def write_file(self, *arg, **kwargs):
+        return BytesIO()
+
+class Test_Combine_Molecules(object):
+    
+    def setUp(self):
+        self.mol1 = pg.Molecule(folder_obj=pg.get_test_folder(),
+                          opt_fname='CJS1_emim-cl_F_6-311+g-d-p-_gd3bj_opt-modredundant_unfrz.log',
+                          atom_groups={'emim':range(1,20), 'cl':[20]},
+                          alignto=[3,2,1])
+        self.mol2 = pg.Molecule(folder_obj=pg.get_test_folder(),
+                          opt_fname='CJS1_emim-cl_F_6-311+g-d-p-_gd3bj_opt-modredundant_unfrz.log',
+                          atom_groups={'emim':range(1,20), 'cl':[20]},
+                          alignto=[3,2,1])
+
+    def test_combine_all(self):
+        self.mol1.combine_molecules(self.mol2)
+    
+    def test_combine_part(self):
+        self.mol1.combine_molecules(self.mol2, self_atoms='cl', other_atoms='emim')
+
+    def test_combine_transform(self):
+        self.mol1.combine_molecules(self.mol2, 
+                        self_rotation=[10, 10, 10], other_rotation=[20, 20, 20], 
+                        self_transpose=[1, 1, 1], other_transpose=[0.5, 0.5, 0.5])
+
+    def test_combine_to_file(self):
+        
+        self.mol1.combine_molecules(self.mol2, charge=0, multiplicity=1,
+                                    out_name='out', folder_obj=MockFolder())
+        
     
 if __name__=='__main__':
     import nose

@@ -21,13 +21,13 @@ class Test_MSDocuments(object):
     '*italic* first', 'last *italic*', 'middle *italic* middle',
     '*italic* **bold**', '**bold** *italic*',
     'a *full* phrase of **mixed bold** and *italic*'])
-    def test_add_markup(self, phrase):
-        para = self.doc.add_markup(phrase)
+    def test_add_markdown(self, phrase):
+        para = self.doc.add_markdown(phrase)
         that.assert_equal(para.text, phrase.replace('*', ''))
 
     @that.raises(Exception)
-    def test_add_markup_fails(self):
-        self.doc.add_markup('**open bold')
+    def test_add_markdown_fails(self):
+        self.doc.add_markdown('**open bold')
     
     def test_add_docstring(self):
         paras = self.doc.add_docstring("""

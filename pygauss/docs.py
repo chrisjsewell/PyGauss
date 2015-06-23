@@ -99,21 +99,19 @@ class MSDocument(object):
                          
         return sects
 
-    def add_markup(self, text='', style='Body Text', para=None):
+    def add_markdown(self, text='', style='Body Text', para=None):
         r"""adds a paragraph to the document, allowing for
             paragraph/font styling akin to a stripped down version of
             markdown text::
         
             - bullet list
-
-            + numbered list
-            
-            **bold**, 
-            *italic*, 
-            _{subscript}, 
-            ^{superscript}, 
-            ~~strikethrough~~, 
-            $mathML$, 
+            + numbered list           
+            **bold** 
+            *italic* 
+            _{subscript} 
+            ^{superscript} 
+            ~~strikethrough~~ 
+            $mathML$
         
         Parameters
         ----------
@@ -211,7 +209,7 @@ class MSDocument(object):
             if markup:
                 for p in self._split_list(para):
                     p = p.replace('\n', ' ').strip()
-                    docx_paras.append(self.add_markup(p, style=style))
+                    docx_paras.append(self.add_markdown(p, style=style))
             else:
                 para = para.replace('\n', ' ').strip()
                 docx_paras.append(self._docx.add_paragraph(para, style=style))

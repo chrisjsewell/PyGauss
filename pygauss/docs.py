@@ -6,6 +6,7 @@ Created on Tue Jun 16 15:52:53 2015
 """
 from math import log10, floor
 from io import BytesIO
+import re
 
 from docx import Document
 from docx.enum.table import WD_TABLE_ALIGNMENT
@@ -100,16 +101,32 @@ class MSDocument(object):
 
     def add_markup(self, text='', style='Body Text', para=None):
         r"""adds a paragraph to the document, allowing for
-            font styling akin to markdown text;
+            font styling akin to markdown text:
         
-            - bullet list
+            - bullet list 
+
+            # numbered list
             
-            **bold**
-            *italic*
-            _{subscript}
-            ^{superscript}
-            ~~strikethrough~~
-            $mathML$
+            **bold**, 
+            *italic*, 
+            _{subscript}, 
+            ^{superscript}, 
+            ~~strikethrough~~, 
+            $mathML$, 
+        
+        Parameters
+        ----------
+        text : str
+            the text to add
+        style : str
+            the style to apply (overriden if a list)
+        para : docx.text.paragraph.Paragraph
+            a pre-existing paragraph to add the text to
+        
+        Returns
+        -------
+        para : docx.text.paragraph.Paragraph
+            a paragraph added to the document
             
         """
         if not para:
@@ -120,6 +137,9 @@ class MSDocument(object):
         if len(text) >= 2:
             if text[0:2] == '- ':
                 para.style = 'List Bullet'
+                text = text[2:]
+            elif text[0:2] == '# ':
+                para.style = 'List Number'
                 text = text[2:]
 
         sects = self._get_markup(text)
@@ -137,20 +157,37 @@ class MSDocument(object):
         """adds a doctring to the document
             
         this function will split text into paragraphs 
-        (denominated by a separating blank line with no spaces)
+        (denominated by a separating blank line)
         remove new-line characters and add to document, allowing for 
-        markup style text designated in :py:func:`pygauss.docs.MSDocument.add_markup`
+        markup style text designated in 
+        :py:func:`pygauss.docs.MSDocument.add_markup`
+        
+        Parameters
+        ----------
+        text : str
+            the text to add
+        style : str
+            the style to apply for each paragraph
+        markup : bool
+            whether to apply markup to the text
+        
+        Returns
+        -------
+        paras : docx.text.paragraph.Paragraph
+            a list of paragraphs added to the document        
 
-       """
-        paras = []
-        for para in docstring.split('\n\n'):
+        """
+        docx_paras = []
+        pattern = re.compile('\n[\s]*\n')
+        paras = re.split(pattern, docstring)
+        for para in paras:
             para = para.replace('\n', ' ').strip()
             if markup:
-                paras.append(self.add_markup(para, style=style))
+                docx_paras.append(self.add_markup(para, style=style))
             else:
-                paras.append(self._docx.add_paragraph(para, style=style))
+                docx_paras.append(self._docx.add_paragraph(para, style=style))
     
-        return paras
+        return docx_paras
 
     def add_list(self, text_list=[], numbered=False):
         """adds a list """

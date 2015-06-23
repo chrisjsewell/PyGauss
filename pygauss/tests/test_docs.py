@@ -66,21 +66,31 @@ class Test_MSDocuments(object):
         
     def test_add_dataframe(self):
 
-        df = pd.DataFrame({(' ', 'Cation'): {('B', 'cl'): 'emim',
+        df = pd.DataFrame({('Test1', 'Energy'): {('B', 'cl'): 'emim',
           ('BE', 'cl'): 'emim',
           ('BM', 'cl'): 'emim',
           ('F', 'cl'): 'emim',
           ('FE', 'cl'): 'emim'},
-         ('Test', 'Energy'): {('B', 'cl'): -21908.029244783389,
-          ('BE', 'cl'): -21908.02923479681,
-          ('BM', 'cl'): -21907.983241297457,
-          ('F', 'cl'): -21908.362869942583,
-          ('FE', 'cl'): -21908.353457551704},
-         ('Test', 'Optimisation'): {('B', 'cl'): True,
+         ('Test2', r'math $\theta$'): {('B', 'cl'): 123456.12345,
+          ('BE', 'cl'): -12345.12345,
+          ('BM', 'cl'): 1,
+          ('F', 'cl'): 0.2345678,
+          ('FE', 'cl'): -3.3},
+         ('Test2', 'Boolean'): {('B', 'cl'): True,
           ('BE', 'cl'): True,
           ('BM', 'cl'): True,
-          ('F', 'cl'): True,
+          ('F', 'cl'): False,
           ('FE', 'cl'): True}})
          
-        self.doc.add_dataframe(df, incl_indx=True)
+        tbl = self.doc.add_dataframe(df, incl_indx=True, sig_figures=5)
+        
+        that.assert_equal(tbl.rows[0].cells[2].text.strip(), 'Test1')
+        that.assert_equal(tbl.rows[1].cells[2].text.strip(), 'Energy')
+        that.assert_equal(float(tbl.rows[2].cells[4].text), 123460)
+        that.assert_equal(float(tbl.rows[3].cells[4].text), -12345)
+        that.assert_equal(float(tbl.rows[4].cells[4].text), 1)
+        that.assert_equal(float(tbl.rows[5].cells[4].text), 0.23457)
+        that.assert_equal(float(tbl.rows[6].cells[4].text), -3.3)
+        that.assert_equal(tbl.rows[5].cells[3].text.strip(), 'False')
+        that.assert_equal(tbl.rows[6].cells[3].text.strip(), 'True')
          

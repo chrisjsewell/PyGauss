@@ -15,6 +15,7 @@ from docx.enum.section import WD_ORIENT
 from docx.shared import Cm
 
 from pandas import DataFrame, Index, MultiIndex
+import numpy as np
 
 class MSDocument(object):
     """a class to output a Microsoft Word Document
@@ -58,10 +59,12 @@ class MSDocument(object):
             'math': ('$', '$')
             }
 
-    def _get_markup(self, para):
+    def _get_markup(self, para, markup_dict=None):
         """get markup """
-
-        df = DataFrame(self._MARKUPS, index=['Enter', 'Exit']).T
+        if not markup_dict:
+            markup_dict = self._MARKUPS
+            
+        df = DataFrame(markup_dict, index=['Enter', 'Exit']).T
         df['In']=False
         
         sects=[]
@@ -100,13 +103,20 @@ class MSDocument(object):
                          
         return sects
 
-    def add_markdown(self, text='', style='Body Text', para=None):
+    def add_markdown(self, text='', style='Body Text', 
+                     markup_dict=None, para=None):
         r"""adds a paragraph to the document, allowing for
         paragraph/font styling akin to a stripped down version of
-        markdown text::
+        markdown text:
         
+        paragraph level::
+        
+            # Header (level denoted by number of #'s)            
             - bullet list
-            1. numbered list           
+            1. numbered list  
+        
+        font level::
+        
             **bold** 
             *italic* 
             _{subscript} 
@@ -119,9 +129,13 @@ class MSDocument(object):
         text : str
             the text to add
         style : str
-            the style to apply (overriden if a header or list)
+            the style to apply (overriden if paragraph level markdown)
+        markup_dict : dict
+            if set will override built in font level markup
+            {font_attribute:(start_chars, end_chars)}
         para : docx.text.paragraph.Paragraph
             a pre-existing paragraph to add the text to
+            if set, will ignore paragraph level markdown
         
         Returns
         -------
@@ -152,7 +166,7 @@ class MSDocument(object):
         if not text:
             return para
         
-        sects = self._get_markup(text)
+        sects = self._get_markup(text, markup_dict)
         for txt, markups in sects:
             run = para.add_run(txt)
             font = run.font
@@ -266,6 +280,27 @@ class MSDocument(object):
         
         return pic
            
+    def _add_headrw(self, cell, val):
+        """ add value to header table cell """
+        val = '' if val is None else str(val)
+        p = cell.add_paragraph()
+        p.alignment = WD_ALIGN_PARAGRAPH.CENTER
+        self.add_markdown('??'+val+'??', para=p, 
+                          markup_dict={'math':('$','$'), 'bold':('??','??')})
+        return p        
+    
+    def _sigfigs(self, val, sig_figures=5):
+        """round to significant figure"""
+        if type(val) == bool:
+            return val            
+        try:
+            if val >= 0.:
+                return round(val, -int(floor(log10(val))) + (sig_figures-1))
+            else:
+                return -round(-val, -int(floor(log10(-val))) + (sig_figures-1))
+        except Exception:
+            return val
+
     def add_dataframe(self, df, incl_indx=True, autofit=True, sig_figures=5,
                       style='Medium List 1 Accent 1'):
         """add dataframe as a table to the document
@@ -277,7 +312,7 @@ class MSDocument(object):
         incl_indx : bool
             include dataframes index in table
         autofit : bool
-            autfit table in document 
+            allow table to autofit content 
         sig_figures : int
             number of significant figures for numbers in table
         style : str
@@ -314,79 +349,55 @@ class MSDocument(object):
         table.alignment = WD_TABLE_ALIGNMENT.CENTER
         table.autofit = autofit
          
+        #add header rows
         if type(df.columns) == MultiIndex:
             
-            merge_cells=[None, None]
-            prev_val = None
-
-            for col, vals in enumerate(df.columns.tolist()):
-                for hrw, val in enumerate(vals):
-                    cell = table.rows[hrw].cells[col+icols]
-                    
-                    if not hrw==0:
-                        p=cell.add_paragraph(str(val))
-                        p.alignment = WD_ALIGN_PARAGRAPH.CENTER
-                    elif not merge_cells[0]:
-                        merge_cells[0] = cell
-                        prev_val = val
-                    elif not merge_cells[1] and not val==prev_val:
-                        p=merge_cells[0].add_paragraph(str(prev_val))
-                        p.alignment = WD_ALIGN_PARAGRAPH.CENTER                        
-                        merge_cells[0] = cell
-                        prev_val = val
-                    elif not merge_cells[1]:
-                        merge_cells[1] = cell
-                        prev_val = val
-                    elif val == prev_val:
-                        merge_cells[1] = cell
-                        prev_val = val
-                    else:
-                        m = merge_cells[0].merge(merge_cells[1])
-                        m.add_paragraph(str(prev_val))
-                        m.alignment = WD_ALIGN_PARAGRAPH.CENTER
-                        merge_cells=[cell, None]
-                        prev_val = val
+            h_array = np.array(df.columns.tolist())
+            col_count, rw_count = h_array.shape
             
-            if merge_cells[0] != None and merge_cells[1] != None:
-                m = merge_cells[0].merge(merge_cells[1])
-                m.add_paragraph(str(prev_val))
-                m.alignment = WD_ALIGN_PARAGRAPH.CENTER
-            else:
-                p=merge_cells[0].add_paragraph(str(prev_val))
-                p.alignment = WD_ALIGN_PARAGRAPH.CENTER                        
-                                    
+            for rw in range(rw_count):
+                #merge adjacent headers with the same value for higher level indexes
+                rw_values = h_array[:,rw].tolist()
+                start_col = end_col = icols
+                while rw_values:
+                    val = rw_values.pop(0)
+                    if rw_values and rw < (rw_count-1):
+                        while val == rw_values[0]:
+                            rw_values.pop(0)
+                            end_col += 1
+                            if not rw_values:
+                                break
+                    cell = table.rows[rw].cells[start_col]
+                    if not start_col == end_col:
+                        cell = cell.merge(table.rows[rw].cells[end_col])
+                    self._add_headrw(cell, val)
+                    start_col = end_col = end_col + 1
+                
         else:
-            for col, head in enumerate(df.keys()):
-                p=table.rows[hrows-1].cells[col+icols].add_paragraph(str(head))
-                p.alignment = WD_ALIGN_PARAGRAPH.CENTER
+            for col, val in enumerate(df.keys()):
+                cell = table.rows[hrows-1].cells[col+icols]
+                self._add_headrw(cell, val)
 
         if incl_indx and type(df.index) == MultiIndex:
            for col, name in enumerate(df.index.names):
-               p=table.rows[hrows-1].cells[col].add_paragraph(str(name))
-               p.alignment = WD_ALIGN_PARAGRAPH.CENTER
-        
-        def rnd(val):
-            try:
-                if val >= 0.:
-                    return round(val, -int(floor(log10(val))) + (sig_figures - 1))
-                else:
-                    return -round(-val, -int(floor(log10(-val))) + (sig_figures - 1))
-            except Exception:
-                return val
-                
+               cell = table.rows[hrows-1].cells[col]
+               self._add_headrw(cell, name)
+                        
+        #add data rows
         for row, id_series in enumerate(df.iterrows()):
 
             if incl_indx and type(df.index) == Index:
-                p=table.rows[row+hrows].cells[hrows-1].add_paragraph(str(df.index[row]))
-                p.alignment = WD_ALIGN_PARAGRAPH.CENTER                
+                cell = table.rows[row+hrows].cells[hrows-1]
+                self._add_headrw(cell, df.index[row])
                 
             if incl_indx and type(df.index) == MultiIndex:
                 for col, val in enumerate(df.index.tolist()[row]):
-                    p=table.rows[row+hrows].cells[col].add_paragraph(str(val))
-                    p.alignment = WD_ALIGN_PARAGRAPH.CENTER
+                    cell = table.rows[row+hrows].cells[col]
+                    self._add_headrw(cell, val)
                     
             for col, item in enumerate(id_series[1].iteritems()):
-                p=table.rows[row+hrows].cells[col+icols].add_paragraph(str(rnd(item[1])))
+                cell = table.rows[row+hrows].cells[col+icols]
+                p = cell.add_paragraph(str(self._sigfigs(item[1], sig_figures)))
                 p.alignment = WD_ALIGN_PARAGRAPH.CENTER
 
         return table

@@ -31,12 +31,30 @@ class Test_MSDocuments(object):
     
     def test_add_docstring(self):
         paras = self.doc.add_docstring("""
-        paragraph 1
-
-        paragraph 2
+        # Heading 1
+        ## Heading 2
+        
+        **paragraph** 1
+        
+        *paragraph* 2
+        
+        some_{subscript}
+        
+        some^{superscript}
+        
+        - bullet 1
+        - bullet 2
+        
+        1. numbered 1
+        2. numbered 2
         """)
 
-        that.assert_equal([p.text for p in paras], ['paragraph 1', 'paragraph 2'])        
+        that.assert_equal([p.text for p in paras], 
+                          ['Heading 1', 'Heading 2',
+                          'paragraph 1', 'paragraph 2',
+                          'somesubscript', 'somesuperscript',
+                          'bullet 1', 'bullet 2',
+                          'numbered 1', 'numbered 2'])        
         
     def test_add_list(self):
         plist = self.doc.add_list(['one', 'two', 'three'])

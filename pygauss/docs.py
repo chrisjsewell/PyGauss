@@ -39,11 +39,12 @@ class MSDocument(object):
         self._docx = Document(docx=docx)
     
     def __getattr__(self, name):
-        """ required to get docx.Document methods """
+        """ required to get :py:class:`docx.document.Document` methods """
         return getattr(self._docx, name)
     
     def __dir__(self):
-        """ required to have docx.Document methods in ipython tab completion"""
+        """ required to have :py:class:`docx.document.Document` methods in 
+        :py:mod:`IPython` tab completion"""
         dirlist = self.__class__.__dict__.keys() + self._docx.__class__.__dict__.keys()
         return sorted(dirlist)           
     
@@ -101,11 +102,11 @@ class MSDocument(object):
 
     def add_markdown(self, text='', style='Body Text', para=None):
         r"""adds a paragraph to the document, allowing for
-            paragraph/font styling akin to a stripped down version of
-            markdown text::
+        paragraph/font styling akin to a stripped down version of
+        markdown text::
         
             - bullet list
-            + numbered list           
+            1. numbered list           
             **bold** 
             *italic* 
             _{subscript} 
@@ -128,15 +129,17 @@ class MSDocument(object):
             a paragraph added to the document
             
         """
+        list_pattern = re.compile('^[-+]\s')
+        number_pattern = re.compile('^\d+[.]\s')
         head_pattern = re.compile('^#+\s')
         level=0
         
-        if text[0:2] == '- ':
+        if re.match(list_pattern, text):
             style = 'List Bullet'
-            text = text[2:]
-        elif text[0:2] == '+ ':
+            text = text[len(re.findall(list_pattern, text)[0]):]
+        elif re.match(number_pattern, text):
             style = 'List Number'
-            text = text[2:]
+            text = text[len(re.findall(number_pattern, text)[0]):]
         elif re.match(head_pattern, text):
             level = len(re.findall(head_pattern, text)[0]) - 1
             text = text[level+1:]
@@ -159,32 +162,30 @@ class MSDocument(object):
         return para
 
 
-    def _split_list(self, text):
-        """split text into paras if a list
-        denominated by - bullet or + numbered)
+    def _split_special_paras(self, text):
+        """split text into paras if a header or list
+        denominated by; # heading, - bullet or 1. numbered
         """
-        if text[0:2] == '- ':
-            symbol = '-'
-        elif text[0:2] == '+ ':
-            symbol = '+'
-        else:
-            return [text]
+        patterns = ['[-+]', '\d+[.]', '#+']
 
-        list_pattern = re.compile('\n[\s]*[{0}]\s'.format(symbol))
-        list_paras = re.split(list_pattern, text)
+        for pattern in patterns:
+            if re.match(re.compile('^{}\s'.format(pattern)), text):
+                starts = re.findall(re.compile('\n\s*{}\s'.format(pattern)), '\n'+text)
+                texts = re.split(re.compile('\n\s*{}\s'.format(pattern)), '\n'+text)
+                return [s[1:]+t for s, t in zip(starts, texts[1:])]
         
-        return list_paras[0:1] + [' '.join([symbol, t]) for t in list_paras[1:]]
-
+        return [text]
+        
 
     def add_docstring(self, docstring, style='Body Text',
-                      markup=True):
+                      markdown=True):
         """adds a doctring to the document
             
         this function will split text into paragraphs 
         (denominated by a separating blank line)
         remove new-line characters and add to document, allowing for 
-        markup style text designated in 
-        :py:func:`pygauss.docs.MSDocument.add_markup`
+        markdown style text designated in 
+        :py:func:`pygauss.docs.MSDocument.add_markdown`
         
         Parameters
         ----------
@@ -192,8 +193,8 @@ class MSDocument(object):
             the text to add
         style : str
             the style to apply for each paragraph
-        markup : bool
-            whether to apply markup to the text
+        markdown : bool
+            whether to apply markdown to the text
         
         Returns
         -------
@@ -205,9 +206,14 @@ class MSDocument(object):
         para_pattern = re.compile('\n[\s]*\n')
         paras = re.split(para_pattern, docstring)
 
+        # remove initial linespace if present
+        if paras[0][:1] == '\n':
+            paras[0] = paras[0][1:]
+
         for para in paras:
-            if markup:
-                for p in self._split_list(para):
+            if markdown:
+                para = para.strip()
+                for p in self._split_special_paras(para):
                     p = p.replace('\n', ' ').strip()
                     docx_paras.append(self.add_markdown(p, style=style))
             else:

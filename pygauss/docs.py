@@ -163,7 +163,7 @@ class MSDocument(object):
 
 
     def _split_special_paras(self, text):
-        """split text into paras if a header or list
+        """split text into paras if a header or list,
         denominated by; # heading, - bullet or 1. numbered
         """
         patterns = ['[-+]', '\d+[.]', '#+']
@@ -232,8 +232,27 @@ class MSDocument(object):
         return [self._docx.add_paragraph(tx, style=style) for tx in text_list]
     
     def add_mpl(self, fig, dpi=None, width=None, height=None, pad_inches=0.2):
-        """add matplotlib figure to the document, width/height in cm 
-        Amount of padding around the figure """
+        """add matplotlib figure to the document 
+        
+        Parameters
+        ----------
+        fig : matplotlib.figure.Figure
+            a matplotlib figure
+        dpi : int
+            Dots per inch
+        width : float
+            width of image in document
+        height : float
+            width of image in document
+        pad_inches : float
+            amount of padding around the figure
+
+        Returns
+        -------
+        pic : docx.shape.InlineShape
+            an inline picture added to the document        
+
+        """
         stream = BytesIO()
         fig.savefig(stream, format='png', dpi=dpi,
                     bbox_inches='tight', pad_inches=pad_inches,
@@ -249,7 +268,25 @@ class MSDocument(object):
            
     def add_dataframe(self, df, incl_indx=True, autofit=True, sig_figures=5,
                       style='Medium List 1 Accent 1'):
-        """add dataframe as a table
+        """add dataframe as a table to the document
+        
+        Parameters
+        ----------
+        df : pandas.DataFrame
+            a pandas dataframe
+        incl_indx : bool
+            include dataframes index in table
+        autofit : bool
+            autfit table in document 
+        sig_figures : int
+            number of significant figures for numbers in table
+        style : str
+            MS Word table style
+
+        Returns
+        -------
+        pic : docx.table.Table
+            a table added to the document        
         
         """
         df = df.fillna('-')

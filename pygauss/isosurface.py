@@ -119,29 +119,6 @@ def calc_normals(verts, faces):
     normalize_v3(norm)
     
     return norm
-
-def my_calc_normals(verts, faces):
-    """ doesn't work """
-    normals=[]
-    #for each vertex
-    for i in range(verts.shape[0]):
-        #find all triangles with vertex in
-        mask = faces==i
-        tris = faces[mask.any(axis=1)]
-        # find the normal of each triangle
-        vs = tris[tris!=i].reshape((tris.shape[0],2))
-        v0 = verts[i]
-        v1s = verts[vs[:,0]]
-        v2s = verts[vs[:,1]]
-        vi = v1s - v0
-        vj = v2s - v0
-        norms = np.cross(vi, vj)        
-        scalar = 1/np.linalg.norm(norms, axis=1)
-        norms = norms * scalar.reshape((scalar.shape[0],1))
-        #sum all the normals and normalise        
-        norm = np.sum(norms, axis=0)
-        normals.append(norm / np.linalg.norm(norm))
-    return np.array(normals) # Numpyize  
     
 if __name__ == '__main__':
 

@@ -247,6 +247,10 @@ class Test_PES(object):
                                                'CJS_emim_6311_plus_d3_scan_bck.log'])
         ax = mol2.plot_pes_scans([1,4,9,10], rotation=[0,0,90], img_pos=img_pos, zoom=0.5)
 
+
+def mock_isosurface(*args, **kwargs):
+    return None
+
 class Test_Orbitals(object):
     
     def setUp(self):
@@ -276,7 +280,9 @@ class Test_Orbitals(object):
         ax = self.mol.plot_dos(atom_groups=['cl'], group_colors=['blue'], 
                      group_labels=['Cl'], group_fill=True, lbound=-20, ubound=10)
         
-
+    def test_yield_orbital_images_no_isos(self):
+        pg.isosurface.get_isosurface = mock_isosurface
+        self.mol.yield_orbital_images(1)
     
 if __name__=='__main__':
     import nose

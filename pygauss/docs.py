@@ -14,7 +14,7 @@ from docx.enum.text import WD_ALIGN_PARAGRAPH
 from docx.enum.section import WD_ORIENT
 from docx.shared import Cm
 
-from pandas import DataFrame, Index, MultiIndex
+from pandas import DataFrame
 import numpy as np
 
 class MSDocument(object):
@@ -27,7 +27,10 @@ class MSDocument(object):
         """a class to output a Microsoft Word Document
 
         inherited api details for :py:class:`docx.document.Document` can be 
-        found at; https://python-docx.readthedocs.org/en/latest/api/document.html       
+        found at; https://python-docx.readthedocs.org/en/latest/api/document.html 
+        
+        the class has an internal state for the number of calls to add_picture
+        and add_table for use in caption numbering
         
         Parameters
         ----------
@@ -38,6 +41,9 @@ class MSDocument(object):
         
         """
         self._docx = Document(docx=docx)
+        
+        self._piccount = 0
+        self._tablecount = 0
     
     def __getattr__(self, name):
         """ required to get :py:class:`docx.document.Document` methods """
@@ -48,7 +54,30 @@ class MSDocument(object):
         :py:mod:`IPython` tab completion"""
         dirlist = self.__class__.__dict__.keys() + self._docx.__class__.__dict__.keys()
         return sorted(dirlist)           
+
+    def add_picture(self, image_path_or_stream, width=None, height=None):
+        """ Return a new picture shape added in its own paragraph at the end of
+        the document. The picture contains the image at
+        *image_path_or_stream*, scaled based on *width* and *height*. If
+        neither width nor height is specified, the picture appears at its
+        native size. If only one is specified, it is used to compute
+        a scaling factor that is then applied to the unspecified dimension,
+        preserving the aspect ratio of the image. The native size of the
+        picture is calculated using the dots-per-inch (dpi) value specified
+        in the image file, defaulting to 72 dpi if no value is specified, as
+        is often the case.
+        """
+        self._piccount += 1
+        return self._docx.add_picture(image_path_or_stream, width, height)
     
+    def add_table(self, rows, cols, style=None):
+        """Add a table having row and column counts of *rows* and *cols*
+        respectively and table style of *style*. *style* may be a paragraph
+        style object or a paragraph style name. If *style* is |None|, the
+        table inherits the default table style of the document.
+        """
+        self._tablecount += 1
+        return self._docx.add_table(rows, cols, style)
 
     _MARKUPS = {
             'italic':('*','*'),
@@ -160,9 +189,9 @@ class MSDocument(object):
  
         if not para:
             if level:
-                para = self._docx.add_heading(level=level)
+                para = self.add_heading(level=level)
             else:
-                para = self._docx.add_paragraph(style=style)
+                para = self.add_paragraph(style=style)
         if not text:
             return para
         
@@ -232,7 +261,7 @@ class MSDocument(object):
                     docx_paras.append(self.add_markdown(p, style=style))
             else:
                 para = para.replace('\n', ' ').strip()
-                docx_paras.append(self._docx.add_paragraph(para, style=style))
+                docx_paras.append(self.add_paragraph(para, style=style))
     
         return docx_paras
         
@@ -243,9 +272,10 @@ class MSDocument(object):
         else:
             style='List Bullet'
             
-        return [self._docx.add_paragraph(tx, style=style) for tx in text_list]
+        return [self.add_paragraph(tx, style=style) for tx in text_list]
     
-    def add_mpl(self, fig, dpi=None, width=None, height=None, pad_inches=0.2):
+    def add_mpl(self, fig, dpi=None, width=None, height=None, pad_inches=0.2,
+                caption=None):
         """add matplotlib figure to the document 
         
         Parameters
@@ -260,6 +290,8 @@ class MSDocument(object):
             width of image in document
         pad_inches : float
             amount of padding around the figure
+        caption : str
+            a caption below the figure
 
         Returns
         -------
@@ -275,18 +307,22 @@ class MSDocument(object):
         width = Cm(width) if width else None
         height = Cm(height) if height else None
         
-        pic = self._docx.add_picture(stream, width=width, height=height)
-        self._docx.paragraphs[-1].alignment = WD_ALIGN_PARAGRAPH.CENTER
+        pic = self.add_picture(stream, width=width, height=height)
+        self.paragraphs[-1].alignment = WD_ALIGN_PARAGRAPH.CENTER
+        
+        if caption is not None:
+            self.add_markdown('***Figure '+ str(self._piccount) + ':*** ' + str(caption),
+                              style='Caption')
         
         return pic
            
     def _add_headrw(self, cell, val):
         """ add value to header table cell """
         val = '' if val is None else str(val)
-        p = cell.add_paragraph()
+        p = cell.paragraphs[0]
         p.alignment = WD_ALIGN_PARAGRAPH.CENTER
-        self.add_markdown('??'+val+'??', para=p, 
-                          markup_dict={'math':('$','$'), 'bold':('??','??')})
+        p.paragraph_format.keep_with_next = True
+        self.add_markdown('**'+val+'**', para=p)
         return p        
     
     def _sigfigs(self, val, sig_figures=5):
@@ -302,7 +338,7 @@ class MSDocument(object):
             return val
 
     def add_dataframe(self, df, incl_indx=True, autofit=True, sig_figures=5,
-                      style='Medium List 1 Accent 1'):
+                      style='Medium List 1 Accent 1', caption=None):
         """add dataframe as a table to the document
         
         Parameters
@@ -317,6 +353,8 @@ class MSDocument(object):
             number of significant figures for numbers in table
         style : str
             MS Word table style
+        caption : str
+            add a caption below the table
 
         Returns
         -------
@@ -327,30 +365,26 @@ class MSDocument(object):
         df = df.fillna('-')
         rows, cols = df.shape 
 
-        if type(df.columns) == Index:
-            hrows = 1
-        elif type(df.columns) == MultiIndex:
+        if hasattr(df.columns, 'levels'):
             hrows = len(df.columns.levels)
         else:
-            raise TypeError('df does not have standard or multi column index')
+            hrows = 1
         
         if incl_indx:
-            if type(df.index) == Index:
-                icols = 1
-            elif type(df.index) == MultiIndex:
+            if hasattr(df.index, 'levels'):
                 icols = len(df.index.levels)
             else:
-                raise TypeError('df does not have standard or multi row index')
+                icols = 1
         else:
             icols = 0
             
-        table = self._docx.add_table(rows=rows+hrows, cols=cols+icols, 
+        table = self.add_table(rows=rows+hrows, cols=cols+icols, 
                                      style=style)
         table.alignment = WD_TABLE_ALIGNMENT.CENTER
         table.autofit = autofit
          
         #add header rows
-        if type(df.columns) == MultiIndex:
+        if hasattr(df.columns, 'levels'):
             
             h_array = np.array(df.columns.tolist())
             col_count, rw_count = h_array.shape
@@ -378,27 +412,52 @@ class MSDocument(object):
                 cell = table.rows[hrows-1].cells[col+icols]
                 self._add_headrw(cell, val)
 
-        if incl_indx and type(df.index) == MultiIndex:
-           for col, name in enumerate(df.index.names):
-               cell = table.rows[hrows-1].cells[col]
-               self._add_headrw(cell, name)
+        if incl_indx:
+            if hasattr(df.index, 'levels'):
+               for col, name in enumerate(df.index.names):
+                   cell = table.rows[hrows-1].cells[col]
+                   self._add_headrw(cell, name)
+                   row = hrows-2
+                   #ensure all cells are formatted correctly
+                   while row >= 0:
+                       cell = table.rows[row].cells[col]
+                       self._add_headrw(cell, '')
+                       row -= 1
+            else:
+                cell = table.rows[hrows-1].cells[0]
+                self._add_headrw(cell, df.index.name)
+                row = hrows-2
+                #ensure all cells are formatted correctly
+                while row >= 0:
+                    cell = table.rows[row].cells[0]
+                    self._add_headrw(cell, '')
+                    row -= 1
+                    
+        
                         
         #add data rows
         for row, id_series in enumerate(df.iterrows()):
 
-            if incl_indx and type(df.index) == Index:
-                cell = table.rows[row+hrows].cells[hrows-1]
-                self._add_headrw(cell, df.index[row])
-                
-            if incl_indx and type(df.index) == MultiIndex:
-                for col, val in enumerate(df.index.tolist()[row]):
-                    cell = table.rows[row+hrows].cells[col]
-                    self._add_headrw(cell, val)
+            if incl_indx:
+                if hasattr(df.index, 'levels'):
+                    for col, val in enumerate(df.index.tolist()[row]):
+                        cell = table.rows[row+hrows].cells[col]
+                        self._add_headrw(cell, val)
+                else:
+                    cell = table.rows[row+hrows].cells[0]
+                    self._add_headrw(cell, df.index[row])
+                    
                     
             for col, item in enumerate(id_series[1].iteritems()):
                 cell = table.rows[row+hrows].cells[col+icols]
-                p = cell.add_paragraph(str(self._sigfigs(item[1], sig_figures)))
+                cell.text = str(self._sigfigs(item[1], sig_figures))
+                p = cell.paragraphs[0]
                 p.alignment = WD_ALIGN_PARAGRAPH.CENTER
+                p.paragraph_format.keep_with_next = True
+
+        if caption is not None:
+            self.add_markdown('***Table '+ str(self._tablecount) + ':*** ' + str(caption),
+                              style='Caption')
 
         return table
     

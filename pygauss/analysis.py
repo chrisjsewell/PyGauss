@@ -463,13 +463,37 @@ class Analysis(object):
 
         return self.get_table()
             
+    def get_ids(self, variable_names, variable_lists):
+        """return ids of a list of unique computations """
+        df = self.get_table()
+        df['Index'] = df.index
+        df.set_index(variable_names, inplace=True)
+        df.sortlevel(inplace=True)
+        
+        ids = []
+        for variable_lst in variable_lists:
+            df1 = df.copy()
+            try:                
+                for v in variable_lst:
+                    df1 = df1.loc[v]
+            except KeyError:
+                raise ValueError(
+                        'could not find variable set; {}'.format(variable_lst))
+            i = df1.Index
+            if hasattr(i, 'values'):
+                raise ValueError(
+                        'variable set is not unique; {}'.format(variable_lst))
+            ids.append(int(i))
+        return ids
+
+    
     def get_molecule(self, row):
         """ get molecule object coresponding to particular row """
         return copy.deepcopy(self._df.Molecule.loc[row])
     
     ## TODO will active work?
     def yield_mol_images(self, rows=[], filters={}, mtype='optimised',
-                         align_to=[], rotations=[[0., 0., 0.]],
+                         sort_columns=[], align_to=[], rotations=[[0., 0., 0.]],
                          gbonds=True, represent='ball_stick', 
                          zoom=1., width=300, height=300, axis_length=0,
                          relative=False, minval=-1, maxval=1,
@@ -498,6 +522,8 @@ class Analysis(object):
             index for the row of each molecule to plot (all plotted if empty)
         filters : dict
             {columns:values} to filter by
+        sort_columns : list of str
+            columns to sort by
         align_to : [int, int, int]
             align geometries to the plane containing these atoms
         rotations : list of [float, float, float]
@@ -549,8 +575,11 @@ class Analysis(object):
             an image of the molecule in the format specified by ipyimg            
         
         """
-        df = self.get_table(columns=['Molecule'], rows=rows, 
+        df = self.get_table(columns=['Molecule']+sort_columns, rows=rows, 
                        filters=filters, mol=True)
+        
+        if sort_columns:
+            df.sort(sort_columns, inplace=True)
         
         for indx, mol in zip(df.index, df.Molecule):
             if align_to: mol.set_alignment_atoms(*align_to)
@@ -606,8 +635,8 @@ class Analysis(object):
                 raise ValueError(
                 'mtype must be initial, optimised, nbo, highlight, sopt or hbond')                
     
-    def plot_mol_images(self, mtype='optimised', max_cols=1,
-                        info_columns=[], info_incl_id=False,
+    def plot_mol_images(self, mtype='optimised', max_cols=1, padding=(1, 1),
+                        sort_columns=[], info_columns=[], info_incl_id=False,
                         label_size=20, start_letter='A',
                         rows=[], filters={}, align_to=[], rotations=[[0., 0., 0.]],
                         gbonds=True, represent='ball_stick',
@@ -625,6 +654,10 @@ class Analysis(object):
             'initial', 'optimised', 'nbo', 'highlight', 'sopt' or 'hbond'
         max_cols : int
             maximum columns in plot
+        padding: tuple
+            padding between images (horizontally, vertically)
+        sort_columns : list of str
+            columns to sort by
         info_columns : list of str
             columns to use as info in caption
         info_incl_id : bool
@@ -697,7 +730,7 @@ class Analysis(object):
         
         imgs = self.yield_mol_images(rows=rows, filters=filters, mtype=mtype,
                         align_to=align_to, gbonds=gbonds, represent=represent, 
-                        rotations=rotations, zoom=zoom, 
+                        sort_columns=sort_columns, rotations=rotations, zoom=zoom, 
                         width=width, height=height, axis_length=axis_length,
                         relative=relative, minval=minval, maxval=maxval,
                         highlight=highlight, active=False, ipyimg=False,
@@ -741,18 +774,19 @@ class Analysis(object):
             
             mol_num += 1                            
 
-        fig.tight_layout(h_pad=2.0)
+        fig.tight_layout(w_pad=padding[0], h_pad=padding[1])
                 
-        caption = 'Figure: ' + ', '.join(caption)
+        caption = ', '.join(caption)
         #insert newline character every 80 charaters
         #caption = re.sub("(.{80})", "\\1\n", caption, 0, re.DOTALL)
         
         return fig, caption
         
                 
-    def plot_mol_graphs(self, gtype='energy', share_plot=False, max_cols=1, tick_rotation=0,
-                    rows=[], filters={}, info_columns=[], info_incl_id=False,
-                    start_letter='A',
+    def plot_mol_graphs(self, gtype='energy', share_plot=False, max_cols=1, 
+                    padding=(1,1), tick_rotation=0,
+                    rows=[], filters={}, sort_columns=[], info_columns=[], 
+                    info_incl_id=False, start_letter='A',
                     grid=True, sharex=True, sharey=True, legend_size=10,
                     color_scheme='jet', eunits='eV',
                     per_energy=1., lbound=None, ubound=None,
@@ -771,12 +805,16 @@ class Analysis(object):
             whether to plot all data on the same or separate axes
         max_cols : int
             maximum columns on plots (share_plot=False only)
+        padding: tuple
+            padding between images (horizontally, vertically)
         tick_rotation : int
             rotation of x-axis labels
         rows : int or list
             index for the row of each molecule to plot (all plotted if empty)
         filters : dict
             {columns:values} to filter by
+        sort_columns : list of str
+            columns to sort by
         info_columns : list of str
             columns to use as info in caption
         info_incl_id : bool
@@ -820,9 +858,13 @@ class Analysis(object):
             A caption describing each subplot, given info_columns
             
         """
-        df = self.get_table(columns=info_columns, rows=rows, 
+        df = self.get_table(columns=list(set(info_columns+sort_columns)), 
+                            rows=rows, 
                             filters=filters, mol=True)
         num_plots = df.index.shape[0]
+        
+        if sort_columns:
+            df.sort(sort_columns, inplace=True)        
 
         if gtype == 'energy':
             mol_func = 'plot_opt_energy'
@@ -927,9 +969,9 @@ class Analysis(object):
         ax.set_xlabel(x_label)  
         ax.set_ylabel(y_label)
         
-        fig.tight_layout(h_pad=1.0)
+        fig.tight_layout(w_pad=padding[0], h_pad=padding[1])
         
-        caption = 'Figure: ' + ', '.join(caption)
+        caption = ', '.join(caption)
         
         return fig, caption
         

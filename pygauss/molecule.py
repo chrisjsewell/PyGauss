@@ -147,19 +147,19 @@ class Molecule(object):
             self.set_alignment_atoms(*alignto)
         self._atom_groups = atom_groups
                 
-        parts=[[init_fname, self.add_initialgeom],
-               [opt_fname,  self.add_optimisation],
-               [freq_fname, self.add_frequency],
-               [nbo_fname, self.add_nbo_analysis],
-               [pes_fname, self.add_pes_analysis]]
+        parts=[['init', init_fname, self.add_initialgeom],
+               ['opt', opt_fname,  self.add_optimisation],
+               ['freq', freq_fname, self.add_frequency],
+               ['nbo', nbo_fname, self.add_nbo_analysis],
+               ['pes', pes_fname, self.add_pes_analysis]]
         self._init_read_errors = []
-        for fname, method in parts:
+        for typ, fname, method in parts:
             if fname:
                 if fail_silently:
                     try:
                         method(fname)
                     except Exception, e:
-                        self._init_read_errors.append([fname, str(e)])   
+                        self._init_read_errors.append([typ, fname, str(e)])   
                 else:
                     method(fname)
     

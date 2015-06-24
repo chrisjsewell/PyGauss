@@ -133,9 +133,10 @@ class Analysis(object):
                 molecules.append(molecule)
 
                 read_errors = []
-                for fname, msg in molecule.get_init_read_errors():
+                for typ, fname, msg in molecule.get_init_read_errors():
                     idents = identifiers[len(molecules)-1].copy()
                     idents.pop('Molecule', '_')
+                    idents['Type'] = typ
                     idents['File'] = fname
                     idents['Error_Message'] = msg
                     read_errors.append(idents)
@@ -207,6 +208,7 @@ class Analysis(object):
         if read_errors:
             cols = err_df.columns.tolist()
             #rearrange columns headers
+            cols.remove('Type'); cols.append('Type')
             cols.remove('File'); cols.append('File')
             cols.remove('Error_Message'); cols.append('Error_Message')
             err_df = err_df[cols]
@@ -635,6 +637,15 @@ class Analysis(object):
                 raise ValueError(
                 'mtype must be initial, optimised, nbo, highlight, sopt or hbond')                
     
+    def _get_letter(self, number):
+        """get an uppercase letter according to a number"""
+        if number < 26:
+            return string.ascii_uppercase[number]
+        else:
+            first_letter = string.ascii_uppercase[int(number/26)]
+            second_letter = string.ascii_uppercase[number % 26]
+            return first_letter + second_letter
+        
     def plot_mol_images(self, mtype='optimised', max_cols=1, padding=(1, 1),
                         sort_columns=[], info_columns=[], info_incl_id=False,
                         label_size=20, start_letter='A',
@@ -770,7 +781,7 @@ class Analysis(object):
                 info = str(indx) + ', ' + info
                                 
             caption.append(
-                '(' + string.ascii_uppercase[mol_num+letter_offset] + ') ' + info)
+                '(' + self._get_letter(mol_num+letter_offset) + ') ' + info)
             
             mol_num += 1                            
 
@@ -944,7 +955,7 @@ class Analysis(object):
                 info = ', '.join(row[info_columns].fillna('-').astype(str))
                 if info_incl_id:
                     info = str(indx) + ', ' + info
-                letter = string.ascii_uppercase[ax_num+letter_offset]
+                letter = self._get_letter(ax_num+letter_offset)
                 axes[i,j].set_title(letter, fontweight="bold")
                     
                 caption.append('(' + letter + ') ' + info)

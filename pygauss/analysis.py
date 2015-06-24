@@ -642,7 +642,7 @@ class Analysis(object):
         if number < 26:
             return string.ascii_uppercase[number]
         else:
-            first_letter = string.ascii_uppercase[int(number/26)]
+            first_letter = string.ascii_uppercase[int(number/26)-1]
             second_letter = string.ascii_uppercase[number % 26]
             return first_letter + second_letter
         
@@ -773,7 +773,7 @@ class Analysis(object):
             ax.set_frame_on(frame_on)
 
             if label_size:
-                ax.text(0,0.8,string.ascii_uppercase[mol_num+letter_offset], 
+                ax.text(0,0.8,self._get_letter(mol_num+letter_offset), 
                         size=label_size, weight="bold")
             
             info = ', '.join(df[info_columns].loc[indx].fillna('-').astype(str))

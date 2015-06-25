@@ -111,7 +111,7 @@ class Test_Analysis(object):
 
         analysis.add_mol_property(name, prop, *args, **kwargs)
 
-    @parameterized(['initial', 'optimised', 'highlight', 'nbo', 'sopt', 'hbond'])
+    @parameterized(['initial', 'optimised', 'highlight', 'highlight-initial', 'nbo', 'sopt', 'hbond'])
     def test_tbl_images(self, mtype):
 
         analysis = pg.Analysis(folder_obj=self.folder)

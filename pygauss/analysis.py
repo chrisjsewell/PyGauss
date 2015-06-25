@@ -57,6 +57,7 @@ class Analysis(object):
         heads = headers[:]+['Molecule']
         
         self._df = pd.DataFrame(columns=heads)
+        self._df.index.name = 'ID'
         self._next_index = 0
         
     def __repr__(self):

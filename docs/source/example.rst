@@ -543,35 +543,47 @@ produce a full document of your analysis.
 
     import matplotlib.pyplot as plt
     d = pg.MSDocument()
-    d.add_heading('A Pygauss Example Assessment', level=1)
-    
-    d.add_paragraph('We have looked at the following aspects;')
-    d.add_list(['geometric conformers', 'electronic structure'])
-    
-    d.add_heading('Geometric Conformers', level=2)
+    d.add_heading('A Pygauss Example Assessment', level=0)
+
+    d.add_docstring("""
+    # Introduction
+
+    We have looked at the following aspects
+    of [EMIM]^{+}[Cl]^{-} (C_{6}H_{11}ClN_{2});
+
+    - Geometric conformers
+    - Electronic structure
+
+    # Geometric Conformers
+    """)
+
     fig, caption = analysis.plot_mol_images(max_cols=2, 
                     rotations=[[90,0,0], [0,0,90]], 
                     info_columns=['Anion', 'Cation', 'Initial'])
-    d.add_mpl(fig, dpi=96, height=9)
+    d.add_mpl(fig, dpi=96, height=9, caption=caption)
     plt.close()
-    d.add_markdown('*' + caption + '*')
     d.add_paragraph()
-    df = analysis.get_table(columns=['Anion Charge', 'Cation Charge', 
-                                     'Energy (au)'],
-                       row_index=['Anion', 'Cation', 'Initial'])
-    d.add_dataframe(df, incl_indx=True, style='Medium Shading 1 Accent 1')
-    d.add_markdown('**Table:** Analysis of Conformer Charge')
-    
-    d.add_heading('Molecular Orbital Analysis', level=2)
+    df = analysis.get_table(
+            columns=['Anion Charge', 'Cation Charge'],
+            row_index=['Anion', 'Cation', 'Initial'])
+    d.add_dataframe(df, incl_indx=True, style='Medium Shading 1 Accent 1',
+                    caption='Analysis of Conformer Charge')
+
+    d.add_docstring("""
+    # Molecular Orbital Analysis
+    ## Density of States
+
+    It is **important** to *emphasise* that the
+    computations have only been run in the gas phase.
+    """)
     fig, caption = analysis.plot_mol_graphs(gtype='dos', max_cols=3,
                             info_columns=['Cation', 'Anion', 'Initial'],
                             atom_groups=['cl'], group_colors=['blue'], 
                             group_labels=['Cl'], group_fill=True, 
                             lbound=-20, ubound=10, legend_size=8)
-    d.add_mpl(fig, dpi=96, height=9)
+    d.add_mpl(fig, dpi=96, height=9, caption=caption)
     plt.close()
-    d.add_markdown('*' + caption + '*')
-    
+
     d.save('exmpl_assess.docx')
 
 Which gives us the following:

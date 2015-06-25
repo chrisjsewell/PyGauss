@@ -509,7 +509,7 @@ class Analysis(object):
         Parameters
         ----------
         mtype :
-            'initial', 'optimised', 'nbo', 'highlight', 'sopt' or 'hbond'
+            'initial', 'optimised', 'nbo', 'highlight', 'highlight-initial', 'sopt' or 'hbond'
         info_columns : list of str
             columns to use as info in caption
         max_cols : int
@@ -604,7 +604,16 @@ class Analysis(object):
                                        minval=minval, maxval=maxval, ipyimg=ipyimg)
             elif mtype == 'highlight':
                 yield indx, mol.show_highlight_atoms(highlight, 
-                                       alpha=alpha,
+                                       alpha=alpha, optimised=True,
+                                       transparent=transparent,
+                                       gbonds=gbonds, 
+                                       represent=represent, 
+                                       rotations=rotations, zoom=zoom, 
+                                       width=width, height=height, 
+                                       axis_length=axis_length, ipyimg=ipyimg)
+            elif mtype == 'highlight-initial':
+                yield indx, mol.show_highlight_atoms(highlight, 
+                                       alpha=alpha, optimised=False, 
                                        transparent=transparent,
                                        gbonds=gbonds, 
                                        represent=represent, 
@@ -662,7 +671,7 @@ class Analysis(object):
         Parameters
         ----------
         mtype :
-            'initial', 'optimised', 'nbo', 'highlight', 'sopt' or 'hbond'
+            'initial', 'optimised', 'nbo', 'highlight', 'highlight-initial', 'sopt' or 'hbond'
         max_cols : int
             maximum columns in plot
         padding: tuple

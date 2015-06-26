@@ -169,9 +169,28 @@ class Molecule(object):
         
     def get_atom_group(self, group):
         """return list of atoms in group """
-        if not self._atom_groups.has_key(group):
-            raise ValueError('the molecule does not have an; {0}, atom group'.format(group))
-        return self._atom_groups[group]        
+        if group is None:
+            return group
+            
+
+        if type(group) is str:
+            if not self._atom_groups.has_key(group):
+                raise ValueError('the molecule does not have an; {0}, atom group'.format(group))
+            return self._atom_groups[group]
+        
+        atoms = []
+        for i in group: 
+            
+            if type(i) is str:
+                if not self._atom_groups.has_key(i):
+                    raise ValueError('the molecule does not have an; {0}, atom group'.format(i))
+                atoms.extend(self._atom_groups[i])
+            elif type(i) is int:
+                atoms.append(i)
+            else:
+                raise ValueError('atom must be an integer')
+            
+        return list(set(atoms))        
         
     def get_init_read_errors(self):
         """ get read errors, recorded if fail_silently was set to True on initialise """
@@ -811,7 +830,7 @@ class Molecule(object):
         else:
             natoms = self._read_data('_init_data', 'natom')
         
-        atomlists=[self.get_atom_group(grp) if type(grp) is str else grp for grp in atomlists]
+        atomlists=[self.get_atom_group(grp) for grp in atomlists]
 
         colorlist = self._get_highlight_colors(natoms, atomlists, active,
                                                alpha=alpha)
@@ -894,8 +913,7 @@ class Molecule(object):
         """ transpose in nanometers """                      
         mol = self._create_molecule(optimised=self_opt)
         if self_atoms:
-            if type(self_atoms) is str:
-                self_atoms = self.get_atom_group(self_atoms)
+            self_atoms = self.get_atom_group(self_atoms)
             self_indxs = np.array(self_atoms) - 1
             mol.r_array = mol.r_array[self_indxs]
             mol.type_array = mol.type_array[self_indxs]
@@ -906,8 +924,7 @@ class Molecule(object):
         
         other = other_mol._create_molecule(optimised=other_opt)
         if other_atoms:
-            if type(other_atoms) is str:
-                other_atoms = other_mol._atom_groups[other_atoms]
+            other_atoms = other_mol.get_atom_group(other_atoms)
             other_indxs = np.array(other_atoms) - 1
             other.r_array = other.r_array[other_indxs]
             other.type_array = other.type_array[other_indxs]
@@ -1186,10 +1203,8 @@ class Molecule(object):
         else:
             molecule = self._read_data('_init_data', 'molecule')
             
-        if type(idx_list1) is str:
-            idx_list1 = self.get_atom_group(idx_list1)
-        if type(idx_list2) is str:
-            idx_list2 = self.get_atom_group(idx_list2)
+        idx_list1 = self.get_atom_group(idx_list1)
+        idx_list2 = self.get_atom_group(idx_list2)
         
         # remove atoms not in molecule
         if ignore_missing:
@@ -1388,8 +1403,7 @@ class Molecule(object):
         if atoms==[]: 
             return np.sum(charges)
             
-        if type(atoms) is str:
-            atoms = self.get_atom_group(atoms)
+        atoms = self.get_atom_group(atoms)
             
         atoms = np.array(atoms) -1 # 1->0 base        
         try:
@@ -1418,8 +1432,7 @@ class Molecule(object):
         charges = self._read_data('_nbo_data', 'atomcharges')['natural']
         coords = molecule.r_array   
         
-        if type(atoms) is str:
-            atoms = self.get_atom_group(atoms)
+        atoms = self.get_atom_group(atoms)
 
         if atoms:
             atoms = np.array(atoms) -1 # 1->0 base
@@ -1472,10 +1485,8 @@ class Molecule(object):
             
             group1, group2 = atom_groups
 
-            if type(group1) is str:
-                group1 = self.get_atom_group(group1)
-            if type(group2) is str:
-                group2 = self.get_atom_group(group2)
+            group1 = self.get_atom_group(group1)
+            group2 = self.get_atom_group(group2)
         
             match_rows=[]
             for indx, rw in df.iterrows():

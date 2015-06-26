@@ -614,7 +614,7 @@ class Analysis(object):
                                        axis_length=axis_length, ipyimg=ipyimg)
             elif mtype == 'highlight-initial':
                 yield indx, mol.show_highlight_atoms(highlight, 
-                                       alpha=alpha, optimised=False, 
+                                       alpha=alpha, optimised=False,
                                        transparent=transparent,
                                        gbonds=gbonds, 
                                        represent=represent, 
@@ -645,7 +645,7 @@ class Analysis(object):
                                     minval=minval, maxval=maxval, ipyimg=ipyimg)
             else:
                 raise ValueError(
-                'mtype must be initial, optimised, nbo, highlight, sopt or hbond')                
+                'mtype must be initial, optimised, nbo, highlight, highligh-initial, sopt or hbond')                
     
     def _get_letter(self, number):
         """get an uppercase letter according to a number"""

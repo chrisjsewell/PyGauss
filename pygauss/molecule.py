@@ -4,6 +4,7 @@ Created on Fri May 01 21:24:31 2015
 
 @author: chris
 """
+import os
 from io import BytesIO
 import PIL
 from PIL import Image, ImageChops
@@ -201,15 +202,15 @@ class Molecule(object):
             
     def __deepcopy__(self, memo):
         if not self._folder.islocal():
-            warnings.warn('Cannot deepcopy a molecule created via non-local IO')
-            return copy.copy(self)
-        else:
-            cls = self.__class__
-            result = cls.__new__(cls)
-            memo[id(self)] = result
-            for k, v in self.__dict__.items():
-                setattr(result, k, copy.deepcopy(v, memo))
-            return result
+            warnings.warn('Cannot deepcopy non-local folder object (reverting to user home path)')
+            self._folder = Folder(os.path.expanduser('~'))
+        
+        cls = self.__class__
+        result = cls.__new__(cls)
+        memo[id(self)] = result
+        for k, v in self.__dict__.items():
+            setattr(result, k, copy.deepcopy(v, memo))
+        return result
         
     def _get_data(self, file_name, ftype='gaussian'):
        

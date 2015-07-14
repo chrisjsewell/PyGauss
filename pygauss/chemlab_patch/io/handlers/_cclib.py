@@ -43,6 +43,9 @@ class Handler(IOHandler):
         if filetype not in _types:
             raise FormatNotSupported(filetype)
         self.data = _types[filetype](fd, loglevel=logging.ERROR).parse()
+        
+        self.fd.close()
+        self.fd = None
 
     def read(self, feature, *args, **kwargs):
         if feature == 'molecule':
@@ -61,6 +64,9 @@ class Handler(IOHandler):
                                     type_array=np.array([symbols[a] for a in self.data.atomnos]))
         else:
             return getattr(self.data, feature)
+    
+    def write(self, *args, **kwargs):
+        raise NotImplementedError()
 
     def available_features(self):
         return set(self.data._attrlist) & set(dir(self.data))

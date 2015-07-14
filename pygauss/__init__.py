@@ -33,6 +33,33 @@ from .molecule import Molecule
 from .analysis import Analysis
 from .file_io import Folder
 from .docs import MSDocument
+from .utils import df_to_img, set_imagik_exe
+
+import cPickle as pkl
+import datetime
+def save_object(obj, filename, descript=''):
+    filepath = filename + '.pkl'
+    with open(filepath, 'wb') as f:
+        pkl.dump({'date':datetime.datetime.now(),
+                  'pg_version':__version__,
+                  'description':descript}, 
+                 f)
+        pkl.dump(obj, f)
+    return os.path.abspath(filepath)
+def load_object(filename):
+    filepath = filename + '.pkl'
+    with open(filepath, 'rb') as f:
+        meta = pkl.load(f)
+        if not meta['pg_version'] == __version__:
+            print 'Warning file ({0}) and package ({1}) versions differs'.format(
+                            meta['pg_version'], __version__)
+        obj = pkl.load(f)
+    return obj
+def load_object_meta(filename):
+    filepath = filename + '.pkl'
+    with open(filepath, 'rb') as f:
+        meta = pkl.load(f)
+    return meta
 
 import inspect
 from . import test_data
@@ -40,7 +67,6 @@ def get_test_folder():
     """return a folder obj of test data """
     return Folder(os.path.dirname(os.path.abspath(inspect.getfile(test_data))))
 
-from .utils import df_to_img, set_imagik_exe
 
 def run_nose(doctests=False, verbose=False):
     import pygauss, nose

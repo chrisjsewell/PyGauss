@@ -82,7 +82,8 @@ class Gausscom(logfileparser.Logfile):
                 line = next(inputfile)
                 while line.strip() != '':
                     broken = line.split()
-                    atomnames.append(symbols.index(broken[0]))
+                    #can now handle where where fragments, e.g. Cl(Fragment=2)
+                    atomnames.append(symbols.index(re.split('[(]', broken[0])[0]))
                     atomcoords.append(list(map(float, broken[1:4])))
                     line = next(inputfile)
     

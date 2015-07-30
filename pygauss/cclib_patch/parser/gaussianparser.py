@@ -1380,7 +1380,9 @@ class Gaussian(logfileparser.Logfile):
                 for i in range(self.natom):
                     nline = next(inputfile)
                     charges.append(float(nline.split()[2]))
-                self.atomcharges["natural"] = charges
+                # CJS if using fragments you get total charges followed by alpha and beta charges
+                if not self.atomcharges.has_key("natural"):
+                    self.atomcharges["natural"] = charges
                 
         # CJS added extraction of NBO occupancy data
         # 
@@ -1415,8 +1417,12 @@ class Gaussian(logfileparser.Logfile):
                 
                 line = next(inputfile)
                 line = line.strip()
-
-            self.set_attribute('nbo_occupancy', occupancies)
+            
+            # CJS if using fragments you get separate alpha and beta occupancies
+            if hasattr(self, 'nbo_occupancy'):
+                self.nbo_occupancy.extend(occupancies)
+            else:
+                self.set_attribute('nbo_occupancy', occupancies)
 
         # CJS added extraction of Second Order Perturbation NBO data
         # The next segment summarizes the second-order perturbative estimates 
@@ -1469,7 +1475,11 @@ class Gaussian(logfileparser.Logfile):
                     
                 line = next(inputfile)
             
-            self.set_attribute('sopt', sopt_analysis)
+            # CJS if using fragments you get separate alpha and beta SOPT
+            if hasattr(self, 'sopt'):
+                self.sopt.extend(sopt_analysis)
+            else:
+                self.set_attribute('sopt', sopt_analysis)
 
         #Extract Thermochemistry
         #Temperature   298.150 Kelvin.  Pressure   1.00000 Atm.

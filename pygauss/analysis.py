@@ -66,7 +66,7 @@ class Analysis(object):
     def copy(self):
         clone = copy.deepcopy(self)
         return clone        
-
+    
     def get_folder(self):
         return self._folder
         
@@ -585,7 +585,9 @@ class Analysis(object):
             df.sort(sort_columns, inplace=True)
         
         for indx, mol in zip(df.index, df.Molecule):
-            if align_to: mol.set_alignment_atoms(*align_to)
+            if align_to: 
+                align_atoms = mol.get_atom_group(align_to)
+                mol.set_alignment_atoms(*align_atoms)
             if mtype == 'initial':
                 yield indx, mol.show_initial(gbonds=gbonds, represent=represent, 
                                        rotations=rotations, zoom=zoom, 
@@ -691,8 +693,8 @@ class Analysis(object):
             index for the row of each molecule to plot (all plotted if empty)
         filters : dict
             {columns:values} to filter by
-        align_to : [int, int, int]
-            align geometries to the plane containing these atoms
+        align_to : [int, int, int] or str
+            align geometries to the plane containing these atoms (or atom group)
         rotations : list of [float, float, float]
             for each rotation set [x,y,z] an image will be produced 
         gbonds : bool
@@ -761,9 +763,11 @@ class Analysis(object):
                         transparent=transparent,
                         hbondwidth=hbondwidth, no_hbonds=no_hbonds)
         
-        num_rows = int(math.ceil(num_mols/float(max_cols)))
-        num_cols = min([max_cols, num_mols])
-
+        #num_rows = int(math.ceil(num_mols/float(max_cols)))
+        #num_cols = min([max_cols, num_mols])
+        num_cols=int(max_cols)
+        num_rows=int(math.ceil(num_mols/float(num_cols)))
+ 
         fig, axes = plt.subplots(num_rows, num_cols, squeeze=False,
                                  gridspec_kw={'width_ratios':[1]*num_cols})
                                  
@@ -793,7 +797,15 @@ class Analysis(object):
             caption.append(
                 '(' + self._get_letter(mol_num+letter_offset) + ') ' + info)
             
-            mol_num += 1                            
+            mol_num += 1            
+
+        #resize extra axes to be same as last img
+        while mol_num < num_rows*num_cols:
+            ax = axes[int(math.ceil((mol_num+1)/float(max_cols)))-1,
+                      mol_num % max_cols]
+            ax.imshow(img)
+            ax.clear()
+            mol_num += 1               
 
         fig.tight_layout(w_pad=padding[0], h_pad=padding[1])
                 

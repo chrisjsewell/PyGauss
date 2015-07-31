@@ -100,6 +100,15 @@ class Test_Freq(object):
     def test_plot_freq(self):
 
         ax = self.mol.plot_freq_analysis()
+        
+    def test_zpe_correction(self):
+        """zero-point error correction
+        
+        File extract:
+        Zero-point correction=                           0.168038 (Hartree/Particle)
+        """
+        
+        that.assert_equal(self.mol.get_zeropt_energy(units='hartree'), 0.168038)
 
 
 class Test_NBO(object):

@@ -143,6 +143,7 @@ class ccData(object):
         "vibirs":         numpy.ndarray,
         "vibramans":      numpy.ndarray,
         "vibsyms":        list,
+        "zeropt_energy":  float,
     }
 
     # The name of all attributes can be generated from the dictionary above.

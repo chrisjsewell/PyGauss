@@ -1491,13 +1491,15 @@ class Gaussian(logfileparser.Logfile):
         #Sum of electronic and thermal Energies=              -563.636699
         #Sum of electronic and thermal Enthalpies=            -563.635755
         #Sum of electronic and thermal Free Energies=         -563.689037
+        # CJS zero-point correction
+        if "Zero-point correction=" in line:
+            self.set_attribute('zeropt_energy', utils.convertor(float(line.split()[2]), "hartree", "eV"))
         if "Sum of electronic and thermal Enthalpies" in line:
             self.set_attribute('enthalpy', float(line.split()[6]))
         if "Sum of electronic and thermal Free Energies=" in line:
             self.set_attribute('freenergy', float(line.split()[7]))
         if line[1:12] == "Temperature":
             self.set_attribute('temperature', float(line.split()[1]))
-        
         #CJS to capture errors in the run
         if line[1:18] == 'Error termination':
             self.run_error = True

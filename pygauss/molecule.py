@@ -275,8 +275,8 @@ class Molecule(object):
         """ was the geometry optimised """
         return self._read_data('_opt_data', 'optdone')
 
-    def get_opt_energy(self, units='eV', final=True):
-        """ return the SCF optimisation energy 
+    def get_opt_energy(self, units='eV', final=True, zpe_correct=False):
+        """ return the SCF optimisation energy(s) 
         
         Parameters
         ----------
@@ -284,6 +284,8 @@ class Molecule(object):
             the unit type of the energy
         final : bool
             return only the final optimised energy if True, else for all steps            
+        zpe_correct : bool
+            apply zero-point energy correction (found in frequency log) to final optimised energy           
         
         Returns
         -------
@@ -301,9 +303,35 @@ class Molecule(object):
         
         if not units == 'eV':
             energies = convertor(energies, 'eV', units)
+            
+        if zpe_correct:
+            energies[-1] += self.get_zeropt_energy(units=units)
         
         return energies[-1] if final else energies  
             
+    def get_zeropt_energy(self, units='eV'):
+        """ return the zero-point energy correction 
+        
+        Parameters
+        ----------
+        units : str
+            the unit type of the energy
+        
+        Returns
+        -------
+        energy : float
+            zero-point energy correction
+        """       
+        if not self._freq_data:
+            return np.nan
+        
+        energy = self._read_data('_freq_data', 'zeropt_energy')
+               
+        if not units == 'eV':
+            energy = convertor(energy, 'eV', units)
+        
+        return energy
+
     def plot_opt_energy(self, units='eV', linecolor='blue', ax=None):
         """ plot SCF optimisation energy 
 

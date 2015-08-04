@@ -1219,7 +1219,7 @@ class Molecule(object):
     def _converter(self, val, unit1, unit2):
         
         multiple = {('nm', 'nm') : 1.,
-                    ('nm', 'Angstrom') : 0.1}
+                    ('nm', 'Angstrom') : 10.}
 
         return val * multiple[(unit1, unit2)]      
 

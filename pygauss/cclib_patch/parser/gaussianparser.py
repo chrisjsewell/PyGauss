@@ -1446,16 +1446,20 @@ class Gaussian(logfileparser.Logfile):
         # after that a 'serial number' which corresponds to the connectivity
         # (or idealized bond index between the atoms, i.e., single double triple bond), 
         # and finally the atom(s) to which the NBO belongs.        
-        if line.strip() == 'Second Order Perturbation Theory Analysis of Fock Matrix in NBO Basis':
+        if line.strip().upper() == 'Second Order Perturbation Theory Analysis of Fock Matrix in NBO Basis'.upper():
 
             p = re.compile('([\d]+).\s([A-Z\*]+)[\s\(]+([\w]+)[\)]([\s\w-]+\-[\s\w-]+|[\s\w]+)\s([\s\w\.]+)')
             p2 = re.compile('[\d]+')
             
             line = next(inputfile)
             sopt_analysis=[]
-            while line.find("Natural Bond Orbitals") < 0:
-                if len(line.split('/')) == 2:
-                    donor, acceptor_energy =  line.split('/')
+            while line.upper().find("Natural Bond Orbitals".upper()) < 0:
+                if p.search(line):#len(line.split('/')) == 2:
+                    if len(line.split('/')) == 2:
+                        donor, acceptor_energy =  line.split('/')
+                    else:
+                        donor = line.split(p.search(line).groups()[4])[0]
+                        acceptor_energy = line.split(p.search(line).groups()[3])[1]
                     #there are instances where E2=******** appears to mean nan/0
                     acceptor_energy = acceptor_energy.replace('********', ' 0.00')
                     if p.search(donor) and p.search(acceptor_energy):

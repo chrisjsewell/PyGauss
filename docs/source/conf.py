@@ -97,6 +97,7 @@ with open('enhancements.rst', 'w') as f:
 				break
 
 import inspect
+print sys.path
 import pygauss
 
 # If extensions (or modules to document with autodoc) are in another directory,

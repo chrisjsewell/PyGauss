@@ -298,8 +298,7 @@ class Test_Orbitals(object):
                           energy)
         
     def test_plot_dos(self):
-        ax = self.mol.plot_dos(atom_groups=['cl'], group_colors=['blue'], 
-                     group_labels=['Cl'], group_fill=True, lbound=-20, ubound=10)
+        ax = self.mol.plot_dos(lbound=-20, ubound=10)
         
     def test_yield_orbital_images_no_isos(self):
         pg.isosurface.get_isosurface = mock_isosurface

@@ -1369,7 +1369,7 @@ class Gaussian(logfileparser.Logfile):
             else:
                 self.atomcharges["lowdin"] = charges
 
-        if line.strip() == "Natural Population":
+        if line.strip()[0:18] == "Natural Population":
             if not hasattr(self, 'atomcharges'):
                 self.atomcharges = {}
             line1 = next(inputfile)
@@ -1382,7 +1382,7 @@ class Gaussian(logfileparser.Logfile):
                     charges.append(float(nline.split()[2]))
                 # CJS if using fragments you get total charges followed by alpha and beta charges
                 if not self.atomcharges.has_key("natural"):
-                    self.atomcharges["natural"] = charges
+                    self.atomcharges["natural"] = charges[:]
                 
         # CJS added extraction of NBO occupancy data
         # 

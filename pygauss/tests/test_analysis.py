@@ -132,8 +132,7 @@ class Test_Analysis(object):
                     param('energy', False),
                     param('freq', True),
                     param('freq', False),
-                    param('dos', False, atom_groups=['cl'], group_colors=['blue'], 
-                          group_labels=['Cl'], group_fill=True, lbound=-20, ubound=10),
+                    param('dos', False, lbound=-20, ubound=10),
                   ])
     def test_tbl_graphs(self, gtype, share_plot, **kwargs):
 

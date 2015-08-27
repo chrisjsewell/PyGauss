@@ -660,7 +660,7 @@ class Analysis(object):
         
     def plot_mol_images(self, mtype='optimised', max_cols=1, padding=(1, 1),
                         sort_columns=[], info_columns=[], info_incl_id=False,
-                        label_size=20, start_letter='A',
+                        label_size=20, letter_prefix='', start_letter='A',
                         rows=[], filters={}, align_to=[], rotations=[[0., 0., 0.]],
                         gbonds=True, represent='ball_stick',
                         zoom=1., width=500, height=500, axis_length=0,
@@ -687,14 +687,16 @@ class Analysis(object):
             include molecule id number in caption
         label_size : int
             subplot label size (pts)
+        letter_prefix : str
+            prefix for labelling subplots
         start_letter : str
             starting (capital) letter for labelling subplots
         rows : int or list
             index for the row of each molecule to plot (all plotted if empty)
         filters : dict
             {columns:values} to filter by
-        align_to : [int, int, int] or str
-            align geometries to the plane containing these atoms (or atom group)
+        align_to : [int, int, int]
+            align geometries to the plane containing these atoms
         rotations : list of [float, float, float]
             for each rotation set [x,y,z] an image will be produced 
         gbonds : bool
@@ -787,7 +789,7 @@ class Analysis(object):
             ax.set_frame_on(frame_on)
 
             if label_size:
-                ax.text(0,0.8,self._get_letter(mol_num+letter_offset), 
+                ax.text(0,0.8,letter_prefix+self._get_letter(mol_num+letter_offset), 
                         size=label_size, weight="bold")
             
             info = ', '.join(df[info_columns].loc[indx].fillna('-').astype(str))
@@ -795,7 +797,7 @@ class Analysis(object):
                 info = str(indx) + ', ' + info
                                 
             caption.append(
-                '(' + self._get_letter(mol_num+letter_offset) + ') ' + info)
+                '(' + letter_prefix+self._get_letter(mol_num+letter_offset) + ') ' + info)
             
             mol_num += 1            
 
@@ -819,12 +821,12 @@ class Analysis(object):
     def plot_mol_graphs(self, gtype='energy', share_plot=False, max_cols=1, 
                     padding=(1,1), tick_rotation=0,
                     rows=[], filters={}, sort_columns=[], info_columns=[], 
-                    info_incl_id=False, start_letter='A',
+                    info_incl_id=False, letter_prefix='', start_letter='A',
                     grid=True, sharex=True, sharey=True, legend_size=10,
                     color_scheme='jet', eunits='eV',
                     per_energy=1., lbound=None, ubound=None,
-                    atom_groups=[], group_colors=[], 
-                    group_labels=[], group_fill=False):
+                    color_homo='g', color_lumo='r', 
+                    homo_lumo_lines=True,homo_lumo_values=True,band_gap_value=True):
         """get a set of data plots for each molecule
         
         Parameters
@@ -852,6 +854,8 @@ class Analysis(object):
             columns to use as info in caption
         info_incl_id : bool
             include molecule id number in labels
+        letter_prefix : str
+            prefix for labelling subplots (share_plot=False only)
         start_letter : str
             starting (capital) letter for labelling subplots (share_plot=False only)
         grid : bool
@@ -873,15 +877,16 @@ class Analysis(object):
             lower bound energy (DoS only)
         ubound: float
             upper bound energy (DoS only)
-        atom_groups : list of lists or strings
-            atom groups to highlight (DoS only)
-        group_colors : list of str
-            highlight colour for each atom group (DoS only)
-            format adheres to matplotlib.colors
-        group_labels : list of str
-            label for each atom group (DoS only)
-        group_fill : bool
-            whether to fill colour for groups (DoS only)
+        color_homo : matplotlib.colors
+            color of homo in matplotlib format
+        color_lumo : matplotlib.colors
+            color of lumo in matplotlib.colors
+        homo_lumo_lines : bool
+            draw lines at HOMO and LUMO energies
+        homo_lumo_values : bool
+            annotate HOMO and LUMO lines with exact energy values
+        band_gap_value : bool
+            annotate inbetween HOMO and LUMO lines with band gap value
         
         Returns
         -------
@@ -919,13 +924,13 @@ class Analysis(object):
             if share_plot:
                 raise ValueError('share_plots not available for Density of States')
             mol_func = 'plot_dos'
-            x_label = 'States per {0} {1}'.format(per_energy, eunits)
+            x_label = 'Density of States (per {0} {1})'.format(per_energy, eunits)
             y_label = 'Energy ({})'.format(eunits)
             all_plot_kwargs = {'eunits':eunits, 'per_energy':per_energy, 
                                'lbound':lbound, 'ubound':ubound,
-                               'atom_groups':atom_groups, 'group_colors':group_colors, 
-                               'group_labels':group_labels, 'group_fill':group_fill,
-                               'legend_size':legend_size}
+                 'color_homo':color_homo, 'color_lumo':color_lumo, 
+                 'homo_lumo_lines':homo_lumo_lines, 'homo_lumo_values':homo_lumo_values,
+                 'band_gap_value':band_gap_value, 'legend_size':legend_size}
         else:
             raise ValueError('gtype; {0}, not available'.format(gtype))
 
@@ -978,9 +983,9 @@ class Analysis(object):
                 if info_incl_id:
                     info = str(indx) + ', ' + info
                 letter = self._get_letter(ax_num+letter_offset)
-                axes[i,j].set_title(letter, fontweight="bold")
+                axes[i,j].set_title(letter_prefix+letter, fontweight="bold")
                     
-                caption.append('(' + letter + ') ' + info)
+                caption.append('(' + letter_prefix+letter + ') ' + info)
                 
                 ax_num += 1
             

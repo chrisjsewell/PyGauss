@@ -1332,8 +1332,8 @@ class Molecule(object):
 
     def calc_2plane_angle(self, p1, p2, optimisation=True):
         """return angle of planes """
-        a1, a2, a3 = p1
-        b1, b2, b3 = p2        
+        a1, a2, a3 = self.get_atom_group(p1)
+        b1, b2, b3 = self.get_atom_group(p2)       
         
         if optimisation:
             molecule = self._read_data('_opt_data', 'molecule')  
@@ -1758,9 +1758,10 @@ class Molecule(object):
                  ax=None,
                  color='g', label='', 
                  line=True, linestyle='-', linewidth=2, linealpha = 1, 
-                 fill=True, fillalpha = 1):
+                 fill=True, fillalpha = 1, df=None):
 
-        df = self._get_dos(mol, atoms=atoms, dos_type=dos_type, 
+        if df is None:
+            df = self._get_dos(mol, atoms=atoms, dos_type=dos_type, 
                            per_energy=per_energy, eunits=eunits,
                            lbound=lbound, ubound=ubound)    
         
@@ -1783,9 +1784,10 @@ class Molecule(object):
         return ax
     
     def plot_dos(self, eunits='eV', per_energy=1., lbound=None, ubound=None,
-                 atom_groups=[], group_colors=[], group_labels=[], group_fill=False,
+                 color_homo='g', color_lumo='r', 
+                 homo_lumo_lines=True,homo_lumo_values=True,band_gap_value=True,
                  legend_size=10, ax=None):
-        """plot Density of States
+        """plot Density of States and HOMO/LUMO gap
         
         Parameters
         -----------
@@ -1797,15 +1799,16 @@ class Molecule(object):
             lower bound energy
         ubound: float
             upper bound energy
-        atom_groups : list of lists or strings
-            atom groups to highlight
-        group_colors : list of str
-            highlight colour for each atom group
-            format adheres to matplotlib.colors
-        group_labels : list of str
-            label for each atom group
-        group_fill : bool
-            whether to fill colour for groups
+        color_homo : matplotlib.colors
+            color of homo in matplotlib format
+        color_lumo : matplotlib.colors
+            color of lumo in matplotlib.colors
+        homo_lumo_lines : bool
+            draw lines at HOMO and LUMO energies
+        homo_lumo_values : bool
+            annotate HOMO and LUMO lines with exact energy values
+        band_gap_value : bool
+            annotate inbetween HOMO and LUMO lines with band gap value
         legend_size : int
             the font size (in pts) for the legend
         ax : matplotlib.Axes
@@ -1819,29 +1822,38 @@ class Molecule(object):
         """
         if not ax:
             fig, ax = plt.subplots()
-            ax.set_xlabel('States per {0} {1}'.format(per_energy, eunits))
+            ax.set_xlabel('Density of States (per {0} {1})'.format(per_energy, eunits))
             ax.set_ylabel('Energy ({})'.format(eunits))
 
         mol = self
         
-        self._plot_single_dos(mol, ax=ax, label='HOMO', dos_type='homo', color='g', 
+        self._plot_single_dos(mol, ax=ax, label='HOMO', dos_type='homo', color=color_homo, 
                       line=False, fillalpha=0.3, 
                       per_energy=per_energy, eunits=eunits, lbound=lbound, ubound=ubound)
-        self._plot_single_dos(mol, ax=ax, label='LUMO', dos_type='lumo', color='r', 
+        self._plot_single_dos(mol, ax=ax, label='LUMO', dos_type='lumo', color=color_lumo, 
                       fillalpha=0.3, line=False, 
                       per_energy=per_energy, eunits=eunits, lbound=lbound, ubound=ubound)
 
-        for atoms, color, label in zip(atom_groups, group_colors, group_labels):  
+        homo, lumo = mol.get_orbital_energies(mol.get_orbital_homo_lumo())
+        xlower, xupper = ax.get_xbound()
 
-            if type(atoms) is str:
-                atoms = self.get_atom_group(atoms)
-                
-            self._plot_single_dos(mol, ax=ax, atoms=atoms, fill=group_fill,
-                          color=color, label=label,
-                          per_energy=per_energy, eunits=eunits, lbound=lbound, ubound=ubound)
+        if homo_lumo_lines:
+            ax.plot([xlower, xupper], [homo,homo], 'g-', linewidth=2)
+            ax.plot([xlower, xupper], [lumo,lumo], 'r-', linewidth=2)
+        
+        if homo_lumo_values:
+            ax.annotate('{0}{1}'.format(homo.round(1), eunits), xy=(xupper, homo), 
+                        xytext=(-5, -10), ha='right', textcoords='offset points')
+            ax.annotate('{0}{1}'.format(lumo.round(1), eunits), xy=(xupper, lumo), 
+                        xytext=(-5, 5), ha='right', textcoords='offset points')
+        if band_gap_value:
+            gap = lumo-homo
+            ax.annotate('{0}{1}'.format(gap.round(1), eunits), xy=(xupper, homo+0.5*gap), 
+                        xytext=(-5, -4), ha='right', textcoords='offset points')
 
         ax.set_ybound(lbound, ubound)
-        ax.legend(framealpha=0.5, prop={'size':legend_size})
+        if legend_size: 
+            ax.legend(framealpha=0.5, prop={'size':legend_size})
         ax.grid(True)
         
         return ax
@@ -1903,9 +1915,9 @@ class Molecule(object):
         energies = np.array(df.energy.tolist())
         
         fig, ax = plt.subplots()
-        ax.plot(angles, energies)
-        ax.scatter(angles, energies)
-        ax.set_ylabel('Energy ({0})'.format(eunits))
+        ax.plot(angles, energies-energies.min())
+        ax.scatter(angles, energies-energies.min())
+        ax.set_ylabel('Relative Energy ({0})'.format(eunits))
         ax.set_xlabel(xlabel)
         ax.grid(True)
             
@@ -1919,6 +1931,6 @@ class Molecule(object):
         for indx in feature_dict[img_pos]:
             img = self._image_molecule(df.mol.loc[indx], rotation=rotation, represent='ball_stick')                        
             img = self._color_to_transparent(img)
-            self._img_to_plot(df.angle.loc[indx], df.energy.loc[indx], img, zoom=zoom, ax=ax)
+            self._img_to_plot(df.angle.loc[indx], df.energy.loc[indx]-energies.min(), img, zoom=zoom, ax=ax)
             
-        return ax
+        return ax, df

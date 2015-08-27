@@ -1084,7 +1084,7 @@ class Molecule(object):
             The value for which the function should be constant.
         extents : (float, float, float)
             +/- x,y,z to extend the molecule geometrty when constructing the surface
-        transparent=True : 
+        transparent : bool
             whether iso-surface should be transparent (based on alpha value) 
         alpha : 
             alpha value of iso-surface
@@ -1790,19 +1790,19 @@ class Molecule(object):
         """plot Density of States and HOMO/LUMO gap
         
         Parameters
-        -----------
+        ----------
         eunits : str
             unit of energy
         per_energy : float
             energy interval to group states by
         lbound : float
             lower bound energy
-        ubound: float
+        ubound : float
             upper bound energy
         color_homo : matplotlib.colors
             color of homo in matplotlib format
         color_lumo : matplotlib.colors
-            color of lumo in matplotlib.colors
+            color of lumo in matplotlib format
         homo_lumo_lines : bool
             draw lines at HOMO and LUMO energies
         homo_lumo_values : bool

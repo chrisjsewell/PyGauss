@@ -6,8 +6,6 @@ computations. The package was created to fill a perceived gap in current analyti
 whereby they are closed, Graphical User Interface (GUI) systems that do not allow for autonomous
 reproducibility or extensibility of analyses. For example, to compare multiple molecular conformers a user
 must open each data file separately, and then record and analyse the relevant data in an external programme.
-Given the large number of conformers assessed in this project, this process incurred a high time cost and was
-open to human error.
 
 .. image:: images/pygauss_system.png
 

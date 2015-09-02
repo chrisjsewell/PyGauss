@@ -585,4 +585,9 @@ Which gives us the following:
 
 .. image:: images/example_docx2.png
 
+Further Examples
+-----------------------
+
+For more complex examples, you can also find a notebook from a recent project at;
+https://github.com/chrisjsewell/PyGauss/blob/master/Real_project_example_notebook.ipynb
 

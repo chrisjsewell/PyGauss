@@ -9,6 +9,8 @@ must open each data file separately, and then record and analyse the relevant da
 
 .. image:: images/pygauss_system.png
 
+*PyGauss system diagram (blue=internal class, green=external dependency).*
+
 
 The figure above illustrates the systems model of PyGauss. It was designed in an object-orientated manner to
 have modularity, with well-defined and open interfaces, between the data parsing, analysis and presentation
@@ -20,11 +22,12 @@ as required and present it to the user.
 
 The system was realised with the Python programming language, which is widely used in the scientific community
 and has a number of existing, well-developed scientific packages. The cclib package has been utilised as a data
-parser, initially this has focussed on parsing files output from the Gaussian programme (e.g. optimisation,
+parser,[1] initially this has focussed on parsing files output from the Gaussian programme (e.g. optimisation,
 frequency and population computations) but is extensible to many other DFT programmes. The Numpy package is
-used to carry out statistical computations, whilst the Pandas, Matplotlib and chemlab packages are interfaced
-with to provide visualisation of the data. Finally the IPython package can be used to provide the user
-with an interactive interface to the system from where they can create extensible and reusable analysis.
+used to carry out statistical computations,[2] whilst the Pandas, Matplotlib and chemlab packages are
+interfaced with to provide visualisation of the data.[3-5] Finally the IPython package can be used to provide
+the user with an interactive interface to the system from where they can create extensible and reusable
+analysis.[6]
 
 The source code is housed in an open-source repository. The
 code was written in a test-driven development manner, whereby each computational function is written to pass a

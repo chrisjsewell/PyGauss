@@ -80,7 +80,7 @@ and run the following...
 
 .. parsed-literal::
 
-    pygauss version: 0.5.0
+    pygauss version: 0.6.0
     
 
 The test folder has a number of example Gaussian outputs to play around
@@ -96,7 +96,7 @@ with.
 
 .. parsed-literal::
 
-    37
+    33
 
 
 
@@ -253,11 +253,7 @@ Density of States Analysis
 
 .. code:: python
 
-    ax = mol.plot_dos(per_energy=1,
-                    atom_groups=['cl', 'emim'], 
-                    group_colors=['blue', 'orange'], 
-                    group_labels=['Cl', 'EMIM'], group_fill=False, 
-                    lbound=-20, ubound=10, legend_size=12)
+ax = mol.plot_dos(per_energy=1, lbound=-20, ubound=10, legend_size=12)
 
 
 
@@ -336,8 +332,8 @@ Molecular Comparison
 
 .. parsed-literal::
 
-    Figure: (A) emim, cl, B, (B) emim, cl, BE, (C) emim, cl, BM, (D) emim, cl, F, (E) emim, cl, FE
-    
+    (A) emim, cl, B, (B) emim, cl, BE, (C) emim, cl, BM, (D) emim, cl, F, (E) emim, cl, FE
+
 
 
 .. image:: output_26_1.png
@@ -348,18 +344,17 @@ Data Comparison
 
 .. code:: python
 
-    fig, caption = analysis.plot_mol_graphs(gtype='dos', max_cols=3,
-                            info_columns=['Cation', 'Anion', 'Initial'],
-                            atom_groups=['cl'], group_colors=['blue'], 
-                            group_labels=['Cl'], group_fill=True, 
-                            lbound=-20, ubound=10, legend_size=8)
+    fig, caption = analysis.plot_mol_graphs(gtype='dos', max_cols=3, 
+                                            lbound=-20, ubound=10, legend_size=0,
+                                            band_gap_value=False,
+                                       info_columns=['Cation', 'Anion', 'Initial'])
     print caption
 
 
 .. parsed-literal::
 
-    Figure: (A) emim, cl, B, (B) emim, cl, BE, (C) emim, cl, BM, (D) emim, cl, F, (E) emim, cl, FE
-    
+    (A) emim, cl, B, (B) emim, cl, BE, (C) emim, cl, BM, (D) emim, cl, F, (E) emim, cl, FE
+
 
 
 .. image:: output_28_1.png
@@ -434,7 +429,7 @@ groups of equal variance.
 
 .. parsed-literal::
 
-    Figure: (A) BM
+    (A) BM
     
 
 
@@ -443,7 +438,7 @@ groups of equal variance.
 
 .. parsed-literal::
 
-    Figure: (A) FE
+    (A) FE
     
 
 
@@ -452,7 +447,7 @@ groups of equal variance.
 
 .. parsed-literal::
 
-    Figure: (A) B, (B) BE
+    (A) B, (B) BE
     
 
 
@@ -461,7 +456,7 @@ groups of equal variance.
 
 .. parsed-literal::
 
-    Figure: (A) F
+    (A) F
     
 
 Documentation (MS Word)
@@ -525,11 +520,10 @@ produce a full document of your analysis.
     It is **important** to *emphasise* that the
     computations have only been run in the gas phase.
     """)
-    fig, caption = analysis.plot_mol_graphs(gtype='dos', max_cols=3,
-                            info_columns=['Cation', 'Anion', 'Initial'],
-                            atom_groups=['cl'], group_colors=['blue'], 
-                            group_labels=['Cl'], group_fill=True, 
-                            lbound=-20, ubound=10, legend_size=8)
+    fig, caption = analysis.plot_mol_graphs(gtype='dos', max_cols=3, 
+                                        lbound=-20, ubound=10, legend_size=0,
+                                        band_gap_value=False,
+                                   info_columns=['Cation', 'Anion', 'Initial'])
     d.add_mpl(fig, dpi=96, height=9, caption=caption)
     plt.close()
 

@@ -17,8 +17,8 @@ and run the following...
 
 .. parsed-literal::
 
-    pygauss version: 0.5.0
-    
+    pygauss version: 0.6.0
+
 
 The test folder has a number of example Gaussian outputs to play around
 with.
@@ -33,7 +33,7 @@ with.
 
 .. parsed-literal::
 
-    37
+    33
 
 
 
@@ -98,7 +98,7 @@ Molecules can be viewed statically or interactively.
 .. parsed-literal::
 
     Cl optimised polar coords from aromatic ring : (0.11, -116.42,-170.06)
-    
+
 
 
 .. image:: images/output_10_1.png
@@ -121,7 +121,7 @@ Energetics and Frequency Analysis
 .. parsed-literal::
 
     Optimised? True, Conformer? True, Energy = -805.105 a.u.
-    
+
 
 
 .. image:: images/output_12_1.png
@@ -138,7 +138,7 @@ Potential Energy Scan analysis of geometric conformers...
     mol2 = pg.molecule.Molecule(folder_obj=folder, alignto=[3,2,1],
                 pes_fname=['CJS_emim_6311_plus_d3_scan.log', 
                            'CJS_emim_6311_plus_d3_scan_bck.log'])   
-    ax = mol2.plot_pes_scans([1,4,9,10], rotation=[0,0,90], img_pos='local_maxs', zoom=0.5)
+    ax, data = mol2.plot_pes_scans([1,4,9,10], rotation=[0,0,90], img_pos='local_maxs', zoom=0.5)
     ax.set_title('Ethyl chain rotational conformer analysis')
     ax.get_figure().set_size_inches(7, 3)
 
@@ -163,7 +163,7 @@ using Natural Bond Orbital (NBO) analysis
 .. parsed-literal::
 
     +ve charge centre polar coords from aromatic ring: (0.02 -51.77,-33.15)
-    
+
 
 
 .. image:: images/output_16_1.png
@@ -186,15 +186,11 @@ Density of States Analysis
     Number of Orbitals: 272
     HOMO at -4.91492036773 eV
     LUMO at -1.85989816817 eV
-    
+
 
 .. code:: python
 
-    ax = mol.plot_dos(per_energy=1,
-                    atom_groups=['cl', 'emim'], 
-                    group_colors=['blue', 'orange'], 
-                    group_labels=['Cl', 'EMIM'], group_fill=False, 
-                    lbound=-20, ubound=10, legend_size=12)
+    ax = mol.plot_dos(per_energy=1, lbound=-20, ubound=10, legend_size=12)
 
 
 
@@ -225,7 +221,7 @@ Using Second Order Perturbation Theory.
 
     H inter-bond energy = 111.7128 kJmol-1
     Other inter-bond energy = 11.00392 kJmol-1
-    
+
 
 
 .. image:: images/output_21_1.png
@@ -258,7 +254,7 @@ can be grouped into an *Analysis* class and anlaysed collectively.
 .. parsed-literal::
 
     Reading data 5 of 5
-    
+
 
 Molecular Comparison
 ~~~~~~~~~~~~~~~~~~~~
@@ -273,8 +269,8 @@ Molecular Comparison
 
 .. parsed-literal::
 
-    Figure: (A) emim, cl, B, (B) emim, cl, BE, (C) emim, cl, BM, (D) emim, cl, F, (E) emim, cl, FE
-    
+    (A) emim, cl, B, (B) emim, cl, BE, (C) emim, cl, BM, (D) emim, cl, F, (E) emim, cl, FE
+
 
 
 .. image:: images/output_26_1.png
@@ -285,18 +281,17 @@ Data Comparison
 
 .. code:: python
 
-    fig, caption = analysis.plot_mol_graphs(gtype='dos', max_cols=3,
-                            info_columns=['Cation', 'Anion', 'Initial'],
-                            atom_groups=['cl'], group_colors=['blue'], 
-                            group_labels=['Cl'], group_fill=True, 
-                            lbound=-20, ubound=10, legend_size=8)
+    fig, caption = analysis.plot_mol_graphs(gtype='dos', max_cols=3, 
+                                            lbound=-20, ubound=10, legend_size=0,
+                                            band_gap_value=False,
+                                       info_columns=['Cation', 'Anion', 'Initial'])
     print caption
 
 
 .. parsed-literal::
 
-    Figure: (A) emim, cl, B, (B) emim, cl, BE, (C) emim, cl, BM, (D) emim, cl, F, (E) emim, cl, FE
-    
+    (A) emim, cl, B, (B) emim, cl, BE, (C) emim, cl, BM, (D) emim, cl, F, (E) emim, cl, FE
+
 
 
 .. image:: images/output_28_1.png
@@ -320,12 +315,11 @@ a subset of these computations.
                        column_index=['Cation', 'Anion', 'Anion-Cation'])
 
 
+
+
 .. raw:: html
 
-    <script type="text/javascript"
-      src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
-    </script>
-    <div style="max-height:1000px;max-width:1500px;overflow:auto;">
+    <div>
     <table border="1" class="dataframe">
       <thead>
         <tr>
@@ -343,12 +337,12 @@ a subset of these computations.
           <th></th>
           <th>Opt</th>
           <th>Energy (au)</th>
-          <th>chain, &#968</th>
+          <th>chain, $\psi$</th>
           <th>Charge</th>
           <th>Charge</th>
-          <th>r</th>
-          <th>&#952</th>
-          <th>&#966</th>
+          <th>$r$</th>
+          <th>$\theta$</th>
+          <th>$\phi$</th>
           <th>h-bond</th>
         </tr>
         <tr>
@@ -485,8 +479,8 @@ groups of equal variance.
 
 .. parsed-literal::
 
-    Figure: (A) BM
-    
+    (A) BM
+
 
 
 .. image:: images/output_37_2.png
@@ -494,8 +488,8 @@ groups of equal variance.
 
 .. parsed-literal::
 
-    Figure: (A) FE
-    
+    (A) B, (B) BE
+
 
 
 .. image:: images/output_37_4.png
@@ -503,8 +497,8 @@ groups of equal variance.
 
 .. parsed-literal::
 
-    Figure: (A) B, (B) BE
-    
+    (A) F
+
 
 
 .. image:: images/output_37_6.png
@@ -512,8 +506,8 @@ groups of equal variance.
 
 .. parsed-literal::
 
-    Figure: (A) F
-    
+    (A) FE
+
 
 Documentation (MS Word)
 -----------------------
@@ -544,19 +538,19 @@ produce a full document of your analysis.
     import matplotlib.pyplot as plt
     d = pg.MSDocument()
     d.add_heading('A Pygauss Example Assessment', level=0)
-
+    
     d.add_docstring("""
     # Introduction
-
+    
     We have looked at the following aspects
     of [EMIM]^{+}[Cl]^{-} (C_{6}H_{11}ClN_{2});
-
+    
     - Geometric conformers
     - Electronic structure
-
+    
     # Geometric Conformers
     """)
-
+    
     fig, caption = analysis.plot_mol_images(max_cols=2, 
                     rotations=[[90,0,0], [0,0,90]], 
                     info_columns=['Anion', 'Cation', 'Initial'])
@@ -568,22 +562,21 @@ produce a full document of your analysis.
             row_index=['Anion', 'Cation', 'Initial'])
     d.add_dataframe(df, incl_indx=True, style='Medium Shading 1 Accent 1',
                     caption='Analysis of Conformer Charge')
-
+    
     d.add_docstring("""
     # Molecular Orbital Analysis
     ## Density of States
-
+    
     It is **important** to *emphasise* that the
     computations have only been run in the gas phase.
     """)
-    fig, caption = analysis.plot_mol_graphs(gtype='dos', max_cols=3,
-                            info_columns=['Cation', 'Anion', 'Initial'],
-                            atom_groups=['cl'], group_colors=['blue'], 
-                            group_labels=['Cl'], group_fill=True, 
-                            lbound=-20, ubound=10, legend_size=8)
+    fig, caption = analysis.plot_mol_graphs(gtype='dos', max_cols=3, 
+                                        lbound=-20, ubound=10, legend_size=0,
+                                        band_gap_value=False,
+                                   info_columns=['Cation', 'Anion', 'Initial'])
     d.add_mpl(fig, dpi=96, height=9, caption=caption)
     plt.close()
-
+    
     d.save('exmpl_assess.docx')
 
 Which gives us the following:
@@ -592,5 +585,4 @@ Which gives us the following:
 
 .. image:: images/example_docx2.png
 
-MORE TO COME!!
 

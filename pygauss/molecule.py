@@ -19,6 +19,7 @@ from scipy.signal import argrelextrema
 import matplotlib as mpl
 import matplotlib.pyplot as plt
 import matplotlib.cm as cm
+from matplotlib.colors import ColorConverter
 from matplotlib.offsetbox import OffsetImage, AnnotationBbox
 
 with warnings.catch_warnings():
@@ -553,7 +554,7 @@ class Molecule(object):
         if bbox:
             return im.crop(bbox)
 
-    def _image_molecule(self, molecule, represent='vdw', 
+    def _image_molecule(self, molecule, represent='vdw', background='white', 
                         colorlist=[], transparent=False,
                          rotation=[0., 0., 0.], width=300, height=300, zoom=1.,
                         lines=[], linestyle='impostors',
@@ -566,6 +567,8 @@ class Molecule(object):
             the molecule to image
         represent : str
             representation of molecule ('none', 'wire', 'vdw' or 'ball_stick')
+        background : matplotlib.colors
+            background color
         colorlist : list
             color override for each of the atoms (if empty colored by atom type)
         transparent=True : 
@@ -596,7 +599,8 @@ class Molecule(object):
             represent, allowed_rep))
             
         v = QtViewer()
-        w = v.widget        
+        w = v.widget       
+        w.background_color = tuple([int(i*255) for i in ColorConverter().to_rgba(background)])
         w.initializeGL()
 
         if represent=='ball_stick':
@@ -650,7 +654,7 @@ class Molecule(object):
         
         return self._trim_image(image)
 
-    def _concat_images_horizontal(self, images, gap=10):
+    def _concat_images_horizontal(self, images, gap=10, background='white'):
         """ concatentate one or more PIL images horizontally 
 
         Parameters
@@ -659,13 +663,15 @@ class Molecule(object):
             the images to concatenate
         gap : int
             the pixel gap between images
+        background : PIL.ImageColor
+            background color (as supported by PIL.ImageColor)
         """
         if len(images) == 1: return images[0]
         
         total_width = sum([img.size[0] for img in images]) + len(images)*gap
         max_height = max([img.size[1] for img in images])
         
-        final_img = PIL.Image.new("RGBA", (total_width, max_height), color='white')
+        final_img = PIL.Image.new("RGBA", (total_width, max_height), color=background)
         
         horizontal_position = 0
         for img in images:
@@ -723,7 +729,7 @@ class Molecule(object):
 
     def _show_molecule(self, molecule, active=False, 
                        represent='vdw', rotations=[[0., 0., 0.]],
-                       colorlist=[], transparent=False, 
+                       background='white', colorlist=[], transparent=False, 
                        axis_length=0, lines=[], linestyle='impostors',
                        surfaces=[],
                        zoom=1., width=300, height=300, ipyimg=True):
@@ -738,6 +744,8 @@ class Molecule(object):
             (ipython notebook only)
         represent : str
             representation of molecule ('none', 'wire', 'vdw' or 'ball_stick')
+        background : matplotlib.colors
+            background color
         colorlist : list
             color override for each of the atoms (if empty colored by atom type)
         transparent=True : 
@@ -786,12 +794,13 @@ class Molecule(object):
             images = []
             for rotation in rotations:
                 images.append(self._image_molecule(molecule, 
-                                    represent=represent, colorlist=colorlist, 
+                                    represent=represent, 
+                                    background=background, colorlist=colorlist, 
                                     rotation=rotation, zoom=zoom,
                                     width=width, height=width,
                                     lines=drawlines, linestyle=linestyle,
                                     transparent=transparent, surfaces=surfaces))  
-            image = self._concat_images_horizontal(images)
+            image = self._concat_images_horizontal(images, background=background)
             del images
             
             if ipyimg:
@@ -803,11 +812,11 @@ class Molecule(object):
                                 
     def show_initial(self, gbonds=True, active=False, represent='vdw', 
                      rotations=[[0., 0., 0.]], zoom=1., width=300, height=300,
-                     axis_length=0, lines=[], ipyimg=True):
+                     axis_length=0, lines=[], background='white', ipyimg=True):
         """show initial geometry (before optimisation) of molecule coloured by atom type """
         molecule = self._create_molecule(optimised=False, gbonds=gbonds)
         
-        return self._show_molecule(molecule, active=active, 
+        return self._show_molecule(molecule, active=active, background=background,
                                    represent=represent, 
                                    rotations=rotations, zoom=zoom, 
                                    lines=lines, axis_length=axis_length, ipyimg=ipyimg)      
@@ -815,12 +824,12 @@ class Molecule(object):
     def show_optimisation(self, opt_step=False, gbonds=True, active=False,
                           represent='vdw', rotations=[[0., 0., 0.]], zoom=1.,
                           width=300, height=300, axis_length=0, lines=[], 
-                          ipyimg=True):
+                          background='white', ipyimg=True):
         """show optimised geometry of molecule coloured by atom type """       
         molecule = self._create_molecule(optimised=True, opt_step=opt_step, 
                                          gbonds=gbonds)
 
-        return self._show_molecule(molecule, active=active, 
+        return self._show_molecule(molecule, active=active, background=background,
                                   represent=represent, 
                                   rotations=rotations, zoom=zoom,
                                   lines=lines, axis_length=axis_length,
@@ -850,7 +859,7 @@ class Molecule(object):
         return colorlist
 
     def show_highlight_atoms(self, atomlists, transparent=False, alpha=0.7,
-                             gbonds=True, active=False, optimised=True,
+                             gbonds=True, active=False, optimised=True, background='white',
                         represent='vdw', rotations=[[0., 0., 0.]], zoom=1.,
                         width=300, height=300, axis_length=0, lines=[], ipyimg=True):
         """show optimised geometry of molecule with certain atoms highlighted """               
@@ -873,7 +882,7 @@ class Molecule(object):
             
         return self._show_molecule(molecule, active=active, 
                                    transparent=transparent,
-                                  represent=represent, 
+                                  represent=represent, background=background,
                                   rotations=rotations, zoom=zoom,
                                   colorlist=colorlist, linestyle=linestyle,
                                   lines=lines, axis_length=axis_length,
@@ -935,7 +944,7 @@ class Molecule(object):
                           self_opt=True, other_opt=True,
                           charge=None, multiplicity=None,
                           out_name=False, descript='', overwrite=False,
-                          active=False,
+                          active=False, background='white',
                           represent='ball_stick', rotations=[[0., 0., 0.]], zoom=1.,
                           width=300, height=300, axis_length=0, ipyimg=True,
                           folder_obj=None):
@@ -977,7 +986,7 @@ class Molecule(object):
         return self._show_molecule(mol, active=active, 
                                   represent=represent, 
                                   rotations=rotations, zoom=zoom,
-                                  colorlist=colorlist,
+                                  background=background, colorlist=colorlist,
                                   axis_length=axis_length,
                                   width=width, height=height, ipyimg=ipyimg,
                                   ) 
@@ -993,7 +1002,7 @@ class Molecule(object):
         
         return colors
 
-    def show_nbo_charges(self, gbonds=True, active=False, 
+    def show_nbo_charges(self, gbonds=True, active=False, background='white',
                          relative=False, minval=-1, maxval=1,
                          represent='vdw', rotations=[[0., 0., 0.]], zoom=1.,
                          width=300, height=300, axis_length=0, lines=[], ipyimg=True):
@@ -1005,7 +1014,7 @@ class Molecule(object):
         return self._show_molecule(molecule, active=active, 
                                   represent=represent, 
                                   rotations=rotations, zoom=zoom,
-                                  colorlist=colorlist,
+                                  background=background, colorlist=colorlist,
                                   lines=lines, axis_length=axis_length,
                                   width=width, height=height, ipyimg=ipyimg) 
     
@@ -1069,7 +1078,7 @@ class Molecule(object):
         return moenergies[orbitals-1]
         
     def yield_orbital_images(self, orbitals, iso_value=0.02, extents=(2,2,2),
-                     transparent=True, alpha=0.5, wireframe=True,
+                     transparent=True, alpha=0.5, wireframe=True, background='white',
                      bond_color=(255, 0, 0), antibond_color=(0, 255, 0),
                      resolution=100, gbonds=True, represent='ball_stick', 
                      rotations=[[0., 0., 0.]], zoom=1.,
@@ -1090,6 +1099,8 @@ class Molecule(object):
             alpha value of iso-surface
         wireframe : 
             whether iso-surface should be wireframe (or solid)
+        background : matplotlib.colors
+            background color
         bond_color : 
             color of bonding orbital surface in RGB format
         antibond_color : 
@@ -1165,7 +1176,7 @@ class Molecule(object):
                 surfaces.append([averts, anormals, acolors, transparent,wireframe])                                        
             
             yield self._show_molecule(molecule, 
-                                      represent=represent, 
+                                      represent=represent, background=background,
                                       rotations=rotations, zoom=zoom,
                                       surfaces=surfaces, transparent=False,
                                       lines=lines, axis_length=axis_length,
@@ -1614,7 +1625,7 @@ class Molecule(object):
                         represent='ball_stick', rotations=[[0., 0., 0.]], zoom=1.,
                         width=300, height=300, axis_length=0, lines=[],
                         relative=False, minval=-1, maxval=1,
-                        alpha=0.5, transparent=True,
+                        alpha=0.5, transparent=True, background='white',
                         ipyimg=True):
         """visualisation of interactions between "filled" (donor) Lewis-type 
         Natural Bonding Orbitals (NBOs) and "empty" (acceptor) non-Lewis NBOs,
@@ -1648,7 +1659,7 @@ class Molecule(object):
                                   colorlist=colorlist,
                                   lines=drawlines, axis_length=axis_length,
                                   width=width, height=height, linestyle='lines', 
-                                  transparent=transparent,
+                                  transparent=transparent, background=background,
                                   ipyimg=ipyimg) 
     
     def calc_hbond_energy(self, atom_groups=[], eunits='kJmol-1'):
@@ -1663,7 +1674,7 @@ class Molecule(object):
                         represent='ball_stick', rotations=[[0., 0., 0.]], zoom=1.,
                         width=300, height=300, axis_length=0, lines=[],
                         relative=False, minval=-1, maxval=1,
-                        alpha=0.5, transparent=True, ipyimg=True):
+                        alpha=0.5, transparent=True, background='white',ipyimg=True):
         """EXPERIMENTAL! hydrogen bond analysis DH---A
         
         For a hydrogen bond to occur there must be both a hydrogen donor and an 
@@ -1698,7 +1709,7 @@ class Molecule(object):
         colorlist = self._get_charge_colors(relative, minval, maxval, alpha=alpha)
         
         return self._show_molecule(molecule, active=active, 
-                                  represent=represent, 
+                                  represent=represent, background=background,
                                   rotations=rotations, zoom=zoom,
                                   colorlist=colorlist,
                                   lines=drawlines, axis_length=axis_length,

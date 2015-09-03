@@ -11,6 +11,7 @@ import pandas as pd
 from pandas.tools.plotting import radviz
 import matplotlib.pyplot as plt
 import matplotlib.cm as cm
+from matplotlib.colors import ColorConverter
 
 from sklearn.cluster import KMeans
 
@@ -499,6 +500,7 @@ class Analysis(object):
                          sort_columns=[], align_to=[], rotations=[[0., 0., 0.]],
                          gbonds=True, represent='ball_stick', 
                          zoom=1., width=300, height=300, axis_length=0,
+                         background='white',
                          relative=False, minval=-1, maxval=1,
                          highlight=[], active=False, 
                          sopt_min_energy=20., sopt_cutoff_energy=0.,
@@ -543,6 +545,8 @@ class Analysis(object):
             height of original images (although width takes precedent)
         axis_length : float
             length of x,y,z axes in negative and positive directions
+        background : matplotlib.colors
+            background color
         relative : bool
             coloring of nbo atoms scaled to min/max values in atom set (for nbo mtype)
         minval : float
@@ -584,67 +588,46 @@ class Analysis(object):
         if sort_columns:
             df.sort(sort_columns, inplace=True)
         
+        show_kwargs = {'gbonds':gbonds, 'represent':represent, 
+                       'rotations':rotations, 'zoom':zoom, 
+                       'width':width, 'height':height, 'background':background,
+                       'axis_length':axis_length, 'ipyimg':ipyimg}
+        
         for indx, mol in zip(df.index, df.Molecule):
             if align_to: 
                 align_atoms = mol.get_atom_group(align_to)
                 mol.set_alignment_atoms(*align_atoms)
             if mtype == 'initial':
-                yield indx, mol.show_initial(gbonds=gbonds, represent=represent, 
-                                       rotations=rotations, zoom=zoom, 
-                                       width=width, height=height, 
-                                       axis_length=axis_length, ipyimg=ipyimg)
+                yield indx, mol.show_initial(**show_kwargs)
             elif mtype == 'optimised':
-                yield indx, mol.show_optimisation(gbonds=gbonds, represent=represent, 
-                                       rotations=rotations, zoom=zoom, 
-                                       width=width, height=height, 
-                                       axis_length=axis_length, ipyimg=ipyimg)
+                yield indx, mol.show_optimisation(**show_kwargs)
             elif mtype == 'nbo':
-                yield indx, mol.show_nbo_charges(gbonds=gbonds, represent=represent, 
-                                       rotations=rotations, zoom=zoom, 
-                                       width=width, height=height, 
-                                       axis_length=axis_length,
-                                       relative=relative, 
-                                       minval=minval, maxval=maxval, ipyimg=ipyimg)
+                yield indx, mol.show_nbo_charges(relative=relative, 
+                                minval=minval, maxval=maxval, **show_kwargs)
             elif mtype == 'highlight':
                 yield indx, mol.show_highlight_atoms(highlight, 
                                        alpha=alpha, optimised=True,
                                        transparent=transparent,
-                                       gbonds=gbonds, 
-                                       represent=represent, 
-                                       rotations=rotations, zoom=zoom, 
-                                       width=width, height=height, 
-                                       axis_length=axis_length, ipyimg=ipyimg)
+                                       **show_kwargs)
             elif mtype == 'highlight-initial':
                 yield indx, mol.show_highlight_atoms(highlight, 
                                        alpha=alpha, optimised=False,
                                        transparent=transparent,
-                                       gbonds=gbonds, 
-                                       represent=represent, 
-                                       rotations=rotations, zoom=zoom, 
-                                       width=width, height=height, 
-                                       axis_length=axis_length, ipyimg=ipyimg)
+                                       **show_kwargs)
             elif mtype == 'sopt':
                 yield indx, mol.show_sopt_bonds(min_energy=sopt_min_energy,
                                     cutoff_energy=sopt_cutoff_energy, no_hbonds=no_hbonds, 
                                     eunits=eunits, atom_groups=atom_groups,
                                     alpha=alpha, transparent=transparent,
-                                    gbonds=gbonds, represent=represent, 
-                                    rotations=rotations, zoom=zoom, 
-                                    width=width, height=height, 
-                                    axis_length=axis_length,
                                     relative=relative, 
-                                    minval=minval, maxval=maxval, ipyimg=ipyimg)
+                                    minval=minval, maxval=maxval, **show_kwargs)
             elif mtype == 'hbond':
                 yield indx, mol.show_hbond_analysis(min_energy=sopt_min_energy,
                                     cutoff_energy=sopt_cutoff_energy, eunits=eunits,
                                     atom_groups=atom_groups, bondwidth=hbondwidth,
                                     alpha=alpha, transparent=transparent,
-                                    gbonds=gbonds, represent=represent, 
-                                    rotations=rotations, zoom=zoom, 
-                                    width=width, height=height, 
-                                    axis_length=axis_length,
                                     relative=relative, 
-                                    minval=minval, maxval=maxval, ipyimg=ipyimg)
+                                    minval=minval, maxval=maxval, **show_kwargs)
             else:
                 raise ValueError(
                 'mtype must be initial, optimised, nbo, highlight, highligh-initial, sopt or hbond')                
@@ -664,6 +647,7 @@ class Analysis(object):
                         rows=[], filters={}, align_to=[], rotations=[[0., 0., 0.]],
                         gbonds=True, represent='ball_stick',
                         zoom=1., width=500, height=500, axis_length=0,
+                        background='white',
                         relative=False, minval=-1, maxval=1,
                         highlight=[], frame_on=False, eunits='kJmol-1',
                         sopt_min_energy=20., sopt_cutoff_energy=0.,
@@ -711,6 +695,8 @@ class Analysis(object):
             height of original images (although width takes precedent)
         axis_length : float
             length of x,y,z axes in negative and positive directions
+        background : matplotlib.colors
+            background color
         relative : bool
             coloring of nbo atoms scaled to min/max values in atom set (for nbo mtype)
         minval : float
@@ -762,7 +748,7 @@ class Analysis(object):
                         eunits=eunits, sopt_min_energy=sopt_min_energy, 
                         sopt_cutoff_energy=sopt_cutoff_energy,
                         atom_groups=atom_groups, alpha=alpha, 
-                        transparent=transparent,
+                        transparent=transparent, background=background,
                         hbondwidth=hbondwidth, no_hbonds=no_hbonds)
         
         #num_rows = int(math.ceil(num_mols/float(max_cols)))
@@ -772,6 +758,13 @@ class Analysis(object):
  
         fig, axes = plt.subplots(num_rows, num_cols, squeeze=False,
                                  gridspec_kw={'width_ratios':[1]*num_cols})
+        fig.set_facecolor(background)
+        
+        r,g,b = ColorConverter().to_rgb(background)
+        if ( .241*(255*r)**2 + .691*(255*g)**2 + .068*(255*b)**2 )**0.5 < 130.:
+            label_color = 'white'
+        else:
+            label_color = 'black'
                                  
         for ax in fig.get_axes():
             ax.axes.get_xaxis().set_visible(False)
@@ -790,7 +783,7 @@ class Analysis(object):
 
             if label_size:
                 ax.text(0,0.8,letter_prefix+self._get_letter(mol_num+letter_offset), 
-                        size=label_size, weight="bold")
+                        size=label_size, weight="bold", color=label_color)
             
             info = ', '.join(df[info_columns].loc[indx].fillna('-').astype(str))
             if info_incl_id:

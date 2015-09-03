@@ -5,4 +5,4 @@ Created on Sun May 10 06:45:40 2015
 @author: chris
 """
 
-__version__ = "0.6.0"
+__version__ = "0.6.1dev"
